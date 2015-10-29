@@ -1,0 +1,302 @@
+<?php
+namespace PQD;
+
+require_once 'PQDExceptions.php';
+require_once 'PQDDb.php';
+
+use PQD\PQDUtil as Util;
+
+session_start();
+/**
+ * @author Willker Moraes Silva
+ * @since 2015-09-25
+ *
+ */
+class PQDApp {
+	
+	/**
+	 * @var array
+	 */
+	private $environments = array('admin' => '');
+	
+	/**
+	 * @var string
+	 */
+	private $envDefault = 'admin';
+	
+	/**
+	 * @var array
+	 */
+	private $secureEnv = array('admin' => 0);
+	
+	/**
+	 * @var PQDDb
+	 */
+	private $PQDDb;
+	
+	/**
+	 * @var PQDExceptions
+	 */
+	private $exceptions;
+	
+	
+	/**
+	 * @var array
+	 */
+	private $aUrlRequest;
+	
+	/**
+	 * @var array
+	 */
+	private $aUrlRequestPublic;
+	
+	/**
+	 * @var array
+	 */
+	private $aFreePaths = array();
+	
+	private $logController;
+	
+	private $logAction;
+	
+	
+	public function __construct($appPath, $environments = 'admin', $environmentDefault = 'admin'){
+		$this->exceptions = new PQDExceptions();
+		$this->PQDDb = new PQDDb($this->exceptions);
+		
+		$this->environments = is_array($environments) ? $environments : array($environments => '');
+		$this->envDefault = $environmentDefault;
+		
+		define('APP_PATH', $appPath);		
+	}
+	
+	public static function run($appPath, $environments, $environmentDefault){
+		
+		if (IS_DEVELOPMENT)
+			ini_set("display_errors", "On");
+		else
+			ini_set("display_errors", "Off");
+		
+		$oApp = new self($appPath, $environments, $environmentDefault);
+		$oApp->iniApp();
+		
+		return $oApp;
+	}
+	
+	/**
+	 * @param string $driver
+	 * @param string $host
+	 * @param string $dbName
+	 * @param string $user
+	 * @param string $password
+	 * @param string $port
+	 * @return number $index
+	 */
+	public function setDbConnection($driver, $host, $dbName, $user, $password, $port = null){
+		return PQDDb::setDbConnection($driver, $host, $dbName, $user, $password, $port = null);
+	}
+	
+	public function setTemplates($head = 'templates/head.php', $footer = 'templates/footer.php'){
+		if (!is_null($head) && !empty($head))
+			define('APP_TEMPLATE_HEAD', $head);
+		
+		if (!is_null($footer) && !empty($footer))
+			define('APP_TEMPLATE_FOOTER', $footer);
+	}
+	
+	public function setSecureEnv($environments){
+		$this->secureEnv = is_array($environments) ? array_flip($environments) : array($environments => 0);
+	}
+	
+	public function setFreePaths(array $paths){
+		$this->aFreePaths = array_flip($paths);
+	}
+	
+	public function view(){
+		
+		if (isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]) && (!isset($this->aUrlRequest[1]) || $this->aUrlRequest[1] != 'login')){
+			header('Location: ' . APP_URL_PUBLIC . APP_ENVIRONMENT . '/login/' . APP_URL . (($_SERVER['QUERY_STRING'] != '') ? '?' . $_SERVER['QUERY_STRING'] : ''));
+			exit();
+		}
+		
+		//Requisitando arquivos necessários
+		
+		if (APP_URL == '')
+			$modulo = "home";
+		else{
+			if( isset($this->secureEnv[APP_ENVIRONMENT]) && $this->aUrlRequestPublic[0] == "login")
+				$modulo = "login";
+			else
+				$modulo = APP_URL;
+		}
+		
+		//Mapeando ambientes, somente não mapea para as urls livres
+		if(!isset($this->aFreePaths[APP_URL]))
+			$modulo = $this->environments[APP_ENVIRONMENT] . $modulo;
+
+		//Para aceitar modulos como "cadastre-se", "quem-somos"
+		if(strstr($modulo, '-')){
+			$modulo  = preg_split("[-]", $modulo);
+			$modulo = $modulo[0] . join('', array_map("ucwords", array_slice($modulo, 1)));
+		}
+		
+		if (is_dir(APP_PATH . 'modulos/' . $modulo)){
+
+			if (!isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $this->environments[APP_ENVIRONMENT] . "home" && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][$this->aUrlRequestPublic[0]]))
+				$this->viewHttpError(403);
+			else{
+		
+				$ctrl = ucwords(basename(APP_PATH . 'modulos/' . $modulo)) . 'Ctrl';
+				$file = APP_PATH . 'modulos/' . $modulo . '/' . $ctrl . '.php';
+				$ctrl = str_replace('/', "\\", '/modulos/' . $modulo . '/' . $ctrl);
+		
+				if(file_exists($file)){
+					require_once $file;
+					if(class_exists($ctrl)){
+						
+						$obj = new $ctrl($_POST, $_GET, $_SESSION, $this->exceptions, $_FILES);
+						$this->logController = $ctrl;
+						$act = isset($_GET['act']) ? $_GET['act'] : 'view';
+						
+						if(!method_exists($obj, $act))
+							$this->viewHttpError(500);
+						else{
+							$this->logAction = $act;
+							$obj->{$act}();
+						}
+					}
+					else {
+						$this->exceptions->setException(new \Exception("Classe (". $ctrl .") não encontrada!"));
+						$this->viewHttpError(500);
+					}
+				}
+				else{
+					$this->exceptions->setException(new \Exception("Arquivo (". $file .".php) não encontrado!"));
+					$this->viewHttpError(500);
+				}
+			}
+		}
+		else
+			$this->viewHttpError(404);
+	}
+	
+	private function viewHttpError($httpError){
+		
+		http_response_code($httpError);
+		$oView = new PQDView('templates/' . $httpError. '.php', $this->exceptions);
+		
+		switch ($httpError) {
+			case 403:
+				$oView->title = ': 403 Acesso Proibido(Forbidden)';
+			break;
+			case 404:
+				$oView->title = ': 404 N&atilde;o Encontrado(Not Found)';
+			break;
+			case 500:
+				$oView->title = ': 500 Erro interno do Servidor(Internal Server Error)';
+			break;
+		}
+	}
+	
+	private function iniApp() {
+		chdir(APP_PATH);
+		$this->setIncludePath();
+		$this->setConstants();
+	}
+	
+	private function setConstants() {
+		
+		//Verificando se está rodando a partir dá pasta /public
+		if(strstr($_SERVER['REQUEST_URI'], basename(APP_PATH) . '/public')){
+			$url = preg_split('/' . basename(APP_PATH) . '\/public/', $_SERVER['REQUEST_URI']);
+			define('APP_URL_PUBLIC', $url[0] . basename(APP_PATH) . '/public/');
+			$url = str_replace('?' . $_SERVER['QUERY_STRING'], '', $url[1]);
+		}
+		else{
+			define('APP_URL_PUBLIC', '/');
+			$url = str_replace('?' . $_SERVER['QUERY_STRING'], '', $_SERVER['REQUEST_URI']);
+		}
+		
+		$path = array_values(array_filter(preg_split("[/]", $url)));
+		$pathPublic = $path;//Caminho a partir dá pasta /public
+		
+		if (count($path) > 0) {
+		
+			if(isset($this->environments[$path[0]])){
+				$pathPublic = array_slice($path, 1);
+				$pathString = join('/', $pathPublic);
+			}
+			else{
+				$pathString = join('/', $path);
+				$pathPublic = $path;
+			}
+		
+			define('APP_URL', $pathString);
+		
+			//Setando ambiente de trabalho
+			if(isset($this->environments[$path[0]])){
+				define("APP_ENVIRONMENT", $path[0]);
+			}
+			else{
+				define("APP_ENVIRONMENT", $this->envDefault);
+			}
+		}
+		else{
+			define("APP_ENVIRONMENT", $this->envDefault);
+			define('APP_URL', '');
+		}
+		
+		$this->aUrlRequest = $path;
+		$this->aUrlRequestPublic = $pathPublic;
+	}
+		
+	private function setIncludePath() {
+		//Default Includes
+		set_include_path(
+			get_include_path() . PATH_SEPARATOR .
+			APP_PATH . "/libs/" . PATH_SEPARATOR .
+			APP_PATH
+		);
+	
+		spl_autoload_extensions(".php");
+		spl_autoload_register(function($class){
+			$class = str_replace('\\', '/', $class);
+			$found = stream_resolve_include_path($class . ".php");
+	
+			if($found !== false)
+				require_once $found;
+		});
+	}
+	
+	public function __destruct() {
+		if (!file_exists(APP_PATH . 'logs/')){
+			if(mkdir(APP_PATH . 'logs/', 0777, true) === false)
+				throw new \Exception("Erro ao Criar diretório de LOG!", 6);
+		}
+		
+		$log = array(
+ 			'environment' => APP_ENVIRONMENT,
+			'date' => time()*1000,
+			'ip' => $_SERVER['REMOTE_ADDR'],
+			'http_user' => isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : null,
+			'user_id' => isset($_SESSION['user']) ? $_SESSION['user']['id'] : null,
+			'user' => isset($_SESSION['user']) ? $_SESSION['user']['login'] : null,
+			'request_uri' => $_SERVER['REQUEST_URI'],
+			'controller' => $this->logController,
+			'action' => $this->logAction,
+			'app_url' => APP_URL,
+			'app_url_public' => APP_URL_PUBLIC,
+			'method' => $_SERVER['REQUEST_METHOD'],
+			'http_response' => http_response_code()
+		);
+		
+		$f = fopen(APP_PATH . 'logs/access-log.log', 'a');
+		if($f === false){
+			throw new \Exception("Erro ao Criar arquivo de LOG!", 7);
+		}
+		else{
+			fwrite($f, Util::json_encode($log) . PHP_EOL);
+			fclose($f);
+		}
+	}
+}
