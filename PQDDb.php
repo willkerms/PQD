@@ -5,7 +5,7 @@ namespace PQD;
  * @author Willker Moraes Silva
  * @since 2012-03-30
  */
-class PQDDb {
+class PQDDb{
 	
 	/**
 	 * @var array
@@ -14,7 +14,7 @@ class PQDDb {
 
 	/**
 	 * 
-	 * @var array[\PDO]
+	 * @var array[PQDPDO]
 	 */
 	private static $connections = array();
 	
@@ -26,7 +26,7 @@ class PQDDb {
 	
 	/**
 	 * 
-	 * @var PQD\PQDExceptions
+	 * @var PQDExceptions
 	 */
 	protected $exceptions;
 
@@ -42,7 +42,7 @@ class PQDDb {
 	}
 	
 	/**
-	 * @return \PQD\PQDExceptions
+	 * @return PQDExceptions
 	 */
 	public function getExceptions(){
 		return $this->exceptions;
@@ -50,14 +50,14 @@ class PQDDb {
 
 	/**
 	 * @param number $index
-	 * @return \PDO
+	 * @return PQDPDO
 	 */
 	public function getConnection($indexCon = 0){
 		
 		if (count(self::$dbs) == 0)
 			throw new \Exception("Configurações de conexão com o Banco de Dados indefinidas!", 2);
 		
-		//Somente para não tentar conectar em bancos que já não conectarm dá primeira tentativa
+		//Somente para não tentar conectar em bancos que já não conectaram dá primeira tentativa
 		if(isset(self::$exceptionsDbs[$indexCon]))
 			return null;
 		
@@ -69,13 +69,13 @@ class PQDDb {
 					$port = ":" . self::$dbs[$indexCon]['port'];
 
 				if(self::$dbs[$indexCon]['driver'] == "mssql" && version_compare(phpversion(), '5.3', '>=') && strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
-					self::$connections[$indexCon] = new \PDO('sqlsrv:Server=' . self::$dbs[$indexCon]['host'] . $port . ';Database=' . self::$dbs[$indexCon]['db'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], array('ReturnDatesAsStrings' => true));
+					self::$connections[$indexCon] = new PQDPDO('sqlsrv:Server=' . self::$dbs[$indexCon]['host'] . $port . ';Database=' . self::$dbs[$indexCon]['db'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], array('ReturnDatesAsStrings' => true));
 				else{
 					
 					if(self::$dbs[$indexCon]['driver'] == "mysql")
 						$options[\PDO::MYSQL_ATTR_INIT_COMMAND] = 'SET NAMES latin1;';
 					
-					self::$connections[$indexCon] = new \PDO(self::$dbs[$indexCon]['driver'] . ":" . "dbname=" . self::$dbs[$indexCon]['db'] . ";host=" . self::$dbs[$indexCon]['host']. self::$dbs[$indexCon]['port'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
+					self::$connections[$indexCon] = new PQDPDO(self::$dbs[$indexCon]['driver'] . ":" . "dbname=" . self::$dbs[$indexCon]['db'] . ";host=" . self::$dbs[$indexCon]['host']. self::$dbs[$indexCon]['port'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
 				}
 			}
 			catch (\Exception $e) {

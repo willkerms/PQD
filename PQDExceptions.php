@@ -22,15 +22,15 @@ class PQDExceptions {
 	/**
 	 * @return string
 	 */
-	public function getHtmlExceptions() {
-		return PQDUtil::getErrorLikeHTML($this, IS_DEVELOPMENT);
+	public function getHtmlExceptions($development = IS_DEVELOPMENT) {
+		return PQDUtil::getErrorLikeHTML($this, $development);
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getJsonExceptions() {
-		return PQDUtil::getErrorLikeJSON($this, IS_DEVELOPMENT);
+	public function getJsonExceptions($development = IS_DEVELOPMENT) {
+		return PQDUtil::getErrorLikeJSON($this, $development);
 	}
 
 	/**

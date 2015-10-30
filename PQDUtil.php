@@ -61,12 +61,15 @@ class PQDUtil {
 	 * @param boolean $development
 	 * @return string
 	 */
-	public static function getErrorLikeJSON(PQDExceptions $oErros, $development = false){
+	public static function getErrorLikeJSON(PQDExceptions $oErros, $development = IS_DEVELOPMENT){
 
 		$aExceptions = $oErros->getExceptions();
 		$aExceptionsJSON = array();
 
 		foreach ($aExceptions as $e){
+			if(($e instanceof PQDExceptionsDB) && !$development)
+				continue;
+			
 			if ($development === true) {
 				$aExceptionsJSON[] = array(
 					'code' => $e->getCode(),
@@ -92,16 +95,15 @@ class PQDUtil {
 	 * @param boolean $development
 	 * @return string
 	 */
-	public static function getErrorLikeHTML(PQDExceptions $oErros, $development = false){
+	public static function getErrorLikeHTML(PQDExceptions $oErros, $development = IS_DEVELOPMENT){
 
 		$aExceptions = $oErros->getExceptions();
-		
-		if($development)
-			$html = '<table class="table table-striped table-bordered table-condensed table-errors"><tr class="danger"><th>&nbsp;</th><th>Exceptions</th></tr>';
-		else
-			$html = '<table class="table table-striped table-bordered table-errors">';
+		$html = '';
 		
 		foreach ($aExceptions as $key => $e){
+			if(($e instanceof PQDExceptionsDB) && !$development)
+				continue;
+			
 			if ($development === true) {
 
 				$pre = '<pre>';
@@ -125,8 +127,17 @@ class PQDUtil {
 				$html .= '</tr>';
 			}
 		}
+		
+		if($html != ''){
+			if($development)
+				$html = '<table class="table table-striped table-bordered table-condensed table-errors"><tr class="danger"><th>&nbsp;</th><th>Erro(s)</th></tr>' . $html;
+			else
+				$html = '<table class="table table-striped table-bordered table-errors">' . $html;
+			
+			$html .= '</table>';
+		}
+		
 
-		$html .= '</table>';
 
 		return $html;
 	}
@@ -392,9 +403,10 @@ class PQDUtil {
 	
 		$result = self::getParam($param);
 		
-		$exceptions = new PQDExceptions();
-		$db = new PQDDb($exceptions);
-	
+		$exceptions = PQDApp::getExceptions();
+		$countExceptions = $exceptions->count();
+		
+		$db = PQDApp::getDb();
 		$con = $db->getConnection();
 	
 		$return = false;
@@ -416,8 +428,10 @@ class PQDUtil {
 			$return = $st->execute();
 		}
 	
-		if(IS_DEVELOPMENT && $exceptions->count() > 0)
+		/*
+		if(IS_DEVELOPMENT && $exceptions->count() > $countExceptions)
 			echo $db->getExceptions()->getHtmlExceptions();
+		*/
 	
 		return $return;
 	}
@@ -425,14 +439,16 @@ class PQDUtil {
 	
 	public static function getParam($param, $default = null){
 
-		$exceptions = new PQDExceptions();
-		$db = new PQDDb($exceptions);
+		$exceptions = PQDApp::getExceptions();
+		$countExceptions = $exceptions->count();
 		
+		$db = PQDApp::getDb();
 		$con = $db->getConnection();
 		
 		$return = $default;
 		
 		if(!is_null($con)){
+			//TODO: parametro por ambiente
 			$st = $db->getConnection()->prepare("SELECT valor, tipoValor FROM parametros WHERE parametro = :parametro");
 			
 			$st->bindParam(":parametro", $param, \PDO::PARAM_STR);
@@ -458,14 +474,12 @@ class PQDUtil {
 					}
 				}
 			}
-			else{
-				if(IS_DEVELOPMENT && $exceptions->count() > 0)
-					echo $db->getExceptions()->getHtmlExceptions();
-			}
 		}
 		
-		if(IS_DEVELOPMENT && $exceptions->count() > 0)
+		/*
+		if(IS_DEVELOPMENT && $exceptions->count() > $countExceptions)
 			echo $db->getExceptions()->getHtmlExceptions();
+		*/
 		
 		return $return;
 	}
@@ -485,7 +499,7 @@ class PQDUtil {
 		
 		//Without Comments /**/ //
 		if($commentsJS){
-			$aSearch[] = "/(\/\*(.|\s)*?(\*\/))/"; //Comments /* */
+			$aSearch[] = '/(\/\*(.|\s)*?(\*\/))/'; //Comments /* */
 			$aSearch[] = "/\/\/.*$/"; // Comments //
 		}
 		
@@ -495,7 +509,7 @@ class PQDUtil {
 			if($commentsJS)
 				array_pop($aSearch); //remove comments from one line because when we have http:// it removes all code
 
-			$aSearch[] = "/(\<\!\-\-(.|\s)*?(\-\-\>))/";
+			$aSearch[] = '/(\<\!\-\-(.|\s)*?(\-\-\>))/';
 		}
 		
 		return preg_replace($aSearch, $aReplace, $string);

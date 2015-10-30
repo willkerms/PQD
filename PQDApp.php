@@ -32,12 +32,12 @@ class PQDApp {
 	/**
 	 * @var PQDDb
 	 */
-	private $PQDDb;
+	private static $PQDDb;
 	
 	/**
 	 * @var PQDExceptions
 	 */
-	private $exceptions;
+	private static $exceptions;
 	
 	
 	/**
@@ -61,8 +61,8 @@ class PQDApp {
 	
 	
 	public function __construct($appPath, $environments = 'admin', $environmentDefault = 'admin'){
-		$this->exceptions = new PQDExceptions();
-		$this->PQDDb = new PQDDb($this->exceptions);
+		self::$exceptions = new PQDExceptions();
+		self::$PQDDb = new PQDDb(self::$exceptions);
 		
 		$this->environments = is_array($environments) ? $environments : array($environments => '');
 		$this->envDefault = $environmentDefault;
@@ -81,6 +81,20 @@ class PQDApp {
 		$oApp->iniApp();
 		
 		return $oApp;
+	}
+	
+	/**
+	 * @return PQDExceptions
+	 */
+	public static function getExceptions(){
+		return self::$exceptions = is_null(self::$exceptions) ? new PQDExceptions(): self::$exceptions;
+	}
+	
+	/**
+	 * @return PQDDb
+	 */
+	public static function getDb(){
+		return self::$PQDDb = is_null(self::$PQDDb) ? new PQDDb(self::exceptions): self::$PQDDb;
 	}
 	
 	/**
@@ -154,7 +168,7 @@ class PQDApp {
 					require_once $file;
 					if(class_exists($ctrl)){
 						
-						$obj = new $ctrl($_POST, $_GET, $_SESSION, $this->exceptions, $_FILES);
+						$obj = new $ctrl($_POST, $_GET, $_SESSION, self::$exceptions, $_FILES);
 						$this->logController = $ctrl;
 						$act = isset($_GET['act']) ? $_GET['act'] : 'view';
 						
@@ -166,12 +180,12 @@ class PQDApp {
 						}
 					}
 					else {
-						$this->exceptions->setException(new \Exception("Classe (". $ctrl .") não encontrada!"));
+						self::$exceptions->setException(new \Exception("Classe (". $ctrl .") não encontrada!"));
 						$this->viewHttpError(500);
 					}
 				}
 				else{
-					$this->exceptions->setException(new \Exception("Arquivo (". $file .".php) não encontrado!"));
+					self::$exceptions->setException(new \Exception("Arquivo (". $file .".php) não encontrado!"));
 					$this->viewHttpError(500);
 				}
 			}
@@ -183,7 +197,7 @@ class PQDApp {
 	private function viewHttpError($httpError){
 		
 		http_response_code($httpError);
-		$oView = new PQDView('templates/' . $httpError. '.php', $this->exceptions);
+		$oView = new PQDView('templates/' . $httpError. '.php', self::$exceptions);
 		
 		switch ($httpError) {
 			case 403:
@@ -297,6 +311,12 @@ class PQDApp {
 		else{
 			fwrite($f, Util::json_encode($log) . PHP_EOL);
 			fclose($f);
+			
+			if (self::$exceptions->count() > 0) {
+				$f = fopen(APP_PATH . 'logs/error-log.log', 'a');
+				fwrite($f, '{"date": ' . time()*1000 . ', "exceptions": ' . self::$exceptions->getJsonExceptions(true) . '}' . PHP_EOL);
+				fclose($f);
+			}
 		}
 	}
 }
