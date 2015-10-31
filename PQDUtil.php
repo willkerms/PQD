@@ -296,6 +296,39 @@ class PQDUtil {
 		return json_encode( self::utf8_encode($value), $options);
 	}
 	
+	public static function json_decode($json, $assoc = false, $depth = 512, $options = 0){
+		
+		$return = json_decode( $json, $assoc, $depth, $options);
+		
+		if (is_null($return)){
+			switch (json_last_error()) {
+				case JSON_ERROR_NONE:
+					PQDApp::getExceptions()->setException( new \Exception('JSON - No errors', 10));
+				break;
+				case JSON_ERROR_DEPTH:
+					PQDApp::getExceptions()->setException( new \Exception('JSON - Maximum stack depth exceeded', 10));
+				break;
+				case JSON_ERROR_STATE_MISMATCH:
+					PQDApp::getExceptions()->setException( new \Exception('JSON - Underflow or the modes mismatch', 10));
+				break;
+				case JSON_ERROR_CTRL_CHAR:
+					PQDApp::getExceptions()->setException( new \Exception('JSON - Unexpected control character found', 10));
+				break;
+				case JSON_ERROR_SYNTAX:
+					PQDApp::getExceptions()->setException( new \Exception('JSON - Syntax error, malformed JSON', 10));
+				break;
+				case JSON_ERROR_UTF8:
+					PQDApp::getExceptions()->setException( new \Exception('JSON - Malformed UTF-8 characters, possibly incorrectly encoded', 10));
+				break;
+				default:
+					PQDApp::getExceptions()->setException( new \Exception('JSON - Unknown error', 10));
+				break;
+			}
+		}
+		
+		return $return;
+	}
+	
 	public static function utf8_encode($data){
 		if ( is_array($data)){
 			foreach ($data as $key => $value)
