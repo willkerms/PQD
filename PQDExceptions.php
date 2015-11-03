@@ -18,19 +18,91 @@ class PQDExceptions {
 	public function getExceptions() {
 		return self::$exceptions;
 	}
-
+	
 	/**
+	 *
+	 * @param boolean $development
 	 * @return string
 	 */
-	public function getHtmlExceptions($development = IS_DEVELOPMENT) {
-		return PQDUtil::getErrorLikeHTML($this, $development);
+	public function getJsonExceptions($development = IS_DEVELOPMENT){
+	
+		$aExceptions = $this->getExceptions();
+		$aExceptionsJSON = array();
+	
+		foreach ($aExceptions as $e){
+			
+			if(($e instanceof PQDExceptionsDB) && !$development)
+				continue;
+					
+				if ($development === true) {
+					$aExceptionsJSON[] = array(
+						'code' => $e->getCode(),
+						'file' => $e->getFile() . ":" . $e->getLine(),
+						'traceString' => $e->getTraceAsString(),
+						'trace' => $e->getTrace(),
+						'message' => $e->getMessage()
+					);
+				}
+				else{
+					$aExceptionsJSON[] = array(
+						'message' => $e->getMessage()
+					);
+				}
+		}
+	
+		return PQDUtil::json_encode($aExceptionsJSON);
 	}
-
+	
 	/**
+	 *
+	 * @param boolean $development
 	 * @return string
 	 */
-	public function getJsonExceptions($development = IS_DEVELOPMENT) {
-		return PQDUtil::getErrorLikeJSON($this, $development);
+	public function getHtmlExceptions($development = IS_DEVELOPMENT){
+	
+		$aExceptions = $this->getExceptions();
+		$html = '';
+	
+		foreach ($aExceptions as $key => $e){
+			
+			if(($e instanceof PQDExceptionsDB) && !$development)
+				continue;
+					
+				if ($development === true) {
+	
+					$pre = '<pre>';
+					$pre .= 'code => '. $e->getCode() . PHP_EOL;
+					$pre .= 'file => ' . $e->getFile() . ":" . $e->getLine() . PHP_EOL;
+					$pre .= 'message => ' . PQDUtil::escapeHtml($e->getMessage()) . PHP_EOL;
+					$pre .= 'trace => ' . $e->getTraceAsString();
+					$pre .= '</pre>';
+	
+					$html .= '<tr>';
+					$html .= '<td class="errors-count">' . $key . '</td>';
+					$html .= '<td class="errors-msg">';
+					$html .= $pre;
+					$html .= '</td>';
+					$html .= '</tr>';
+				}
+				else{
+					$html .= '<tr>';
+					$html .= '<td class="errors-count">' . $key . '</td>';
+					$html .= '<td class="errors-msg">' . PQDUtil::escapeHtml($e->getMessage()) . '</td>';
+					$html .= '</tr>';
+				}
+		}
+	
+		if($html != ''){
+			
+			if($development)
+				$html = '<table class="table table-striped table-bordered table-condensed table-errors"><tr class="danger"><th>&nbsp;</th><th>Erro(s)</th></tr>' . $html;
+			else
+				$html = '<table class="table table-striped table-bordered table-errors">' . $html;
+			
+			$html .= '</table>';
+		}
+	
+		return $html;
 	}
 
 	/**

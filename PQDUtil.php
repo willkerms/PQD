@@ -53,95 +53,6 @@ class PQDUtil {
 		return $data;
 	}
 	
-	
-
-	/**
-	 *
-	 * @param PQDExceptions $oErros
-	 * @param boolean $development
-	 * @return string
-	 */
-	public static function getErrorLikeJSON(PQDExceptions $oErros, $development = IS_DEVELOPMENT){
-
-		$aExceptions = $oErros->getExceptions();
-		$aExceptionsJSON = array();
-
-		foreach ($aExceptions as $e){
-			if(($e instanceof PQDExceptionsDB) && !$development)
-				continue;
-			
-			if ($development === true) {
-				$aExceptionsJSON[] = array(
-					'code' => $e->getCode(),
-					'file' => $e->getFile() . ":" . $e->getLine(),
-					'traceString' => $e->getTraceAsString(),
-					'trace' => $e->getTrace(),
-					'message' => $e->getMessage()
-				);
-			}
-			else{
-				$aExceptionsJSON[] = array(
-					'message' => $e->getMessage()
-				);
-			}
-		}
-
-		return self::json_encode($aExceptionsJSON);
-	}
-
-	/**
-	 *
-	 * @param PQDExceptions $oErros
-	 * @param boolean $development
-	 * @return string
-	 */
-	public static function getErrorLikeHTML(PQDExceptions $oErros, $development = IS_DEVELOPMENT){
-
-		$aExceptions = $oErros->getExceptions();
-		$html = '';
-		
-		foreach ($aExceptions as $key => $e){
-			if(($e instanceof PQDExceptionsDB) && !$development)
-				continue;
-			
-			if ($development === true) {
-
-				$pre = '<pre>';
-				$pre .= 'code => '. $e->getCode() . PHP_EOL;
-				$pre .= 'file => ' . $e->getFile() . ":" . $e->getLine() . PHP_EOL;
-				$pre .= 'message => ' . self::escapeHtml($e->getMessage()) . PHP_EOL;
-				$pre .= 'trace => ' . $e->getTraceAsString();
-				$pre .= '</pre>';
-
-				$html .= '<tr>';
-				$html .= '<td class="errors-count">' . $key . '</td>';
-				$html .= '<td class="errors-msg">';
-				$html .= $pre;
-				$html .= '</td>';
-				$html .= '</tr>';
-			}
-			else{
-				$html .= '<tr>';
-				$html .= '<td class="errors-count">' . $key . '</td>';
-				$html .= '<td class="errors-msg">' . self::escapeHtml($e->getMessage()) . '</td>';
-				$html .= '</tr>';
-			}
-		}
-		
-		if($html != ''){
-			if($development)
-				$html = '<table class="table table-striped table-bordered table-condensed table-errors"><tr class="danger"><th>&nbsp;</th><th>Erro(s)</th></tr>' . $html;
-			else
-				$html = '<table class="table table-striped table-bordered table-errors">' . $html;
-			
-			$html .= '</table>';
-		}
-		
-
-
-		return $html;
-	}
-	
 	/**
 	 * verify if values is valid according the reg mask
 	 * @param mixed $value
@@ -175,7 +86,7 @@ class PQDUtil {
 	
 		foreach ($array as $key => $value){
 
-			$obj = preg_split("/[:]/", $key);
+			$obj = explode(":", $key);
 			
 			if (count($obj) > 0 && $obj[0] == $nameSpace) {
 	
@@ -471,17 +382,21 @@ class PQDUtil {
 	
 	
 	public static function getParam($param, $default = null){
-
-		$exceptions = PQDApp::getExceptions();
-		$countExceptions = $exceptions->count();
 		
+		if(substr($param, strlen(APP_ENVIRONMENT) * -1) != strtoupper(APP_ENVIRONMENT)){
+			$return = self::getParam($param . '_' . strtoupper(APP_ENVIRONMENT), null);
+			
+			if(!is_null($return))
+				return $return;
+		}
+		
+		$return = $default;
+			
 		$db = PQDApp::getDb();
 		$con = $db->getConnection();
 		
-		$return = $default;
-		
 		if(!is_null($con)){
-			//TODO: parametro por ambiente
+			
 			$st = $db->getConnection()->prepare("SELECT valor, tipoValor FROM parametros WHERE parametro = :parametro");
 			
 			$st->bindParam(":parametro", $param, \PDO::PARAM_STR);
@@ -500,7 +415,7 @@ class PQDUtil {
 							$return = (boolean)$result['valor'];
 						break;
 						case 4:
-							$return = preg_split('/;/', $result['valor']);
+							$return = explode(';', $result['valor']);
 						break;
 						default:
 							$return = $result['valor'];
@@ -508,11 +423,6 @@ class PQDUtil {
 				}
 			}
 		}
-		
-		/*
-		if(IS_DEVELOPMENT && $exceptions->count() > $countExceptions)
-			echo $db->getExceptions()->getHtmlExceptions();
-		*/
 		
 		return $return;
 	}

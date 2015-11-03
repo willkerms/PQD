@@ -231,9 +231,8 @@ class PQDApp {
 			$url = str_replace('?' . $_SERVER['QUERY_STRING'], '', $_SERVER['REQUEST_URI']);
 		}
 		
-		$path = array_values(array_filter(preg_split("[/]", $url)));
+		$path = array_values(array_filter(explode("/", $url)));
 		$pathPublic = $path;//Caminho a partir dá pasta /public
-		
 		if (count($path) > 0) {
 		
 			if(isset($this->environments[$path[0]])){
