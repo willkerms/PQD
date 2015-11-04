@@ -67,7 +67,10 @@ class PQDApp {
 		$this->environments = is_array($environments) ? $environments : array($environments => '');
 		$this->envDefault = $environmentDefault;
 		
-		define('APP_PATH', $appPath);		
+		define('APP_PATH', $appPath);
+		
+		if(!defined('APP_DEBUG'))
+			define('APP_DEBUG', false);
 	}
 	
 	public static function run($appPath, $environments, $environmentDefault){
@@ -128,8 +131,8 @@ class PQDApp {
 	
 	public function view(){
 		
-		if (isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]) && (!isset($this->aUrlRequest[1]) || $this->aUrlRequest[1] != 'login')){
-			header('Location: ' . APP_URL_PUBLIC . APP_ENVIRONMENT . '/login/' . APP_URL . (($_SERVER['QUERY_STRING'] != '') ? '?' . $_SERVER['QUERY_STRING'] : ''));
+		if (isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]) && substr(APP_URL, 0, 5) != 'login'){
+			header('Location: ' . APP_URL_ENVIRONMENT . 'login/' . APP_URL . (($_SERVER['QUERY_STRING'] != '') ? '?' . $_SERVER['QUERY_STRING'] : ''));
 			exit();
 		}
 		
@@ -191,7 +194,7 @@ class PQDApp {
 			}
 		}
 		else
-			$this->viewHttpError(404);
+			$this->viewHttpError(500);
 	}
 	
 	private function viewHttpError($httpError){
@@ -258,6 +261,11 @@ class PQDApp {
 			define("APP_ENVIRONMENT", $this->envDefault);
 			define('APP_URL', '');
 		}
+		
+		if($this->envDefault == APP_ENVIRONMENT)
+			define('APP_URL_ENVIRONMENT', APP_URL_PUBLIC . (count($path) > 0 && isset($this->environments[$path[0]]) ? APP_ENVIRONMENT . '/' : ''));
+		else
+			define('APP_URL_ENVIRONMENT', APP_URL_PUBLIC . APP_ENVIRONMENT . '/');
 		
 		$this->aUrlRequest = $path;
 		$this->aUrlRequestPublic = $pathPublic;

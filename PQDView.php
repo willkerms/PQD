@@ -54,23 +54,23 @@ class PQDView {
 				ob_start();
 				
 				if(defined('APP_TEMPLATE_HEAD'))
-					require_once 'templates/head.php';
+					require_once APP_TEMPLATE_HEAD;
 				
 				require $this->view;
 				
 				if(defined('APP_TEMPLATE_FOOTER'))
-					require_once 'templates/footer.php';
+					require_once APP_TEMPLATE_FOOTER;
 				
 				echo PQDUtil::withoutSpaces(ob_get_clean(), true, true);
 			}
 			else{
 				if(defined('APP_TEMPLATE_HEAD'))
-					require_once 'templates/head.php';
+					require_once APP_TEMPLATE_HEAD;
 				
 				require $this->view;
 				
 				if(defined('APP_TEMPLATE_FOOTER'))
-					require_once 'templates/footer.php';
+					require_once APP_TEMPLATE_FOOTER;
 			}
 		}
 		else
