@@ -38,16 +38,16 @@ class PQDUtil {
 	 * @param mixed $data
 	 * @return mixed
 	 */
-	public static function escapeSQLServer($data){
+	public static function escapeSQL($data){
 		if (is_string($data))
 			$data = str_replace("'", "''", stripslashes($data));
 		else if ( is_array($data)){
 			foreach ($data as $key => $value)
-				$data[$key] = self::escapeSQLServer($value);
+				$data[$key] = self::escapeSQL($value);
 		}
 		else if(is_object($data)){
 			foreach ($data as $key => $value)
-				$data->{$key} = self::escapeSQLServer($value);
+				$data->{$key} = self::escapeSQL($value);
 		}
 
 		return $data;
@@ -214,25 +214,25 @@ class PQDUtil {
 		if (is_null($return)){
 			switch (json_last_error()) {
 				case JSON_ERROR_NONE:
-					PQDApp::getExceptions()->setException( new \Exception('JSON - No errors', 10));
+					PQDApp::getApp()->getExceptions()->setException( new \Exception('JSON - No errors', 10));
 				break;
 				case JSON_ERROR_DEPTH:
-					PQDApp::getExceptions()->setException( new \Exception('JSON - Maximum stack depth exceeded', 10));
+					PQDApp::getApp()->getExceptions()->setException( new \Exception('JSON - Maximum stack depth exceeded', 10));
 				break;
 				case JSON_ERROR_STATE_MISMATCH:
-					PQDApp::getExceptions()->setException( new \Exception('JSON - Underflow or the modes mismatch', 10));
+					PQDApp::getApp()->getExceptions()->setException( new \Exception('JSON - Underflow or the modes mismatch', 10));
 				break;
 				case JSON_ERROR_CTRL_CHAR:
-					PQDApp::getExceptions()->setException( new \Exception('JSON - Unexpected control character found', 10));
+					PQDApp::getApp()->getExceptions()->setException( new \Exception('JSON - Unexpected control character found', 10));
 				break;
 				case JSON_ERROR_SYNTAX:
-					PQDApp::getExceptions()->setException( new \Exception('JSON - Syntax error, malformed JSON', 10));
+					PQDApp::getApp()->getExceptions()->setException( new \Exception('JSON - Syntax error, malformed JSON', 10));
 				break;
 				case JSON_ERROR_UTF8:
-					PQDApp::getExceptions()->setException( new \Exception('JSON - Malformed UTF-8 characters, possibly incorrectly encoded', 10));
+					PQDApp::getApp()->getExceptions()->setException( new \Exception('JSON - Malformed UTF-8 characters, possibly incorrectly encoded', 10));
 				break;
 				default:
-					PQDApp::getExceptions()->setException( new \Exception('JSON - Unknown error', 10));
+					PQDApp::getApp()->getExceptions()->setException( new \Exception('JSON - Unknown error', 10));
 				break;
 			}
 		}
@@ -341,90 +341,6 @@ class PQDUtil {
 			var_dump($var);
 
 		echo "</pre>";
-	}
-	
-	public static function setParam($param, $value, $descricao = null, $tpValue = 0, $obs = null, $idSysModulo = 1){
-	
-		$result = self::getParam($param);
-		
-		$exceptions = PQDApp::getExceptions();
-		$countExceptions = $exceptions->count();
-		
-		$db = PQDApp::getDb();
-		$con = $db->getConnection();
-	
-		$return = false;
-	
-		if(!is_null($con)){
-			
-			if (is_null($result))
-				$st = $db->getConnection()->prepare("INSERT INTO parametros (parametro, descricao, tipoValor, valor, obs, idSysModulo) VALUES(:parametro, :descricao, :tipoValor, :valor, :obs, :idSysModulo)");
-			else
-				$st = $db->getConnection()->prepare("UPDATE parametros SET descricao = :descricao, tipoValor = :tipoValor, valor = :valor, obs = :obs, idSysModulo = :idSysModulo WHERE parametro = :parametro");
-			
-			$st->bindParam(":parametro", $param, \PDO::PARAM_STR);
-			$st->bindParam(":descricao", $descricao, \PDO::PARAM_STR);
-			$st->bindParam(":tipoValor", $tpValue, \PDO::PARAM_INT);
-			$st->bindParam(":valor", $value, \PDO::PARAM_STR);
-			$st->bindParam(":obs", $obs, \PDO::PARAM_STR);
-			$st->bindParam(":idSysModulo", $idSysModulo, \PDO::PARAM_INT);
-			
-			$return = $st->execute();
-		}
-	
-		/*
-		if(IS_DEVELOPMENT && $exceptions->count() > $countExceptions)
-			echo $db->getExceptions()->getHtmlExceptions();
-		*/
-	
-		return $return;
-	}
-	
-	
-	public static function getParam($param, $default = null){
-		
-		if(substr($param, strlen(APP_ENVIRONMENT) * -1) != strtoupper(APP_ENVIRONMENT)){
-			$return = self::getParam($param . '_' . strtoupper(APP_ENVIRONMENT), null);
-			
-			if(!is_null($return))
-				return $return;
-		}
-		
-		$return = $default;
-			
-		$db = PQDApp::getDb();
-		$con = $db->getConnection();
-		
-		if(!is_null($con)){
-			
-			$st = $db->getConnection()->prepare("SELECT valor, tipoValor FROM parametros WHERE parametro = :parametro");
-			
-			$st->bindParam(":parametro", $param, \PDO::PARAM_STR);
-			if($st->execute() !== false){
-				$result = $st->fetch(\PDO::FETCH_NAMED);
-				
-				if($result !== false){
-					switch ($result['tipoValor']){
-						case 1:
-							$return = (int)$result['valor'];
-						break;
-						case 2:
-							$return = (float)$result['valor'];
-						break;
-						case 3:
-							$return = (boolean)$result['valor'];
-						break;
-						case 4:
-							$return = explode(';', $result['valor']);
-						break;
-						default:
-							$return = $result['valor'];
-					}
-				}
-			}
-		}
-		
-		return $return;
 	}
 	
 	public static function withoutSpaces($string, $commentsJS = true, $commentsHTML = false, $escape = false){

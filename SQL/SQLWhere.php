@@ -1,6 +1,7 @@
 <?php
 namespace PQD\SQL;
 
+use PQD\PQDUtil;
 /**
  *
  * @author Willker Moraes Sivla
@@ -69,6 +70,7 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setLike($field, $value, $typeLike = self::LIKE){
+		$value = PQDUtil::escapeSQL($value);
 		array_push($this->filters, $field . str_replace('#', $value, $typeLike));
 		return $this;
 	}
@@ -82,6 +84,7 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setEqual($field, $value, $type = self::STRING){
+		$value = PQDUtil::escapeSQL($value);
 		array_push($this->filters, $field . " = " . str_replace('#', $value, $type));
 		return $this;
 	}
@@ -95,6 +98,7 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setDiff($field, $value, $type = self::STRING){
+		$value = PQDUtil::escapeSQL($value);
 		array_push($this->filters, $field . " <> " . str_replace('#', $value, $type));
 		return $this;
 	}
@@ -108,6 +112,7 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setMore($field, $value, $type = self::STRING){
+		$value = PQDUtil::escapeSQL($value);
 		array_push($this->filters, $field . " > " . str_replace('#', $value, $type));
 		return $this;
 	}
@@ -121,6 +126,7 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setMoreEqual($field, $value, $type = self::STRING){
+		$value = PQDUtil::escapeSQL($value);
 		array_push($this->filters, $field . " >= " . str_replace('#', $value, $type));
 		return $this;
 	}
@@ -134,6 +140,7 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setLess($field, $value, $type = self::STRING){
+		$value = PQDUtil::escapeSQL($value);
 		array_push($this->filters, $field . " < " . str_replace('#', $value, $type));
 		return $this;
 	}
@@ -147,6 +154,7 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setLessEqual($field, $value, $type = self::STRING){
+		$value = PQDUtil::escapeSQL($value);
 		array_push($this->filters, $field . " <= " . str_replace('#', $value, $type));
 		return $this;
 	}
@@ -160,6 +168,7 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setIn($field, array $value, $type = self::IN){
+		$value = PQDUtil::escapeSQL($value);
 		array_push($this->filters, $field . str_replace('#', join(",", $value), $type));
 		return $this;
 	}
@@ -173,6 +182,7 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setBetween($field, array $value, $type = self::BETWEEN){
+		$value = PQDUtil::escapeSQL($value);
 		array_push($this->filters, $field . str_replace('#', join(" AND ", $value), $type));
 		return $this;
 	}

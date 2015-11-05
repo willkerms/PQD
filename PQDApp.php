@@ -6,13 +6,20 @@ require_once 'PQDDb.php';
 
 use PQD\PQDUtil as Util;
 
+session_name('APP');
 session_start();
+
 /**
  * @author Willker Moraes Silva
  * @since 2015-09-25
  *
  */
 class PQDApp {
+	
+	/**
+	 * @var PQDApp
+	 */
+	private static $oPQDApp = null;
 	
 	/**
 	 * @var array
@@ -28,6 +35,11 @@ class PQDApp {
 	 * @var array
 	 */
 	private $secureEnv = array('admin' => 0);
+	
+	/**
+	 * @var array
+	 */
+	private $aIniClasses = array();
 	
 	/**
 	 * @var PQDDb
@@ -61,8 +73,12 @@ class PQDApp {
 	
 	
 	public function __construct($appPath, $environments = 'admin', $environmentDefault = 'admin'){
-		self::$exceptions = new PQDExceptions();
-		self::$PQDDb = new PQDDb(self::$exceptions);
+		
+		if(!is_null(self::$oPQDApp))
+			throw new \Exception("Aplicação já Iniciada!", 10);
+		
+		self::$exceptions = $this->getExceptions();
+		self::$PQDDb = $this->getDb();
 		
 		$this->environments = is_array($environments) ? $environments : array($environments => '');
 		$this->envDefault = $environmentDefault;
@@ -71,6 +87,12 @@ class PQDApp {
 		
 		if(!defined('APP_DEBUG'))
 			define('APP_DEBUG', false);
+		
+		self::$oPQDApp = $this;
+	}
+	
+	public static function getApp(){
+		return self::$oPQDApp;
 	}
 	
 	public static function run($appPath, $environments, $environmentDefault){
@@ -89,15 +111,15 @@ class PQDApp {
 	/**
 	 * @return PQDExceptions
 	 */
-	public static function getExceptions(){
+	public function getExceptions(){
 		return self::$exceptions = is_null(self::$exceptions) ? new PQDExceptions(): self::$exceptions;
 	}
 	
 	/**
 	 * @return PQDDb
 	 */
-	public static function getDb(){
-		return self::$PQDDb = is_null(self::$PQDDb) ? new PQDDb(self::exceptions): self::$PQDDb;
+	public function getDb(){
+		return self::$PQDDb = is_null(self::$PQDDb) ? new PQDDb($this->getExceptions()): self::$PQDDb;
 	}
 	
 	/**
@@ -121,15 +143,46 @@ class PQDApp {
 			define('APP_TEMPLATE_FOOTER', $footer);
 	}
 	
+	/**
+	 * Classes que deverão ser inicializadas antes do método view(), essas classes devem conter o metodo estatico run como public
+	 * 
+	 * @param array|string $classes
+	 */
+	public function setIniClasses($classes){
+		$this->aIniClasses = is_array($classes) ? $classes : array($classes);
+	}
+	
+	/**
+	 * Ambientes que exigem atutenticação
+	 * 
+	 * @param array|string $environments
+	 */
 	public function setSecureEnv($environments){
 		$this->secureEnv = is_array($environments) ? array_flip($environments) : array($environments => 0);
 	}
 	
+	/**
+	 * Caminhoes livres que podem ser acessados de qualquer ambiente
+	 * 
+	 * @param array $paths
+	 */
 	public function setFreePaths(array $paths){
 		$this->aFreePaths = array_flip($paths);
 	}
 	
+	public function getEnvironments(){
+		return array_keys($this->environments);
+	}
+	
+	private function iniClasses(){
+		foreach ($this->aIniClasses as $class){
+			if( class_exists($class) &&  method_exists($class, 'run'))
+				$class::run();
+		}
+	}
 	public function view(){
+		
+		$this->iniClasses();
 		
 		if (isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]) && substr(APP_URL, 0, 5) != 'login'){
 			header('Location: ' . APP_URL_ENVIRONMENT . 'login/' . APP_URL . (($_SERVER['QUERY_STRING'] != '') ? '?' . $_SERVER['QUERY_STRING'] : ''));
@@ -160,7 +213,7 @@ class PQDApp {
 		if (is_dir(APP_PATH . 'modulos/' . $modulo)){
 
 			if (!isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $this->environments[APP_ENVIRONMENT] . "home" && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][$this->aUrlRequestPublic[0]]))
-				$this->viewHttpError(403);
+				$this->httpError(403);
 			else{
 		
 				$ctrl = ucwords(basename(APP_PATH . 'modulos/' . $modulo)) . 'Ctrl';
@@ -176,7 +229,7 @@ class PQDApp {
 						$act = isset($_GET['act']) ? $_GET['act'] : 'view';
 						
 						if(!method_exists($obj, $act))
-							$this->viewHttpError(500);
+							$this->httpError(500);
 						else{
 							$this->logAction = $act;
 							$obj->{$act}();
@@ -184,20 +237,20 @@ class PQDApp {
 					}
 					else {
 						self::$exceptions->setException(new \Exception("Classe (". $ctrl .") não encontrada!"));
-						$this->viewHttpError(500);
+						$this->httpError(500);
 					}
 				}
 				else{
 					self::$exceptions->setException(new \Exception("Arquivo (". $file .".php) não encontrado!"));
-					$this->viewHttpError(500);
+					$this->httpError(500);
 				}
 			}
 		}
 		else
-			$this->viewHttpError(500);
+			$this->httpError(404);
 	}
 	
-	private function viewHttpError($httpError){
+	public function httpError($httpError){
 		
 		http_response_code($httpError);
 		$oView = new PQDView('templates/' . $httpError. '.php', self::$exceptions);
@@ -300,8 +353,8 @@ class PQDApp {
 			'date' => time()*1000,
 			'ip' => $_SERVER['REMOTE_ADDR'],
 			'http_user' => isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : null,
-			'user_id' => isset($_SESSION['user']) ? $_SESSION['user']['id'] : null,
-			'user' => isset($_SESSION['user']) ? $_SESSION['user']['login'] : null,
+			'user_id' => isset($_SESSION['user']['idUsuario']) ? $_SESSION['user']['idUsuario'] : null,
+			'user' => isset($_SESSION['user']['login']) ? $_SESSION['user']['login'] : null,
 			'request_uri' => $_SERVER['REQUEST_URI'],
 			'controller' => $this->logController,
 			'action' => $this->logAction,

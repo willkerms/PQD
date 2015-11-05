@@ -8,7 +8,7 @@ class PQDStatement extends \PDOStatement{
 		$return = parent::execute($input_parameters);
 		
 		if($return === false)
-			PQDApp::getExceptions()->setException(new PQDExceptionsDB($this->errorInfo(), 'Erro ao executar SQL: ' . $this->queryString));
+			PQDApp::getApp()->getExceptions()->setException(new PQDExceptionsDB($this->errorInfo(), 'Erro ao executar SQL: ' . $this->queryString));
 		
 		return $return;
 	}
