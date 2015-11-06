@@ -263,6 +263,29 @@ class PQDUtil {
 		return $data;
 	}
 	
+	public static function utf8_decode($data){
+		if ( is_array($data)){
+			foreach ($data as $key => $value)
+				$data[$key] = self::utf8_decode($value);
+		}
+		else if(is_object($data)){
+			foreach ($data as $key => $value)
+				$data->{$key} = self::utf8_decode($value);
+			
+			$oReflection = new \ReflectionObject($data);
+			$aMethods = $oReflection->getMethods();
+				
+			foreach ($aMethods as $oReflectionMethod ){
+				if (substr($oReflectionMethod->name, 0, 3) == "set" && method_exists($data, "get" . substr($oReflectionMethod->name, 3)))
+					$data->{$oReflectionMethod->name}(self::utf8_decode($data->{"get" . substr($oReflectionMethod->name, 3)}()));
+			}
+		}
+		else if(!is_null($data) && trim($data) != '')
+			$data = utf8_decode($data);
+		
+		return $data;
+	}
+	
 	public static function escapeHtml($data, $charset = 'UTF-8'){
 		if ( is_array($data)){
 			foreach ($data as $key => $value)
