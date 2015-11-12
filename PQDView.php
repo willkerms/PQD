@@ -34,6 +34,18 @@ class PQDView {
 	private $requireHeaderAndFooter = true;
 
 	/**
+	 * 
+	 * @var string
+	 */
+	private $tplHeader = null;
+	
+	/**
+	 * 
+	 * @var string
+	 */
+	private $tplFooter = null;
+
+	/**
 	 * @param string $view
 	 */
 	function __construct ($view, PQDExceptions $exceptions = null) {
@@ -44,6 +56,12 @@ class PQDView {
 			throw new \Exception("Erro ao Carregar View: " . $view, 3);
 
 		$this->exceptions = $exceptions;
+		
+		if(defined('APP_TEMPLATE_HEAD'))
+			$this->tplHeader = APP_TEMPLATE_HEAD;
+		
+		if(defined('APP_TEMPLATE_FOOTER'))
+			$this->tplFooter =  APP_TEMPLATE_FOOTER;
 	}
 
 	private function render(){
@@ -53,24 +71,24 @@ class PQDView {
 			if(!IS_DEVELOPMENT){
 				ob_start();
 				
-				if(defined('APP_TEMPLATE_HEAD'))
-					require_once APP_TEMPLATE_HEAD;
+				if(!is_null($this->tplHeader) && trim($this->tplHeader) != "")
+					require_once $this->tplHeader;
 				
 				require $this->view;
 				
-				if(defined('APP_TEMPLATE_FOOTER'))
-					require_once APP_TEMPLATE_FOOTER;
+				if(!is_null($this->tplFooter) && trim($this->tplFooter) != "")
+					require_once $this->tplFooter;
 				
 				echo PQDUtil::withoutSpaces(ob_get_clean(), true, true);
 			}
 			else{
-				if(defined('APP_TEMPLATE_HEAD'))
-					require_once APP_TEMPLATE_HEAD;
+				if(!is_null($this->tplHeader) && trim($this->tplHeader) != "")
+					require_once $this->tplHeader;
 				
 				require $this->view;
 				
-				if(defined('APP_TEMPLATE_FOOTER'))
-					require_once APP_TEMPLATE_FOOTER;
+				if(!is_null($this->tplFooter) && trim($this->tplFooter) != "")
+					require_once $this->tplFooter;
 			}
 		}
 		else
@@ -132,6 +150,36 @@ class PQDView {
 	 */
 	public function getRequireHeaderAndFooter(){
 		return $this->requireHeaderAndFooter;
+	}
+
+	/**
+	 * 
+	 * @param string $tplHeader
+	 */
+	public function setTplHeader($tplHeader){
+		$this->tplHeader = $tplHeader;
+	}
+	
+	/**
+	 * @return string
+	 */
+	public function getTplHeader(){
+		return $this->tplHeader;
+	}
+
+	/**
+	 * 
+	 * @param string $tplFooter
+	 */
+	public function setTplFooter($tplFooter){
+		$this->tplFooter = $tplFooter;
+	}
+	
+	/**
+	 * @return string
+	 */
+	public function getTplFooter(){
+		return $this->tplFooter;
 	}
 
 	/**

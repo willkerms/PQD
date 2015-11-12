@@ -9,7 +9,7 @@ require_once 'PQDExceptions.php';
 abstract class PQDController{
 
 	/**
-	 * @var PQD\PQDView
+	 * @var PQDView
 	 */
 	private $view;
 
@@ -39,7 +39,7 @@ abstract class PQDController{
 	protected $exceptions;
 
 	/**
-	 * @return PQD\PQDView $view
+	 * @return PQDView $view
 	 */
 	protected function getView () {
 		return $this->view;

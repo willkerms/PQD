@@ -15,8 +15,8 @@ class PQDUtil {
 	const IS_CNPJ_WITH_MASK = '/^[0-9]{2,2}\.[0-9]{3,3}\.[0-9]{3,3}\/[0-9]{4,4}-[0-9]{2,2}$/';
 	const IS_CNPJ_WITHOUT_MASK = '/^[0-9]{14,14}$/';
 	
-	const IS_FONE_WITH_DDD = '/^[0-9]{2,2}-[0-9]{4,4}-[0-9]{4,4}$/';
-	const IS_FONE_WITHOUT_DDD = '/^[0-9]{4,4}-[0-9]{4,4}$/';
+	const IS_FONE_WITH_DDD = '/^\([0-9]{2,2}\) [0-9]{4,4}-[0-9]{4,5}$/';
+	const IS_FONE_WITHOUT_DDD = '/^[0-9]{4,4}-[0-9]{4,5}$/';
 	
 	const IS_DATE_BR = '/^[0-9]{2,2}\/[0-9]{2,2}\/[0-9]{4,4}$/';
 	const IS_DATE_EN = '/^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}$/';
@@ -238,6 +238,40 @@ class PQDUtil {
 		}
 		
 		return $return;
+	}
+	
+	/**
+	 * @author Willker Moraes Silva
+	 * @since 2015-11-11
+	 * @param mixed $data
+	 */
+	public static function escapeJS($data){
+		
+		if ( is_array($data)){
+			foreach ($data as $key => $value)
+				$data[$key] = self::escapeJS($value);
+		}
+		else if(is_object($data)){
+			foreach ($data as $key => $value)
+				$data->{$key} = self::escapeJS($value);
+					
+			$oReflection = new \ReflectionObject($data);
+			$aMethods = $oReflection->getMethods();
+		
+			foreach ($aMethods as $oReflectionMethod ){
+				if (substr($oReflectionMethod->name, 0, 3) == "set" && method_exists($data, "get" . substr($oReflectionMethod->name, 3)))
+					$data->{$oReflectionMethod->name}(self::escapeJS($data->{"get" . substr($oReflectionMethod->name, 3)}()));
+			}
+		}
+		else if(!is_null($data) && trim($data) != '' && is_string($data)){
+			$return = "";
+			for ($i=0, $return = ""; $i<strlen($data); $i++)
+				$return .= '\x' . dechex(ord(substr($data, $i, 1)));
+			
+			$data = $return;
+		}
+		
+		return $data;
 	}
 	
 	public static function utf8_encode($data){

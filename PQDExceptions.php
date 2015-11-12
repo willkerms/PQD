@@ -31,7 +31,7 @@ class PQDExceptions {
 	
 		foreach ($aExceptions as $e){
 			
-			if(($e instanceof PQDExceptionsDB) && !$development)
+			if(!$development && (($e instanceof PQDExceptionsDB) || ($e instanceof PQDExceptionsDev)) )
 				continue;
 					
 				if ($development === true) {
@@ -65,7 +65,7 @@ class PQDExceptions {
 	
 		foreach ($aExceptions as $key => $e){
 			
-			if(($e instanceof PQDExceptionsDB) && !$development)
+			if(!$development && (($e instanceof PQDExceptionsDB) || ($e instanceof PQDExceptionsDev)) )
 				continue;
 					
 				if ($development === true) {
@@ -122,7 +122,23 @@ class PQDExceptions {
 	/**
 	 * @return int
 	 */
-	public function count() {
-		return count(self::$exceptions);
+	public function count($development = IS_DEVELOPMENT) {
+		if($development)
+			return count(self::$exceptions);
+		else{
+			$count = 0;
+			
+			$aExceptions = $this->getExceptions();
+			
+			foreach ($aExceptions as $e){
+				
+				if(!$development && (($e instanceof PQDExceptionsDB) || ($e instanceof PQDExceptionsDev)) )
+					continue;
+				
+				$count++;
+			}
+				
+			return $count;
+		}
 	}
 }

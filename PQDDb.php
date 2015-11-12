@@ -54,8 +54,10 @@ class PQDDb{
 	 */
 	public function getConnection($indexCon = 0){
 		
-		if (count(self::$dbs) == 0)
-			throw new \Exception("Configurações de conexão com o Banco de Dados indefinidas!", 2);
+		if (count(self::$dbs) == 0){
+			$this->exceptions->setException(new \Exception("Configurações de conexão com o Banco de Dados não indefinidas!", 2));
+			return;
+		}
 		
 		//Somente para não tentar conectar em bancos que já não conectaram dá primeira tentativa
 		if(isset(self::$exceptionsDbs[$indexCon]))
@@ -78,12 +80,11 @@ class PQDDb{
 					self::$connections[$indexCon] = new PQDPDO(self::$dbs[$indexCon]['driver'] . ":" . "dbname=" . self::$dbs[$indexCon]['db'] . ";host=" . self::$dbs[$indexCon]['host']. self::$dbs[$indexCon]['port'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
 				}
 			}
-			catch (\Exception $e) {
+			catch (PQDExceptionsDev $e) {
 				
 				$this->exceptions->setException(new \Exception("Erro ao Conectar ao Banco de Dados(" . self::$dbs[$indexCon]['db'] . ")!", 1));
 				
-				if(IS_DEVELOPMENT)
-					$this->exceptions->setException($e);
+				$this->exceptions->setException($e);
 				
 				self::$exceptionsDbs[$indexCon] = $e;
 				

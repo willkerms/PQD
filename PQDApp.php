@@ -135,7 +135,7 @@ class PQDApp {
 		return PQDDb::setDbConnection($driver, $host, $dbName, $user, $password, $port = null);
 	}
 	
-	public function setTemplates($head = 'templates/head.php', $footer = 'templates/footer.php'){
+	public function setTemplates($head = 'templates/tpl.head.php', $footer = 'templates/tpl.footer.php'){
 		if (!is_null($head) && !empty($head))
 			define('APP_TEMPLATE_HEAD', $head);
 		
@@ -211,8 +211,7 @@ class PQDApp {
 		}
 		
 		if (is_dir(APP_PATH . 'modulos/' . $modulo)){
-
-			if (!isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $this->environments[APP_ENVIRONMENT] . "home" && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][$this->aUrlRequestPublic[0]]))
+			if (!isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $this->environments[APP_ENVIRONMENT] . "home" && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][APP_URL]))
 				$this->httpError(403);
 			else{
 		
