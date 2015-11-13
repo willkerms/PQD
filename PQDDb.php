@@ -70,8 +70,9 @@ class PQDDb{
 				if (!is_null(self::$dbs[$indexCon]['port']))
 					$port = ":" . self::$dbs[$indexCon]['port'];
 
-				if(self::$dbs[$indexCon]['driver'] == "mssql" && version_compare(phpversion(), '5.3', '>=') && strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
+				if(self::$dbs[$indexCon]['driver'] == "mssql" && version_compare(phpversion(), '5.3', '>=') && strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'){
 					self::$connections[$indexCon] = new PQDPDO('sqlsrv:Server=' . self::$dbs[$indexCon]['host'] . $port . ';Database=' . self::$dbs[$indexCon]['db'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], array('ReturnDatesAsStrings' => true));
+				}
 				else{
 					
 					if(self::$dbs[$indexCon]['driver'] == "mysql")
