@@ -31,7 +31,6 @@ class SQLWhere {
 	const NUMBER = "#";
 
 	private $filters = array();
-	private $orderBy = "";
 
 	/**
 	 * Add AND on WHERE
@@ -210,24 +209,11 @@ class SQLWhere {
 	}
 
 	/**
-	 * Add one ORDER BY after WHERE
-	 *
-	 * @param array $fields
-	 * @param boolean $asc
-	 * @return SQLWhere
-	 */
-	public function setOrderBy(array $fields, $asc = true){
-		$this->orderBy = " ORDER BY " . join(", ", $fields) . ($asc === false ? ' DESC' : ' ASC');
-		return $this;
-	}
-
-	/**
 	 * Clean the content of where
 	 * @return SQLWhere
 	 */
 	public function cleanWhere(){
 		$this->filters = array();
-		$this->orderBy = "";
 		return $this;
 	}
 
@@ -242,9 +228,6 @@ class SQLWhere {
 
 		if (count($this->filters) > 0)
 			$sqlWhere = ($where === true ? "WHERE " : "") . join(" ", $this->filters);
-
-		if (!empty($this->orderBy))
-			$sqlWhere .= $this->orderBy;
 
 		return $sqlWhere;
 	}

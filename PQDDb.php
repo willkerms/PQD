@@ -28,7 +28,7 @@ class PQDDb{
 	 * 
 	 * @var PQDExceptions
 	 */
-	protected $exceptions;
+	private $exceptions;
 
 	/**
 	 * @var string
@@ -44,7 +44,7 @@ class PQDDb{
 	/**
 	 * @return PQDExceptions
 	 */
-	public function getExceptions(){
+	protected function getExceptions(){
 		return $this->exceptions;
 	}
 
@@ -72,6 +72,7 @@ class PQDDb{
 
 				if(self::$dbs[$indexCon]['driver'] == "mssql" && version_compare(phpversion(), '5.3', '>=') && strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'){
 					self::$connections[$indexCon] = new PQDPDO('sqlsrv:Server=' . self::$dbs[$indexCon]['host'] . $port . ';Database=' . self::$dbs[$indexCon]['db'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], array('ReturnDatesAsStrings' => true));
+					self::$connections[$indexCon]->setAttribute(PQDPDO::SQLSRV_ATTR_ENCODING, PQDPDO::SQLSRV_ENCODING_SYSTEM);
 				}
 				else{
 					

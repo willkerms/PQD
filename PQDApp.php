@@ -77,8 +77,8 @@ class PQDApp {
 		if(!is_null(self::$oPQDApp))
 			throw new \Exception("Aplicação já Iniciada!", 10);
 		
-		self::$exceptions = $this->getExceptions();
-		self::$PQDDb = $this->getDb();
+		$this->getExceptions();
+		$this->getDb();
 		
 		$this->environments = is_array($environments) ? $environments : array($environments => '');
 		$this->envDefault = $environmentDefault;
@@ -112,7 +112,12 @@ class PQDApp {
 	 * @return PQDExceptions
 	 */
 	public function getExceptions(){
-		return self::$exceptions = is_null(self::$exceptions) ? new PQDExceptions(): self::$exceptions;
+		
+		if(is_null(self::$exceptions))
+			self::$exceptions = new PQDExceptions();
+			
+		return self::$exceptions;
+		//return self::$exceptions = is_null(self::$exceptions) ? new PQDExceptions(): self::$exceptions;
 	}
 	
 	/**

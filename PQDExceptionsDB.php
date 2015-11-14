@@ -5,6 +5,6 @@ namespace PQD;
 class PQDExceptionsDB extends \Exception {
 
 	function __construct(array $dbError, $msg = ''){
-		parent::__construct($msg . "\r\n" . $dbError[2], $dbError[1]);
+		parent::__construct($dbError[2] . PHP_EOL . $msg, $dbError[1]);
 	}
 }

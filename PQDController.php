@@ -111,7 +111,7 @@ abstract class PQDController{
 	}
 	
 	/**
-	 * @return PQD\PQDExceptions
+	 * @return PQDExceptions
 	 */
 	public function getExceptions(){
 		return $this->exceptions;

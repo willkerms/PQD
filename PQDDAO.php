@@ -17,11 +17,6 @@ class PQDDAO extends PQDDb{
 	/**
 	 * @var string
 	 */
-	private $sql;
-	
-	/**
-	 * @var string
-	 */
 	private $table;
 	
 	/**
@@ -37,7 +32,12 @@ class PQDDAO extends PQDDb{
 	/**
 	 * @var string
 	 */
-	private $methodPk;
+	private $methodGetPk;
+	
+	/**
+	 * @var string
+	 */
+	private $methodSetPk;
 	
 	/**
 	 * @var string
@@ -74,110 +74,452 @@ class PQDDAO extends PQDDb{
 	 */
 	private $fieldsDefaultValuesOnInsert = array();
 	
-	public function __construct($table, array $fields, $colPk, $clsEntity, PQDExceptions $exceptions, $view = null, $clsView = null){
+	/**
+	 * @var int
+	 */
+	private $indexCon = 0;
+	
+	public function __construct($table, array $fields, $colPk, $clsEntity, PQDExceptions $exceptions, $view = null, $clsView = null, $indexCon = 0){
 		
 		$this->table = $table;
 		$this->fields = $fields;
 		$this->colPK = $colPk;
 		$this->clsEntity = $clsEntity;
-		$this->methodPk = 'get' . ucwords($this->colPK);
+		
+		$this->methodGetPk = ucwords($this->colPK);
+		$this->methodSetPk = 'set' . $this->methodGetPk;
+		$this->methodGetPk = 'get' . $this->methodGetPk;
 		
 		$this->view = $view;
 		$this->clsView = $clsView;
 		
+		$this->indexCon = $indexCon;
+		
 		parent::__construct($exceptions);
 	}
 	
-	public function retSQLInsert(){
+	protected function prepareSQLInsert(PQDEntity $oEntity, array $fields = null){
 		
-		$sql = "INSERT INTO " . $this->table . "(" . PHP_EOL;
+		$this->sql = "INSERT INTO " . $this->table . "(" . PHP_EOL;
 		$comma = "";
+		$fields = is_null($fields) ? $this->fields : $fields;
+		$paramValues = array();
 		
-		foreach ($this->fields as $col => $type){
+		foreach ($fields as $col => $value){
 			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->colPK | ($col == $this->colPK && !$this->isAutoIncrement))){
-				$sql .= $comma . "\t" . $col;
+				$this->sql .= $comma . "\t" . $col;
 				$comma = "," . PHP_EOL;
 			}
 		}
 		
-		$sql .= ") VALUES (";
-		
-		foreach ($this->fields as $col => $type){
+		$this->sql .= PHP_EOL . ") VALUES (" . PHP_EOL;
+		$comma = "";
+		foreach ($fields as $col => $value){
 			
 			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->colPK | ($col == $this->colPK && !$this->isAutoIncrement))){
 				
-				if(isset($this->fieldsDefaultValuesOnInsert[$col]))
-					$sql .= $comma . "\t" . $this->fieldsDefaultValuesOnInsert[$col];
-				else
-					$sql .= $comma . "\t:" . $col;
+				if(isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
+					$this->sql .= $comma . "\t" . $this->fieldsDefaultValuesOnInsert[$col];
+				else{
+					$paramValues[$col] = $value;
+					$this->sql .= $comma . "\t:" . $col;
+				}
 				
 				$comma = "," . PHP_EOL;
 			}
 		}
-		$sql .= ");";
+		$this->sql .= ");";
+		return $this->setParams($oEntity, $paramValues);
 	}
 	
-	public function retSQLUpdate(){
+	protected function prepareSQLUpdate(PQDEntity $oEntity, array $fields = null){
 		
-		$sql = "UPDATE " . $this->table . " SET" . PHP_EOL;
+		$this->sql = "UPDATE " . $this->table . " SET" . PHP_EOL;
 		$comma = "";
+		$fields = is_null($fields) ? $this->fields : $fields;
+		$paramValues = array($this->colPK => $this->fields[$this->colPK]);
 		
-		foreach ($this->fields as $col => $type){
+		foreach ($fields as $col => $value){
 			
 			if($col != $this->colPK && !isset($this->fieldsIgnoreOnUpdate[$col])){
 				
-				if(isset($this->fieldsDefaultValuesOnUpdate))
-					$sql .= $comma . "\t" . $col . " = " . $this->fieldsDefaultValuesOnUpdate;
-				else
-					$sql .= $comma . "\t" . $col . " = :" . $col;
+				if(isset($this->fieldsDefaultValuesOnUpdate[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
+					$this->sql .= $comma . "\t" . $col . " = " . $this->fieldsDefaultValuesOnUpdate[$col];
+				else{
+					$paramValues[$col] = $value;
+					$this->sql .= $comma . "\t" . $col . " = :" . $col;
+				}
 				
 				$comma = "," . PHP_EOL;
 			}
 		}
 			
-		$sql .= "WHERE " . $this->colPK . " = :" . $this->colPK . ";";
+		$this->sql .= PHP_EOL . "WHERE " . $this->colPK . " = :" . $this->colPK . ";";
+		return $this->setParams($oEntity, $paramValues);
 	}
 	
-	private function setValues($setPk = true, PQDStatement $st, PQDEntity $oEntity){
-		foreach ($this->fields as $col => $value){
+	protected function prepareSQLDelete(PQDEntity $oEntity){
+		
+		$this->sql = "DELETE FROM " . $this->table . " WHERE " . $this->colPK . " = :" . $this->colPK . ";";
+		return $this->setParams($oEntity, array($this->colPK => $this->fields[$this->colPK]));
+	}
+	
+	protected function retParamType($col){
+		if(is_array($col))
+			$type = $col['type'];
+		else
+			$type = $col;
+		
+		switch ($type) {
+			case 'int':
+				return PQDPDO::PARAM_INT;
+			break;
 			
-			if(is_array($value))
-				$type = $value['type'];
-			else
-				$type = $value;
+			case 'bool':
+				return PQDPDO::PARAM_BOOL;
+			break;
 			
+			default:
+				return PQDPDO::PARAM_STR;
+			break;
+		}
+	}
+	
+	private function setParams(PQDEntity $oEntity, array $params){
+		$st = $this->getConnection($this->indexCon)->prepare($this->sql);
+		$this->setParamValues($st, $oEntity, $params);
+		return $st;
+	}
+	
+	protected function setParamValues(PQDStatement $st, PQDEntity $oEntity, array $aFields){
+		
+		foreach ($aFields as $col => $value){
+			$bind = ":" . $col;
 			$method = 'get' . ucwords($col);
 			
-			$st->setAttribute(":" . $col, $oEntity->{$method}(), PQDPDO::PARAM_STR);
+			$st->bindValue($bind, $oEntity->{$method}(), $this->retParamType($value));
 		}
 	}
 	
-	public function save(PQDEntity $oEntity){
+	protected function save(PQDEntity &$oEntity){
 		
-		if (!is_null($oEntity->{$this->methodPk}())) {
-			//UPDATE
-			$this->sql = $this->retSQLUpdate();
+		if (is_null($oEntity->{$this->methodGetPk}())) //INSERT
+			$st = $this->prepareSQLInsert($oEntity);
+		else
+			$st = $this->prepareSQLUpdate($oEntity);//UPDATE
+		
+		if($st->execute()){
+			$id = is_null($oEntity->{$this->methodGetPk}()) ? $this->getConnection($this->indexCon)->lastInsertId() : $oEntity->{$this->methodGetPk}();
+			$oEntity = $this->retEntity($id);
+			return true;
 		}
-		else{
-			//INSERT 
-			$this->sql = $this->retSQLInsert();
+		else 
+			return false;
+	}
+	
+	/**
+	 * 
+	 * @param PQDEntity $oEntity
+	 */
+	protected function delete(PQDEntity $oEntity){
+		return $this->prepareSQLDelete($oEntity)->execute();
+	}
+	
+	protected function retEntity($id, $fetchClass = true){
+		
+		$this->sql = "SELECT * FROM " . $this->table . " WHERE " . $this->colPK . " = :" . $this->colPK . ";";
+		
+		$oEntity = new $this->clsEntity();
+		$oEntity->{$this->methodSetPk}($id);
+		
+		$st = $this->setParams($oEntity, array($this->colPK => $this->fields[$this->colPK]));
+		
+		if($st->execute()){
+			
+			if($fetchClass){
+				$data = $st->fetchAll(PQDPDO::FETCH_CLASS, $this->clsEntity);
+				
+				if(count($data) == 1)
+					return $data[0];
+				else
+					return new $this->clsEntity();
+			}
+			else{
+				$data = $st->fetchAll(PQDPDO::FETCH_NAMED);
+				
+				if(count($data) == 1)
+					return $data[0];
+				else
+					return array();
+			}
 		}
-		$sth = $this->getConnection()->prepare($this->sql);
+		else
+			return new $this->clsEntity();
 	}
 	
-	public function delete(PQDEntity $oEntity){
-		
+	private function query($fetchClass = true){
+		$data = array();
+		if(($st = $this->getConnection($this->indexCon)->query($this->sql)) !== false){
+			if($fetchClass)
+				$data = $st->fetchAll(PQDPDO::FETCH_CLASS, $this->clsEntity);
+			else
+				$data = $st->fetchAll(PQDPDO::FETCH_NAMED);
+		}
+		return $data;
 	}
 	
-	public function retEntity($id){
+	protected function fetchAll(array $fields = null, $fetchClass = true, array $orderBy = null, $asc = true){
 		
+		if(!is_null($fields))
+			$sqlFields = join(', ', $fields);
+		else
+			$sqlFields = '*';
+		
+		$this->sql = "SELECT ". $sqlFields ." FROM " . $this->table;
+		
+		if (!is_null($orderBy) && count($orderBy) > 0)
+			$this->sql .= " ORDER BY " . join(", ", $orderBy) . ($asc === true ? ' ASC': ' DESC') . ";";
+		else
+			$this->sql .= ";";
+		
+		return $this->query($fetchClass);
 	}
 	
-	public function fetchAll(){
+	protected function genericSearch(SQLWhere $oWhere, array $fields = null, $fetchClass = true, array $orderBy = null, $asc = true, $limit = null, $page = 0, array $groupBy = null){
 		
+		$this->sql = "";
+		
+		if(!is_null($fields))
+			$sqlFields = join(', ', $fields);
+		else
+			$sqlFields = '*';
+		
+		$page = !is_null($limit) && $page == 0 ? 1 : $page;
+
+		//Versões anteriores ao 2012 do SQLServer
+		$rowNumber = "";
+		if(!is_null($limit) && ($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0){
+			
+			if (is_null($orderBy) || count($orderBy) == 0)
+				$orderBy = array($this->colPK);
+			
+			$rowNumber = "ROW_NUMBER() OVER ( ORDER BY " . join(", ", $orderBy) . " ) AS RowNum, ";
+			$orderBy = null;
+			
+			$this->sql .= "SELECT " . $sqlFields . " FROM (";
+		}
+					
+		$this->sql .= "SELECT " . $rowNumber . $sqlFields . " FROM " . $this->table . " " . $oWhere->getWhere(true);
+		
+		if (!is_null($groupBy) && count($groupBy) > 0)
+			$this->sql .= " GROUP BY " . join(", ", $groupBy);
+		
+		if (!is_null($orderBy) && count($orderBy) > 0)
+			$this->sql .= " ORDER BY " . join(", ", $orderBy) . ($asc === true ? ' ASC': ' DESC');
+		
+		if(!is_null($limit) && $this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mysql"){
+			$limit = $limit <= 0 ? 12 : $limit;
+			$this->sql .= " LIMIT " . (($page - 1) * $limit) . "," . $limit;
+		}
+		//SQLServer 2012
+		else if(!is_null($limit) && ($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0){
+			
+			//No SQL Server é necessário ORDER BY
+			if (is_null($orderBy) || count($orderBy) == 0)
+				$this->sql .= " ORDER BY " . $this->colPK . ($asc === true ? ' ASC': ' DESC');
+
+			$limit = $limit <= 0 ? 12 : $limit;
+			$this->sql .= " OFFSET " . (($page - 1) * $limit) . " ROWS FETCH NEXT " . $limit . " ROWS ONLY";
+		}
+		//Versões anteriores ao 2012 do SQLServer
+		else if(!is_null($limit) && ($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0)
+				$this->sql .= ") as vw WHERE RowNum BETWEEN " . ((($page - 1) * $limit) + 1) . " AND " . ((($page - 1) * $limit) + $limit);
+		
+		return $this->query($fetchClass);
 	}
 	
-	public function genericSearch(SQLWhere $where, array $fields = null, $fetchClass = true, array $orderBy = null, $asc = true, $limit = null, $page = 0){
-		
+	/**
+	 * @return bool $isAutoIncrement
+	 */
+	public function getIsAutoIncrement(){
+		return $this->isAutoIncrement;
 	}
+
+	/**
+	 * @return string $table
+	 */
+	public function getTable(){
+		return $this->table;
+	}
+
+	/**
+	 * @return string $view
+	 */
+	public function getView(){
+		return $this->view;
+	}
+
+	/**
+	 * @return string $colPK
+	 */
+	public function getColPK(){
+		return $this->colPK;
+	}
+
+	/**
+	 * @return string $clsEntity
+	 */
+	public function getClsEntity(){
+		return $this->clsEntity;
+	}
+
+	/**
+	 * @return string $clsView
+	 */
+	public function getClsView(){
+		return $this->clsView;
+	}
+
+	/**
+	 * @return array $fields
+	 */
+	public function getFields(){
+		return $this->fields;
+	}
+
+	/**
+	 * @return array $fieldsIgnoreOnUpdate
+	 */
+	public function getFieldsIgnoreOnUpdate(){
+		return $this->fieldsIgnoreOnUpdate;
+	}
+
+	/**
+	 * @return array $fieldsIgnoreOnInsert
+	 */
+	public function getFieldsIgnoreOnInsert(){
+		return $this->fieldsIgnoreOnInsert;
+	}
+
+	/**
+	 * @return array $fieldsDefaultValuesOnUpdate
+	 */
+	public function getFieldsDefaultValuesOnUpdate(){
+		return $this->fieldsDefaultValuesOnUpdate;
+	}
+
+	/**
+	 * @return array $fieldsDefaultValuesOnInsert
+	 */
+	public function getFieldsDefaultValuesOnInsert(){
+		return $this->fieldsDefaultValuesOnInsert;
+	}
+
+	/**
+	 * @return int $indexCon
+	 */
+	public function getIndexCon(){
+		return $this->indexCon;
+	}
+
+	/**
+	 * @param boolean $isAutoIncrement
+	 */
+	public function setIsAutoIncrement($isAutoIncrement){
+		$this->isAutoIncrement = $isAutoIncrement;
+	}
+
+	/**
+	 * @param string $table
+	 */
+	public function setTable($table){
+		$this->table = $table;
+	}
+
+	/**
+	 * @param string $view
+	 */
+	public function setView($view){
+		$this->view = $view;
+	}
+
+	/**
+	 * @param string $colPK
+	 */
+	public function setColPK($colPK){
+		$this->colPK = $colPK;
+	}
+
+	/**
+	 * @param string $clsEntity
+	 */
+	public function setClsEntity($clsEntity){
+		$this->clsEntity = $clsEntity;
+	}
+
+	/**
+	 * @param string $clsView
+	 */
+	public function setClsView($clsView){
+		$this->clsView = $clsView;
+	}
+
+	/**
+	 * @param array $fields
+	 */
+	public function setFields(array $fields){
+		$this->fields = $fields;
+	}
+
+	/**
+	 * @param array  $fieldsIgnoreOnUpdate
+	 */
+	public function setFieldsIgnoreOnUpdate(array $fieldsIgnoreOnUpdate){
+		$this->fieldsIgnoreOnUpdate = array_flip($fieldsIgnoreOnUpdate);
+	}
+
+	/**
+	 * @param array $fieldsIgnoreOnInsert
+	 */
+	public function setFieldsIgnoreOnInsert(array $fieldsIgnoreOnInsert){
+		$this->fieldsIgnoreOnInsert = array_flip($fieldsIgnoreOnInsert);
+	}
+
+	/**
+	 * @param array $fieldsDefaultValuesOnUpdate
+	 */
+	public function setFieldsDefaultValuesOnUpdate(array $fieldsDefaultValuesOnUpdate){
+		$this->fieldsDefaultValuesOnUpdate = $fieldsDefaultValuesOnUpdate;
+	}
+
+	/**
+	 * @param array $fieldsDefaultValuesOnInsert
+	 */
+	public function setFieldsDefaultValuesOnInsert(array $fieldsDefaultValuesOnInsert){
+		$this->fieldsDefaultValuesOnInsert = $fieldsDefaultValuesOnInsert;
+	}
+
+	/**
+	 * @param number $indexCon
+	 */
+	public function setIndexCon($indexCon){
+		$this->indexCon = $indexCon;
+	}
+	
+	/**
+	 * @return string $methodGetPk
+	 */
+	public function getMethodGetPk(){
+		return $this->methodGetPk;
+	}
+
+	/**
+	 * @return string $methodSetPk
+	 */
+	public function getMethodSetPk(){
+		return $this->methodSetPk;
+	}
+
+	
+	
 }
