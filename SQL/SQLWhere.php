@@ -16,10 +16,12 @@ class SQLWhere {
 	const LIKE_LEFT 	= " LIKE '%#'";
 	const LIKE_RIGHT 	= " LIKE '#%'";
 	const LIKE 			= " LIKE '%#%'";
+	const LIKE_NONE		= " LIKE '#'";
 
 	const NOT_LIKE_LEFT 	= " NOT LIKE '%#'";
 	const NOT_LIKE_RIGHT 	= " NOT LIKE '#%'";
 	const NOT_LIKE 			= " NOT LIKE '%#%'";
+	const NOT_LIKE_NONE 			= " NOT LIKE '#'";
 
 	const BETWEEN			= " BETWEEN #";
 	const NOT_BETWEEN		= " NOT BETWEEN #";

@@ -44,6 +44,11 @@ class PQDView {
 	 * @var string
 	 */
 	private $tplFooter = null;
+	
+	/**
+	 * @var array $fields
+	 */
+	private $fields = array();
 
 	/**
 	 * @param string $view
@@ -180,6 +185,32 @@ class PQDView {
 	 */
 	public function getTplFooter(){
 		return $this->tplFooter;
+	}
+	
+	/**
+	 * @param array $fields
+	 */
+	public function setFields(array $fields){
+		$this->fields = $fields;
+	}
+	
+	/**
+	 * @return array
+	 */
+	public function getFields(){
+		return $this->fields;
+	}
+	
+	/**
+	 * 
+	 * @param string $field
+	 * @return string
+	 */
+	public function e($field){
+		if(isset($this->fields[$field]['description']))
+			return PQDUtil::escapeHtml($this->fields[$field]['description']);
+		else 
+			return 'Without Description';
 	}
 
 	/**

@@ -214,12 +214,11 @@ class PQDApp {
 			$modulo  = preg_split("[-]", $modulo);
 			$modulo = $modulo[0] . join('', array_map("ucwords", array_slice($modulo, 1)));
 		}
-		
+
 		if (is_dir(APP_PATH . 'modulos/' . $modulo)){
 			if (!isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $this->environments[APP_ENVIRONMENT] . "home" && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][APP_URL]))
 				$this->httpError(403);
 			else{
-		
 				$ctrl = ucwords(basename(APP_PATH . 'modulos/' . $modulo)) . 'Ctrl';
 				$file = APP_PATH . 'modulos/' . $modulo . '/' . $ctrl . '.php';
 				$ctrl = str_replace('/', "\\", '/modulos/' . $modulo . '/' . $ctrl);
@@ -231,6 +230,9 @@ class PQDApp {
 						$obj = new $ctrl($_POST, $_GET, $_SESSION, self::$exceptions, $_FILES);
 						$this->logController = $ctrl;
 						$act = isset($_GET['act']) ? $_GET['act'] : 'view';
+						
+						if(count($this->aUrlRequestPublic) > 1 && $this->aUrlRequestPublic[0] == 'login' && !method_exists($obj, $act))
+							$act = 'view';
 						
 						if(!method_exists($obj, $act))
 							$this->httpError(500);

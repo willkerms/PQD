@@ -63,6 +63,20 @@ class PQDUtil {
 		return preg_match($mask, $value) !== 0;
 	}
 	
+	/**
+	 * verify if values is between a range
+	 * 
+	 * @author Willker Moraes Silva
+	 * @since 2015-11-17
+	 * @param mixed $value
+	 * @param mixed $ini
+	 * @param mixed $end
+	 * @return bool
+	 */
+	public static function isBetween($value, $ini, $end){
+		return ($value >= $ini && $value <= $end);
+	}
+	
 
 	/**
 	 * Dá Trim nos valores, 
@@ -139,6 +153,10 @@ class PQDUtil {
 		}
 		
 		return $date;
+	}
+	
+	public static function formatNumberBr($number, $decimal = 2){
+		return number_format($number, $decimal, ",", ".");
 	}
 	
 	public static function getDateTimeView($date = null){
@@ -482,7 +500,7 @@ class PQDUtil {
 		return $hex; // returns the hex value including the number sign (#)
 	}
 	
-	public static function contentType($type = 'json'){
+	public static function contentType($type = 'json', $fileName = null){
 		
 		$contentType = 'text/html';
 		
@@ -508,6 +526,28 @@ class PQDUtil {
 			break;
 			case 'text':
 				$contentType = 'text/plain';
+			break;
+			case 'xls':
+			case 'xlsx':
+				
+				$contentType = $type == 'xls' ? 'application/vnd.ms-excel' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+				
+				header('Content-Disposition: attachment;filename="' . $fileName . '"');
+				header('Cache-Control: max-age=0');
+				// If you're serving to IE 9, then the following may be needed
+				header('Cache-Control: max-age=1');
+				// If you're serving to IE over SSL, then the following may be needed
+				header ('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+				header ('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT'); // always modified
+				header ('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+				header ('Pragma: public'); // HTTP/1.0
+			break;
+			case 'pdf':
+				// Redirect output to a client’s web browser (PDF)
+				$contentType = 'application/pdf';
+				
+				header('Content-Disposition: attachment;filename="' . $fileName . '"');
+				header('Cache-Control: max-age=0');
 			break;
 		}
 		
