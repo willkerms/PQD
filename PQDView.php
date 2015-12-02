@@ -49,7 +49,12 @@ class PQDView {
 	 * @var array $fields
 	 */
 	private $fields = array();
-
+	
+	/**
+	 * @var array $messages
+	 */
+	private $messages = array();
+	
 	/**
 	 * @param string $view
 	 */
@@ -211,6 +216,29 @@ class PQDView {
 			return PQDUtil::escapeHtml($this->fields[$field]['description']);
 		else 
 			return 'Without Description';
+	}
+	
+	/**
+	 * 
+	 * @param string $msg
+	 * @param string $type
+	 * @param string $style
+	 * @param string $class
+	 */
+	public function setMessage($msg, $type = 'info', $class = null, $style = null, $autoDismiss = true){
+		$this->messages[] = array('msg' => $msg, 'type' => $type, 'style' => $style, 'class' => $class, 'autoDismiss' => $autoDismiss);
+	}
+	
+	public function countMessages(){
+		return count($this->messages);
+	}
+	
+	public function cleanMessages(){
+		$this->messages = array();
+	}
+	
+	public function getMessages(){
+		return $this->messages;
 	}
 
 	/**

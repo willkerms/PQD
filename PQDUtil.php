@@ -141,7 +141,7 @@ class PQDUtil {
 		return is_null($objRet) ? new $class() : $objRet;
 	}
 	
-	public static function getDateView($date = null){
+	public static function formatDateView($date = null){
 		if(!empty($date)){
 			
 			$nDate = \DateTime::createFromFormat(PQD_FORMAT_DB_DATE, $date);
@@ -155,11 +155,15 @@ class PQDUtil {
 		return $date;
 	}
 	
-	public static function formatNumberBr($number, $decimal = 2){
+	public static function formatNumberView($number, $decimal = 2){
 		return number_format($number, $decimal, ",", ".");
 	}
 	
-	public static function getDateTimeView($date = null){
+	public static function formatNumberDb($number){
+		return str_replace(array('.', ','), array('', '.'), $number);
+	}
+	
+	public static function formatDateTimeView($date = null){
 		
 		if(!empty($date)){
 			$nDate = \DateTime::createFromFormat(PQD_FORMAT_DB_DATETIME, $date);
@@ -173,7 +177,7 @@ class PQDUtil {
 		return $date;
 	}
 	
-	public static function getDateDB($date = null){
+	public static function formatDateDB($date = null){
 
 		if(!empty($date)){
 			$nDate = \DateTime::createFromFormat(PQD_FORMAT_VIEW_DATE, $date);
@@ -187,7 +191,7 @@ class PQDUtil {
 		return $date;
 	}
 	
-	public static function getDateTimeDB($date = null){
+	public static function formatDateTimeDB($date = null){
 
 		if(!empty($date)){
 			$nDate = \DateTime::createFromFormat(PQD_FORMAT_VIEW_DATETIME, $date);

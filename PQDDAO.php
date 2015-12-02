@@ -9,7 +9,7 @@ use PQD\SQL\SQLWhere;
  * @author Willker Moraes Silva
  * @since 2015-11-12
  */
-class PQDDAO extends PQDDb{
+abstract class PQDDAO extends PQDDb{
 	
 	/**
 	 * @var bool

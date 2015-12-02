@@ -19,9 +19,10 @@ class PQDAnnotation{
 	 */
 	function __construct($classFile) {
 		
-		$this->class = $classFile;
+		$this->class = str_replace("\\", '/', $classFile);
 		
-		if(!is_file($classFile)){
+		
+		if(!is_file($this->class)){
 			PQDApp::getApp()->getExceptions()->setException(new \Exception("Classe não encontrada!", 11) );
 			self::$annotation[$this->class] = array();
 		}
@@ -48,6 +49,54 @@ class PQDAnnotation{
 		
 		return $col;
 	}
+	
+	/**
+	 * Retorna um objeto com todos os campos setados neste campo 
+	 * 
+	 * @author Willker Moraes Silva
+	 * @since 2015-12-01
+	 * @param \stdClass $file
+	 */
+	private function getAllFieldsFile($file){
+		
+		$return = new \stdClass();
+		$return->pk = null;
+		$return->fks = array();
+		$return->filters = array();
+		$return->fields = array();
+		
+		preg_match_all('/\@field\([^)]*\)/', file_get_contents($file), $matches);
+			
+		if(isset($matches[0])){
+			
+			$fields = array();
+			$pk = null;
+			foreach($matches[0] as $key => $field){
+				
+				$col = $this->retValues('@field', $field);
+				
+				if(isset($col['name']))
+					$fields[$col['name']] = $col;
+				else
+					$fields[] = $col;
+				
+				if(isset($col['isPk']) && $col['isPk'] == 'true')
+					$pk = $col['name'];
+				
+				if(isset($col['isFilter']) && $col['isFilter'] == 'true')
+					$return->filters[] = $col;
+				
+				if(isset($col['fk']))
+					$return->fks[] = array($col['name'] => $col['fk']);
+			}
+			
+			$return->fields = $fields;
+			$return->pk = $pk;
+		}
+		
+		return $return;
+	}
+	
 	/**
 	 * retorna nome dá coluna chave primaria
 	 * 
@@ -61,6 +110,7 @@ class PQDAnnotation{
 			return self::$annotation[$this->class]['pk'];
 		}
 	}
+	
 	/**
 	 * retorna os filtros
 	 * 
@@ -74,6 +124,7 @@ class PQDAnnotation{
 			return self::$annotation[$this->class]['filters'];
 		}
 	}
+	
 	/**
 	 * retorna FK's
 	 * 
@@ -89,7 +140,7 @@ class PQDAnnotation{
 	}
 	
 	/**
-	 * retorna valores setados no na anotação @table
+	 * retorna valores setados na anotação @table
 	 * 
 	 * @return array
 	 */
@@ -99,17 +150,26 @@ class PQDAnnotation{
 			return self::$annotation[$this->class]['table'];
 		else{
 			self::$annotation[$this->class]['table'] = array();
+			self::$annotation[$this->class]['viewFields'] = array();
+			self::$annotation[$this->class]['viewFilters'] = array();
 			
 			preg_match('/\@table\([^)]*\)/', file_get_contents($this->class), $matches);
-				
+			
 			if(isset($matches[0])){
 				
 				$values = $this->retValues('@table', $matches[0]);
 				$table = isset($values[0]) ? array('name' => $values[0]) : $values;
 				
+				if (isset($table['viewCls'])) {
+					$fields = $this->getAllFieldsFile(dirname($this->class) . "/" . $table['viewCls'] . ".php");
+					
+					self::$annotation[$this->class]['viewFields'] = $fields->fields;
+					self::$annotation[$this->class]['viewFilters'] = $fields->filters;
+				}
+				
 				self::$annotation[$this->class]['table'] = $table;
 			}
-				
+
 			return self::$annotation[$this->class]['table'];
 		}
 	}
@@ -124,41 +184,32 @@ class PQDAnnotation{
 		if(isset(self::$annotation[$this->class]['fields']))
 			return self::$annotation[$this->class]['fields'];
 		else{
-			self::$annotation[$this->class]['fields'] = array();
-			self::$annotation[$this->class]['pk'] = null;
-			self::$annotation[$this->class]['fks'] = array();
-			self::$annotation[$this->class]['filters'] = array();
+			$fields = $this->getAllFieldsFile($this->class);
 			
-			preg_match_all('/\@field\([^)]*\)/', file_get_contents($this->class), $matches);
+			self::$annotation[$this->class]['pk'] = $fields->pk;
+			self::$annotation[$this->class]['fks'] = $fields->fks;
+			self::$annotation[$this->class]['filters'] = $fields->filters;
+			self::$annotation[$this->class]['fields'] = $fields->fields;
 			
-			if(isset($matches[0])){
-				
-				$fields = array();
-				$pk = null;
-				foreach($matches[0] as $key => $field){
-					
-					$col = $this->retValues('@field', $field);
-					
-					if(isset($col['name']))
-						$fields[$col['name']] = $col;
-					else
-						$fields[] = $col;
-					
-					if(isset($col['isPk']) && $col['isPk'] == 'true')
-						$pk = $col['name'];
-					
-					if(isset($col['isFilter']) && $col['isFilter'] == 'true')
-						self::$annotation[$this->class]['filters'][] = $col;
-					
-					if(isset($col['fk']))
-						self::$annotation[$this->class]['fks'][] = array($col['name'] => $col['fk']);
-				}
-				
-				self::$annotation[$this->class]['fields'] = $fields;
-				self::$annotation[$this->class]['pk'] = $pk;
-			}
+			$this->getTable();
 			
 			return self::$annotation[$this->class]['fields'];
 		}
+	}
+	
+	public function getAllFields(){
+		$this->getFields();
+		if(isset(self::$annotation[$this->class]['viewFields']))
+			return array_merge(self::$annotation[$this->class]['fields'], self::$annotation[$this->class]['viewFields']);
+		else 
+			return $this->getFields();
+	}
+	
+	public function getAllFilters(){
+		$this->getFields();
+		if(isset(self::$annotation[$this->class]['viewFilters']))
+			return array_merge(self::$annotation[$this->class]['filters'], self::$annotation[$this->class]['viewFilters']);
+		else 
+			return $this->getFilters();
 	}
 }

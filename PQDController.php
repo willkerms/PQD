@@ -6,8 +6,13 @@ require_once 'PQDExceptions.php';
  * @author Willker Moraes Silva
  * @since 2012-03-30
  */
-abstract class PQDController{
-
+abstract class PQDController implements IPQDController{
+	/**
+	 * 
+	 * @var PQDBo
+	 */
+	protected $oBO;
+	
 	/**
 	 * @var PQDView
 	 */

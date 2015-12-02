@@ -6,8 +6,13 @@ namespace PQD;
  * @since 2012-07-26
  *
  */
-class PQDBo {
-
+abstract class PQDBo implements IPQDBo{
+	
+	/**
+	 * @var PQDDAO
+	 */
+	protected $oDAO;
+	
 	/**
 	 *
 	 * @var array
