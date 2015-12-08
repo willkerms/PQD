@@ -97,21 +97,6 @@ class PQDDb{
 		return self::$connections[$indexCon];
 	}
 	
-	protected function log($tabela, $colPk, $pk, $indexCon = 0){
-		
-		$st = $this->getConnection($indexCon)->prepare("call sp_log(:usuario, :tabela, :colPk, :pk, :ip);");
-		
-		$usuario = isset($_SESSION['user']['id']) ? $_SESSION['user']['id'] : -2;
-		
-		$st->bindParam(":usuario", $usuario, \PDO::PARAM_INT);
-		$st->bindParam(":tabela", $tabela, \PDO::PARAM_STR);
-		$st->bindParam(":colPk", $colPk, \PDO::PARAM_STR);
-		$st->bindParam(":pk", $pk, \PDO::PARAM_INT);
-		$st->bindParam(":ip", $_SERVER['REMOTE_ADDR'], \PDO::PARAM_STR);
-		
-		$st->execute();
-	}
-	
 	/**
 	 * 
 	 * @param string $driver

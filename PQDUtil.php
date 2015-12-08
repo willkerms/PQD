@@ -509,6 +509,9 @@ class PQDUtil {
 		$contentType = 'text/html';
 		
 		switch ($type) {
+			case 'html':
+				$contentType = 'text/html';
+			break;
 			case 'json':
 				$contentType = 'application/json';
 			break;

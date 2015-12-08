@@ -218,6 +218,13 @@ class SQLWhere {
 		$this->filters = array();
 		return $this;
 	}
+	
+	/**
+	 * @return int
+	 */
+	public function count(){
+		return count($this->filters);
+	}
 
 	/**
 	 * Return the WHERE clause

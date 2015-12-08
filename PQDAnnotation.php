@@ -197,19 +197,39 @@ class PQDAnnotation{
 		}
 	}
 	
-	public function getAllFields(){
-		$this->getFields();
+	public function getViewFields(){
 		if(isset(self::$annotation[$this->class]['viewFields']))
-			return array_merge(self::$annotation[$this->class]['fields'], self::$annotation[$this->class]['viewFields']);
-		else 
-			return $this->getFields();
+			return self::$annotation[$this->class]['viewFields'];
+		else{
+			$this->getFields();
+			return self::$annotation[$this->class]['viewFields'];
+		}
+	}
+	
+	public function getViewFilters(){
+		if(isset(self::$annotation[$this->class]['viewFilters']))
+			return self::$annotation[$this->class]['viewFilters'];
+		else{
+			$this->getFields();
+			return self::$annotation[$this->class]['viewFilters'];
+		}
+	}
+	
+	public function getAllFields(){
+		if(isset(self::$annotation[$this->class]['viewFields']))
+			return self::$annotation[$this->class]['fields'] +  self::$annotation[$this->class]['viewFields'];
+		else {
+			$this->getFields();
+			return self::$annotation[$this->class]['fields'] +  self::$annotation[$this->class]['viewFields'];
+		}
 	}
 	
 	public function getAllFilters(){
-		$this->getFields();
 		if(isset(self::$annotation[$this->class]['viewFilters']))
-			return array_merge(self::$annotation[$this->class]['filters'], self::$annotation[$this->class]['viewFilters']);
-		else 
+			return self::$annotation[$this->class]['filters'] + self::$annotation[$this->class]['viewFilters'];
+		else{
+			$this->getFields();
 			return $this->getFilters();
+		}
 	}
 }

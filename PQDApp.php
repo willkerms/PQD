@@ -42,6 +42,11 @@ class PQDApp {
 	private $aIniClasses = array();
 	
 	/**
+	 * @var array
+	 */
+	private $aHostsEnv = array();
+	
+	/**
 	 * @var PQDDb
 	 */
 	private static $PQDDb;
@@ -167,6 +172,22 @@ class PQDApp {
 	}
 	
 	/**
+	 * Mapeamento de hosts aos ambientes exemplo: array('lotus.com.br' => 'admin')
+	 * 
+	 * @param array $aHostsEnv
+	 */
+	public function setHostsEnv(array $aHostsEnv){
+		$this->aHostsEnv = $aHostsEnv;
+	}
+	
+	/**
+	 * @return array
+	 */
+	public function getHostsEnv(){
+		return $this->aHostsEnv;
+	}
+	
+	/**
 	 * Caminhoes livres que podem ser acessados de qualquer ambiente
 	 * 
 	 * @param array $paths
@@ -187,6 +208,7 @@ class PQDApp {
 	}
 	public function view(){
 		
+		$this->setConstants();
 		$this->iniClasses();
 		
 		if (isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]) && substr(APP_URL, 0, 5) != 'login'){
@@ -277,7 +299,6 @@ class PQDApp {
 	private function iniApp() {
 		chdir(APP_PATH);
 		$this->setIncludePath();
-		$this->setConstants();
 	}
 	
 	private function setConstants() {
@@ -311,20 +332,28 @@ class PQDApp {
 			//Setando ambiente de trabalho
 			if(isset($this->environments[$path[0]])){
 				define("APP_ENVIRONMENT", $path[0]);
+				define('APP_URL_ENVIRONMENT', APP_URL_PUBLIC . APP_ENVIRONMENT . '/');
 			}
 			else{
-				define("APP_ENVIRONMENT", $this->envDefault);
+				//Quando o ambiente é mapeando em algum host
+				if(isset($this->aHostsEnv[$_SERVER['HTTP_HOST']]) && isset($this->environments[$this->aHostsEnv[$_SERVER['HTTP_HOST']]]))
+					define("APP_ENVIRONMENT", $this->aHostsEnv[$_SERVER['HTTP_HOST']]);
+				else
+					define("APP_ENVIRONMENT", $this->envDefault);
+				
+				define('APP_URL_ENVIRONMENT', APP_URL_PUBLIC);
 			}
 		}
 		else{
-			define("APP_ENVIRONMENT", $this->envDefault);
+			//Quando o ambiente é mapeando em algum host
+			if(isset($this->aHostsEnv[$_SERVER['HTTP_HOST']]) && isset($this->environments[$this->aHostsEnv[$_SERVER['HTTP_HOST']]]))
+				define("APP_ENVIRONMENT", $this->aHostsEnv[$_SERVER['HTTP_HOST']]);
+			else
+				define("APP_ENVIRONMENT", $this->envDefault);
+			
 			define('APP_URL', '');
+			define('APP_URL_ENVIRONMENT', APP_URL_PUBLIC);
 		}
-		
-		if($this->envDefault == APP_ENVIRONMENT)
-			define('APP_URL_ENVIRONMENT', APP_URL_PUBLIC . (count($path) > 0 && isset($this->environments[$path[0]]) ? APP_ENVIRONMENT . '/' : ''));
-		else
-			define('APP_URL_ENVIRONMENT', APP_URL_PUBLIC . APP_ENVIRONMENT . '/');
 		
 		$this->aUrlRequest = $path;
 		$this->aUrlRequestPublic = $pathPublic;
@@ -370,7 +399,7 @@ class PQDApp {
 			'http_response' => http_response_code()
 		);
 		
-		$f = fopen(APP_PATH . 'logs/access-log.log', 'a');
+		$f = fopen(APP_PATH . 'logs/access-log-' . date('y-m-W') . '.log', 'a');
 		if($f === false){
 			throw new \Exception("Erro ao Criar arquivo de LOG!", 7);
 		}
@@ -379,7 +408,7 @@ class PQDApp {
 			fclose($f);
 			
 			if (self::$exceptions->count() > 0) {
-				$f = fopen(APP_PATH . 'logs/error-log.log', 'a');
+				$f = fopen(APP_PATH . 'logs/error-log-' . date('y-m-W') . '.log', 'a');
 				fwrite($f, '{"date": ' . time()*1000 . ', "exceptions": ' . self::$exceptions->getJsonExceptions(true) . '}' . PHP_EOL);
 				fclose($f);
 			}

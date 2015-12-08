@@ -91,6 +91,11 @@ abstract class PQDDAO extends PQDDb{
 	 */
 	private $indexCon = 0;
 	
+	/**
+	 * @var bool
+	 */
+	private $skipNull = true;
+	
 	public function __construct($table, array $fields, $colPk, $clsEntity, PQDExceptions $exceptions, $view = null, $clsView = null, $indexCon = 0){
 		
 		$this->table = $table;
@@ -118,6 +123,11 @@ abstract class PQDDAO extends PQDDb{
 		$paramValues = array();
 		
 		foreach ($fields as $col => $value){
+			
+			//Para não inserir campos que estão nulos
+			if($this->skipNull && !isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
+				continue;
+			
 			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->colPK | ($col == $this->colPK && !$this->isAutoIncrement))){
 				$this->sql .= $comma . "\t" . $col;
 				$comma = "," . PHP_EOL;
@@ -127,6 +137,10 @@ abstract class PQDDAO extends PQDDb{
 		$this->sql .= PHP_EOL . ") VALUES (" . PHP_EOL;
 		$comma = "";
 		foreach ($fields as $col => $value){
+			
+			//Para não inserir campos que estão nulos
+			if($this->skipNull && !isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
+				continue;
 			
 			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->colPK | ($col == $this->colPK && !$this->isAutoIncrement))){
 				
@@ -153,6 +167,10 @@ abstract class PQDDAO extends PQDDb{
 		
 		foreach ($fields as $col => $value){
 			
+			//Para não atualizar campos que estão nulos
+			if($this->skipNull && !isset($this->fieldsDefaultValuesOnUpdate[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
+				continue;
+			
 			if($col != $this->colPK && !isset($this->fieldsIgnoreOnUpdate[$col])){
 				
 				if(isset($this->fieldsDefaultValuesOnUpdate[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
@@ -167,6 +185,7 @@ abstract class PQDDAO extends PQDDb{
 		}
 			
 		$this->sql .= PHP_EOL . "WHERE " . $this->colPK . " = :" . $this->colPK . ";";
+		
 		return $this->setParams($oEntity, $paramValues);
 	}
 	
@@ -268,8 +287,10 @@ abstract class PQDDAO extends PQDDb{
 					return array();
 			}
 		}
-		else
+		else{
+			PQDApp::getApp()->getExceptions()->setException( new \Exception("Erro ao retornar Entidade!"));
 			return new $this->clsEntity();
+		}
 	}
 	
 	private function query($fetchClass = true, $clsFetch, $setException = true){
@@ -282,7 +303,7 @@ abstract class PQDDAO extends PQDDb{
 				$data = $st->fetchAll(PQDPDO::FETCH_NAMED);
 		}
 		else if($setException){
-				PQDApp::getApp()->getExceptions()->setException( new \Exception("Erro ao Executar Consulta!"));
+			PQDApp::getApp()->getExceptions()->setException( new \Exception("Erro ao Executar Consulta!"));
 		}
 		return $data;
 	}
@@ -341,8 +362,12 @@ abstract class PQDDAO extends PQDDb{
 			$this->sql .= "SELECT " . $sqlFields . " FROM (";
 		}
 		
-		if(!is_null($this->defaultWhereOnSelect))
+		if(!is_null($this->defaultWhereOnSelect)){
+			if($oWhere->count() > 0)
+				$oWhere->setAnd();
+			
 			$oWhere->setSQL($this->defaultWhereOnSelect->getWhere(false));
+		}
 
 		$this->sql .= "SELECT " . $rowNumber . $sqlFields . " FROM " . $table . " " . $oWhere->getWhere(true);
 		
@@ -415,6 +440,13 @@ abstract class PQDDAO extends PQDDb{
 		return $this->clsView;
 	}
 
+	/**
+	 * @return array $field
+	 */
+	public function getField($field){
+		return isset($this->fields[$field]) ? $this->fields[$field] : array();
+	}
+	
 	/**
 	 * @return array $fields
 	 */
@@ -581,5 +613,21 @@ abstract class PQDDAO extends PQDDb{
 	 */
 	public function setDefaultWhereOnDelete($defaultWhereOnDelete){
 		$this->defaultWhereOnDelete = $defaultWhereOnDelete;
+	}
+	
+	/**
+	 * @return boolean $skipNull
+	 */
+	public function getSkipNull() {
+
+		return $this->skipNull;
+	}
+
+	/**
+	 * @param boolean $skipNull
+	 */
+	public function setSkipNull($skipNull) {
+
+		$this->skipNull = $skipNull;
 	}
 }
