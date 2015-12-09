@@ -216,20 +216,24 @@ class PQDAnnotation{
 	}
 	
 	public function getAllFields(){
-		if(isset(self::$annotation[$this->class]['viewFields']))
-			return self::$annotation[$this->class]['fields'] +  self::$annotation[$this->class]['viewFields'];
+		
+		if(isset(self::$annotation[$this->class]['allFields']))
+			return self::$annotation[$this->class]['allFields'];
 		else {
 			$this->getFields();
-			return self::$annotation[$this->class]['fields'] +  self::$annotation[$this->class]['viewFields'];
+			self::$annotation[$this->class]['allFields'] = array_merge(self::$annotation[$this->class]['fields'], self::$annotation[$this->class]['viewFields']);
+			return self::$annotation[$this->class]['allFields'];
 		}
 	}
 	
 	public function getAllFilters(){
-		if(isset(self::$annotation[$this->class]['viewFilters']))
-			return self::$annotation[$this->class]['filters'] + self::$annotation[$this->class]['viewFilters'];
+		
+		if(isset(self::$annotation[$this->class]['allFilters']))
+			return self::$annotation[$this->class]['allFilters'];
 		else{
 			$this->getFields();
-			return $this->getFilters();
+			self::$annotation[$this->class]['allFilters'] = array_merge(self::$annotation[$this->class]['filters'], self::$annotation[$this->class]['viewFilters']);
+			return self::$annotation[$this->class]['allFilters'];
 		}
 	}
 }
