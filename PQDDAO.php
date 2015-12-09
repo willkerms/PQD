@@ -94,7 +94,7 @@ abstract class PQDDAO extends PQDDb{
 	/**
 	 * @var bool
 	 */
-	private $skipNull = true;
+	private $skipNull = false;
 	
 	public function __construct($table, array $fields, $colPk, $clsEntity, PQDExceptions $exceptions, $view = null, $clsView = null, $indexCon = 0){
 		
@@ -444,7 +444,7 @@ abstract class PQDDAO extends PQDDb{
 	 * @return array $field
 	 */
 	public function getField($field){
-		return isset($this->fields[$field]) ? $this->fields[$field] : array();
+		return isset($this->fields[$field]) ? $this->fields[$field] : null;
 	}
 	
 	/**
