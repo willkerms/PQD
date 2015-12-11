@@ -21,4 +21,14 @@ class PQDPDO extends \PDO{
 		
 		return $result;
 	}
+	
+	public function exec($statement){
+		
+		$result = parent::exec($statement);
+		
+		if($result === false)
+			PQDApp::getApp()->getExceptions()->setException( new PQDExceptionsDB($this->errorInfo(), "Erro na busca: " . $statement));
+		
+		return $result;
+	}
 }

@@ -342,25 +342,25 @@ class PQDUtil {
 		return $data;
 	}
 	
-	public static function escapeHtml($data, $charset = 'UTF-8'){
+	public static function escapeHtml($data, $charset = 'UTF-8', $flags = null){
 		if ( is_array($data)){
 			foreach ($data as $key => $value)
-				$data[$key] = self::escapeHtml($value, $charset);
+				$data[$key] = self::escapeHtml($value, $charset, $flags);
 		}
 		else if(is_object($data)){
 			foreach ($data as $key => $value)
-				$data->{$key} = self::escapeHtml($value, $charset);
+				$data->{$key} = self::escapeHtml($value, $charset, $flags);
 			
 			$oReflection = new \ReflectionObject($data);
 			$aMethods = $oReflection->getMethods();
 				
 			foreach ($aMethods as $oReflectionMethod ){
 				if (substr($oReflectionMethod->name, 0, 3) == "set" && method_exists($data, "get" . substr($oReflectionMethod->name, 3)))
-					$data->{$oReflectionMethod->name}(self::escapeHtml($data->{"get" . substr($oReflectionMethod->name, 3)}(), $charset));
+					$data->{$oReflectionMethod->name}(self::escapeHtml($data->{"get" . substr($oReflectionMethod->name, 3)}(), $charset, $flags));
 			}
 		}
 		else if(!is_null($data) && trim($data) != '')
-			$data = htmlentities($data, null, defined('PQD_CHARSET') ? PQD_CHARSET : $charset);
+			$data = htmlentities($data, $flags, defined('PQD_CHARSET') ? PQD_CHARSET : $charset);
 		
 		return $data;
 	}

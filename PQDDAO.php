@@ -264,7 +264,8 @@ abstract class PQDDAO extends PQDDb{
 	 * @param SQLWhere $oWhere
 	 */
 	protected function deleteGeneric(SQLWhere $oWhere){
-		return $this->getConnection($this->indexCon)->exec("DELETE FROM " . $this->table . " " . $oWhere->getWhere(true));
+		$this->sql = "DELETE FROM " . $this->table . " " . $oWhere->getWhere(true);
+		return $this->getConnection($this->indexCon)->exec($this->sql) !== false;
 	}
 	
 	/**
