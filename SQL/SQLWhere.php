@@ -3,7 +3,10 @@ namespace PQD\SQL;
 
 use PQD\PQDUtil;
 /**
- *
+ * 
+ * 
+ * 2015-12-10 Alteração dos filtros para contemplar os fields e values para fazer joins
+ * 
  * @author Willker Moraes Sivla
  * @since 2012-08-08
  *
@@ -72,7 +75,8 @@ class SQLWhere {
 	 */
 	public function setLike($field, $value, $typeLike = self::LIKE){
 		$value = PQDUtil::escapeSQL($value);
-		array_push($this->filters, $field . str_replace('#', $value, $typeLike));
+		//array_push($this->filters, $field . str_replace('#', $value, $typeLike));
+		array_push($this->filters, array('field' => $field, 'value' => str_replace('#', $value, $typeLike)));
 		return $this;
 	}
 
@@ -86,7 +90,8 @@ class SQLWhere {
 	 */
 	public function setEqual($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
-		array_push($this->filters, $field . " = " . str_replace('#', $value, $type));
+		//array_push($this->filters, $field . " = " . str_replace('#', $value, $type));
+		array_push($this->filters, array('field' => $field, 'value' => " = " . str_replace('#', $value, $type)));
 		return $this;
 	}
 
@@ -100,7 +105,8 @@ class SQLWhere {
 	 */
 	public function setDiff($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
-		array_push($this->filters, $field . " <> " . str_replace('#', $value, $type));
+		//array_push($this->filters, $field . " <> " . str_replace('#', $value, $type));
+		array_push($this->filters, array('field' => $field, 'value' => " <> " . str_replace('#', $value, $type)));
 		return $this;
 	}
 
@@ -114,7 +120,8 @@ class SQLWhere {
 	 */
 	public function setMore($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
-		array_push($this->filters, $field . " > " . str_replace('#', $value, $type));
+		//array_push($this->filters, $field . " > " . str_replace('#', $value, $type));
+		array_push($this->filters, array('field' => $field, 'value' => " > " . str_replace('#', $value, $type)));
 		return $this;
 	}
 
@@ -128,7 +135,8 @@ class SQLWhere {
 	 */
 	public function setMoreEqual($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
-		array_push($this->filters, $field . " >= " . str_replace('#', $value, $type));
+		//array_push($this->filters, $field . " >= " . str_replace('#', $value, $type));
+		array_push($this->filters, array('field' => $field, 'value' => " >= " . str_replace('#', $value, $type)));
 		return $this;
 	}
 
@@ -142,7 +150,8 @@ class SQLWhere {
 	 */
 	public function setLess($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
-		array_push($this->filters, $field . " < " . str_replace('#', $value, $type));
+		//array_push($this->filters, $field . " < " . str_replace('#', $value, $type));
+		array_push($this->filters, array('field' => $field, 'value' => " < " . str_replace('#', $value, $type)));
 		return $this;
 	}
 
@@ -156,7 +165,8 @@ class SQLWhere {
 	 */
 	public function setLessEqual($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
-		array_push($this->filters, $field . " <= " . str_replace('#', $value, $type));
+		//array_push($this->filters, $field . " <= " . str_replace('#', $value, $type));
+		array_push($this->filters, array('field' => $field, 'value' => " <= " . str_replace('#', $value, $type)));
 		return $this;
 	}
 
@@ -170,7 +180,8 @@ class SQLWhere {
 	 */
 	public function setIn($field, array $value, $type = self::IN){
 		$value = PQDUtil::escapeSQL($value);
-		array_push($this->filters, $field . str_replace('#', join(",", $value), $type));
+		//array_push($this->filters, $field . str_replace('#', join(",", $value), $type));
+		array_push($this->filters, array('field' => $field, 'value' => str_replace('#', join(",", $value), $type)));
 		return $this;
 	}
 
@@ -184,7 +195,8 @@ class SQLWhere {
 	 */
 	public function setBetween($field, array $value, $type = self::BETWEEN){
 		$value = PQDUtil::escapeSQL($value);
-		array_push($this->filters, $field . str_replace('#', join(" AND ", $value), $type));
+		//array_push($this->filters, $field . str_replace('#', join(" AND ", $value), $type));
+		array_push($this->filters, array('field' => $field, 'value' => str_replace('#', join(" AND ", $value), $type)));
 		return $this;
 	}
 
@@ -196,7 +208,8 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setIsNull($field, $type = self::IS){
-		array_push($this->filters, $field . $type . "NULL");
+		//array_push($this->filters, $field . $type . "NULL");
+		array_push($this->filters, array('field' => $field, 'value' => $type . "NULL"));
 		return $this;
 	}
 
@@ -225,6 +238,22 @@ class SQLWhere {
 	public function count(){
 		return count($this->filters);
 	}
+	
+	public function getFilters(){
+		return $this->filters;
+	}
+	
+	public function setAlias($alias){
+		for ($i = 0; $i < count($this->filters); $i++) {
+			if (is_array($this->filters[$i]))
+				$this->filters[$i]['field']  = $alias . "." . $this->filters[$i]['field'];
+		}
+	}
+	
+	public function setFilters(array $filters){
+		$this->filters = $filters;
+		return $this;
+	}
 
 	/**
 	 * Return the WHERE clause
@@ -235,9 +264,26 @@ class SQLWhere {
 	public function getWhere($where = false){
 		$sqlWhere = "";
 
-		if (count($this->filters) > 0)
-			$sqlWhere = ($where === true ? "WHERE " : "") . join(" ", $this->filters);
+		if (count($this->filters) > 0){
+			
+			$sqlWhere = ($where === true ? "WHERE " : "");
+			for ($i = 0; $i < count($this->filters); $i++) {
+				if (is_array($this->filters[$i]))
+					$sqlWhere .= $this->filters[$i]['field'] . $this->filters[$i]['value'] . PHP_EOL;
+				else
+					$sqlWhere .=  $this->filters[$i] . PHP_EOL;
+			}
+		}
 
 		return $sqlWhere;
+		
+		/*
+		$sqlWhere = "";
+
+		if (count($this->filters) > 0)
+			$sqlWhere = ($where === true ? "WHERE " : "") . join(" " . PHP_EOL, $this->filters);
+
+		return $sqlWhere;
+		*/
 	}
 }

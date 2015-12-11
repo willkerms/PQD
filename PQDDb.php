@@ -120,4 +120,11 @@ class PQDDb{
 		
 		return count(self::$dbs) -1;
 	}
+	
+	/**
+	 * @return string
+	 */
+	public function getSql(){
+		return $this->sql;
+	}
 }

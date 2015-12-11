@@ -258,6 +258,21 @@ abstract class PQDDAO extends PQDDb{
 		return $this->prepareSQLDelete($oEntity)->execute();
 	}
 	
+	/**
+	 * Executa uma delete generico na tabela
+	 * 
+	 * @param SQLWhere $oWhere
+	 */
+	protected function deleteGeneric(SQLWhere $oWhere){
+		return $this->getConnection($this->indexCon)->exec("DELETE FROM " . $this->table . " " . $oWhere->getWhere(true));
+	}
+	
+	/**
+	 * 
+	 * @param int $id
+	 * @param string $fetchClass
+	 * @return object
+	 */
 	protected function retEntity($id, $fetchClass = true){
 		
 		$table = !is_null($this->view) ? $this->view: $this->table;
@@ -293,6 +308,14 @@ abstract class PQDDAO extends PQDDb{
 		}
 	}
 	
+	/**
+	 * Executa uma query
+	 * 
+	 * @param string $fetchClass
+	 * @param string $clsFetch
+	 * @param boolean $setException
+	 * @return array
+	 */
 	private function query($fetchClass = true, $clsFetch, $setException = true){
 		
 		$data = array();
@@ -308,6 +331,14 @@ abstract class PQDDAO extends PQDDb{
 		return $data;
 	}
 	
+	/**
+	 * Busca todos os registros da tabela
+	 * 
+	 * @param array $fields
+	 * @param string $fetchClass
+	 * @param array $orderBy
+	 * @param string $asc
+	 */
 	public function fetchAll(array $fields = null, $fetchClass = true, array $orderBy = null, $asc = true){
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsEntity: $this->clsEntity;
@@ -327,7 +358,20 @@ abstract class PQDDAO extends PQDDb{
 		return $this->query($fetchClass, $clsFetch);
 	}
 	
+	/**
+	 * Retorna o numero de registros dá busca generica
+	 * 
+	 * @param SQLWhere $oWhere
+	 * @return int
+	 */
 	public function retNumReg(SQLWhere $oWhere){
+		
+		if(!is_null($this->defaultWhereOnSelect)){
+			if($oWhere->count() > 0)
+				$oWhere->setAnd();
+			
+			$oWhere->setSQL($this->defaultWhereOnSelect->getWhere(false));
+		}
 		
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$this->sql = "SELECT COUNT(*) AS numReg FROM " . $table . " " . $oWhere->getWhere(true);
@@ -336,6 +380,19 @@ abstract class PQDDAO extends PQDDb{
 		return count($data) == 1 ? $data[0]['numReg'] : 0;
 	}
 	
+	/**
+	 * Executa uma busca generica na tabela
+	 * 
+	 * @param SQLWhere $oWhere
+	 * @param array $fields
+	 * @param string $fetchClass
+	 * @param array $orderBy
+	 * @param string $asc
+	 * @param int $limit
+	 * @param number $page
+	 * @param array $groupBy
+	 * @return array
+	 */
 	public function genericSearch(SQLWhere $oWhere, array $fields = null, $fetchClass = true, array $orderBy = null, $asc = true, $limit = null, $page = 0, array $groupBy = null){
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsEntity: $this->clsEntity;

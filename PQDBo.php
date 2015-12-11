@@ -15,7 +15,7 @@ abstract class PQDBo implements IPQDBo{
 	
 	/**
 	 *
-	 * @var array
+	 * @var stdClass
 	 */
 	private $session;
 
@@ -32,7 +32,7 @@ abstract class PQDBo implements IPQDBo{
 	}
 
 	/**
-	 * @return the $session
+	 * @return stdClass $session
 	 */
 	public function getSession() {
 		return $this->session;
