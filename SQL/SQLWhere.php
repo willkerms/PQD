@@ -28,6 +28,9 @@ class SQLWhere {
 
 	const BETWEEN			= " BETWEEN #";
 	const NOT_BETWEEN		= " NOT BETWEEN #";
+	
+	const BETWEEN_STR			= " BETWEEN '#'";
+	const NOT_BETWEEN_STR		= " NOT BETWEEN '#'";
 
 	const IS			= " IS ";
 	const IS_NOT		= " IS NOT ";
@@ -196,7 +199,11 @@ class SQLWhere {
 	public function setBetween($field, array $value, $type = self::BETWEEN){
 		$value = PQDUtil::escapeSQL($value);
 		//array_push($this->filters, $field . str_replace('#', join(" AND ", $value), $type));
-		array_push($this->filters, array('field' => $field, 'value' => str_replace('#', join(" AND ", $value), $type)));
+		if ($type == self::BETWEEN_STR || $type == self::NOT_BETWEEN_STR)
+			array_push($this->filters, array('field' => $field, 'value' => str_replace('#', join("' AND '", $value), $type)));
+		else
+			array_push($this->filters, array('field' => $field, 'value' => str_replace('#', join(" AND ", $value), $type)));
+			
 		return $this;
 	}
 

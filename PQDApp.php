@@ -94,6 +94,11 @@ class PQDApp {
 			define('APP_DEBUG', false);
 		
 		self::$oPQDApp = $this;
+		
+		if (!file_exists(APP_PATH . 'logs/')){
+			if(mkdir(APP_PATH . 'logs/', 0777, true) === false)
+				$this->getExceptions()->setException(new \Exception("Erro ao Criar diretório de LOG!", 6));
+		}
 	}
 	
 	public static function getApp(){
@@ -378,39 +383,38 @@ class PQDApp {
 	}
 	
 	public function __destruct() {
-		if (!file_exists(APP_PATH . 'logs/')){
-			if(mkdir(APP_PATH . 'logs/', 0777, true) === false)
-				throw new \Exception("Erro ao Criar diretório de LOG!", 6);
-		}
 		
-		$log = array(
- 			'environment' => APP_ENVIRONMENT,
-			'date' => time()*1000,
-			'ip' => $_SERVER['REMOTE_ADDR'],
-			'http_user' => isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : null,
-			'user_id' => isset($_SESSION['user']['idUsuario']) ? $_SESSION['user']['idUsuario'] : null,
-			'user' => isset($_SESSION['user']['login']) ? $_SESSION['user']['login'] : null,
-			'request_uri' => $_SERVER['REQUEST_URI'],
-			'controller' => $this->logController,
-			'action' => $this->logAction,
-			'app_url' => APP_URL,
-			'app_url_public' => APP_URL_PUBLIC,
-			'method' => $_SERVER['REQUEST_METHOD'],
-			'http_response' => http_response_code()
-		);
-		
-		$f = fopen(APP_PATH . 'logs/access-log-' . date('y-m-W') . '.log', 'a');
-		if($f === false){
-			throw new \Exception("Erro ao Criar arquivo de LOG!", 7);
-		}
-		else{
-			fwrite($f, Util::json_encode($log) . PHP_EOL);
-			fclose($f);
+		if (file_exists(APP_PATH . 'logs/')){
 			
-			if (self::$exceptions->count() > 0) {
-				$f = fopen(APP_PATH . 'logs/error-log-' . date('y-m-W') . '.log', 'a');
-				fwrite($f, '{"date": ' . time()*1000 . ', "exceptions": ' . self::$exceptions->getJsonExceptions(true) . '}' . PHP_EOL);
+			$log = array(
+	 			'environment' => APP_ENVIRONMENT,
+				'date' => time(),
+				'ip' => $_SERVER['REMOTE_ADDR'],
+				'http_user' => isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : null,
+				'user_id' => isset($_SESSION['user']['idUsuario']) ? $_SESSION['user']['idUsuario'] : null,
+				'user' => isset($_SESSION['user']['login']) ? $_SESSION['user']['login'] : null,
+				'request_uri' => $_SERVER['REQUEST_URI'],
+				'controller' => $this->logController,
+				'action' => $this->logAction,
+				'app_url' => APP_URL,
+				'app_url_public' => APP_URL_PUBLIC,
+				'method' => $_SERVER['REQUEST_METHOD'],
+				'http_response' => http_response_code()
+			);
+			
+			$f = fopen(APP_PATH . 'logs/access-log-' . date('y-m-W') . '.log', 'a');
+			if($f === false){
+				throw new \Exception("Erro ao Criar arquivo de LOG!", 7);
+			}
+			else{
+				fwrite($f, Util::json_encode($log) . PHP_EOL);
 				fclose($f);
+				
+				if (self::$exceptions->count() > 0) {
+					$f = fopen(APP_PATH . 'logs/error-log-' . date('y-m-W') . '.log', 'a');
+					fwrite($f, '{"date": ' . time() . ', "exceptions": ' . self::$exceptions->getJsonExceptions(true) . '}' . PHP_EOL);
+					fclose($f);
+				}
 			}
 		}
 	}

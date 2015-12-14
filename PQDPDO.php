@@ -27,7 +27,7 @@ class PQDPDO extends \PDO{
 		$result = parent::exec($statement);
 		
 		if($result === false)
-			PQDApp::getApp()->getExceptions()->setException( new PQDExceptionsDB($this->errorInfo(), "Erro na busca: " . $statement));
+			PQDApp::getApp()->getExceptions()->setException( new PQDExceptionsDB($this->errorInfo(), "Erro ao executar SQL: " . $statement));
 		
 		return $result;
 	}
