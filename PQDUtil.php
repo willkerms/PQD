@@ -504,7 +504,7 @@ class PQDUtil {
 		return $hex; // returns the hex value including the number sign (#)
 	}
 	
-	public static function contentType($type = 'json', $fileName = null){
+	public static function contentType($type = 'json', $fileNameOrFirstLine = ")]}',\n"){
 		
 		$contentType = 'text/html';
 		
@@ -514,6 +514,7 @@ class PQDUtil {
 			break;
 			case 'json':
 				$contentType = 'application/json';
+				echo $fileNameOrFirstLine;
 			break;
 			case 'jpeg':
 			case 'jpg':
@@ -539,7 +540,7 @@ class PQDUtil {
 				
 				$contentType = $type == 'xls' ? 'application/vnd.ms-excel' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 				
-				header('Content-Disposition: attachment;filename="' . $fileName . '"');
+				header('Content-Disposition: attachment;filename="' . $fileNameOrFirstLine . '"');
 				header('Cache-Control: max-age=0');
 				// If you're serving to IE 9, then the following may be needed
 				header('Cache-Control: max-age=1');
@@ -553,7 +554,7 @@ class PQDUtil {
 				// Redirect output to a client’s web browser (PDF)
 				$contentType = 'application/pdf';
 				
-				header('Content-Disposition: attachment;filename="' . $fileName . '"');
+				header('Content-Disposition: attachment;filename="' . $fileNameOrFirstLine . '"');
 				header('Cache-Control: max-age=0');
 			break;
 		}

@@ -39,6 +39,8 @@ class SQLWhere {
 	const NUMBER = "#";
 
 	private $filters = array();
+	
+	private $alias = null;
 
 	/**
 	 * Add AND on WHERE
@@ -251,10 +253,11 @@ class SQLWhere {
 	}
 	
 	public function setAlias($alias){
-		for ($i = 0; $i < count($this->filters); $i++) {
-			if (is_array($this->filters[$i]))
-				$this->filters[$i]['field']  = $alias . "." . $this->filters[$i]['field'];
-		}
+		$this->alias = $alias;
+	}
+	
+	public function getAlias(){
+		return $this->alias;
 	}
 	
 	public function setFilters(array $filters){
@@ -269,17 +272,22 @@ class SQLWhere {
 	 * @return string
 	 */
 	public function getWhere($where = false){
-		$sqlWhere = "";
-
-		if (count($this->filters) > 0){
-			
-			$sqlWhere = ($where === true ? "WHERE " : "");
-			for ($i = 0; $i < count($this->filters); $i++) {
-				if (is_array($this->filters[$i]))
-					$sqlWhere .= $this->filters[$i]['field'] . $this->filters[$i]['value'] . PHP_EOL;
-				else
-					$sqlWhere .=  $this->filters[$i] . PHP_EOL;
+		
+		$sqlWhere = ($where === true && count($this->filters) > 0 ? "WHERE " : "");
+		for ($i = 0, $espace = "", $alias = ""; $i < count($this->filters); $i++) {
+			if (is_array($this->filters[$i])){
+				if(!is_null($this->getAlias())){
+					if(preg_match('/^[a-zA-Z]+\.[a-zA-Z_\-]+/', $this->filters[$i]['field']) !== 1)
+						$alias = $this->getAlias() . ".";
+				}
+				
+				$sqlWhere .= $espace . $alias . $this->filters[$i]['field'] . $this->filters[$i]['value'];
 			}
+			else
+				$sqlWhere .= $espace . $this->filters[$i];
+			
+			$espace = " ";
+			$alias = "";
 		}
 
 		return $sqlWhere;

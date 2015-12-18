@@ -2,7 +2,7 @@
 namespace PQD;
 
 use PQD\SQL\SQLWhere;
-use PQD\SQL\SQLJoin;
+use PQD\SQL\SQLSelect;
 
 /**
  * Classe de abastração do banco de dados
@@ -10,52 +10,12 @@ use PQD\SQL\SQLJoin;
  * @author Willker Moraes Silva
  * @since 2015-11-12
  */
-abstract class PQDDAO extends PQDDb{
+abstract class PQDDAO extends SQLSelect{
 	
 	/**
 	 * @var bool
 	 */
 	private $isAutoIncrement = true;
-	
-	/**
-	 * @var string
-	 */
-	private $table;
-	
-	/**
-	 * @var string
-	 */
-	private $view;
-	
-	/**
-	 * @var string
-	 */
-	private $colPK;
-	
-	/**
-	 * @var string
-	 */
-	private $methodGetPk;
-	
-	/**
-	 * @var string
-	 */
-	private $methodSetPk;
-	
-	/**
-	 * @var string
-	 */
-	private $clsEntity;
-	
-	/**
-	 * @var string
-	 */
-	private $clsView;
-	
-	/**
-	 * @var array
-	 */
-	private $fields = array();
 	
 	/**
 	 * @var array
@@ -78,59 +38,20 @@ abstract class PQDDAO extends PQDDb{
 	private $fieldsDefaultValuesOnInsert = array();
 	
 	/**
-	 * @var array
-	 */
-	private $fieldsDefaultOrderBy = array();
-	
-	/**
-	 * @var boolean
-	 */
-	private $defaultOrderByAsc = true;
-	
-	/**
-	 * @var SQLWhere
-	 */
-	private $defaultWhereOnSelect;
-	
-	/**
 	 * @var SQLWhere
 	 */
 	private $defaultWhereOnDelete;
-	
-	/**
-	 * @var int
-	 */
-	private $indexCon = 0;
 	
 	/**
 	 * @var bool
 	 */
 	private $skipNull = false;
 	
-	public function __construct($table, array $fields, $colPk, $clsEntity, PQDExceptions $exceptions, $view = null, $clsView = null, $indexCon = 0){
-		
-		$this->table = $table;
-		$this->fields = $fields;
-		$this->colPK = $colPk;
-		$this->clsEntity = $clsEntity;
-		
-		$this->methodGetPk = ucwords($this->colPK);
-		$this->methodSetPk = 'set' . $this->methodGetPk;
-		$this->methodGetPk = 'get' . $this->methodGetPk;
-		
-		$this->view = $view;
-		$this->clsView = $clsView;
-		
-		$this->indexCon = $indexCon;
-		
-		parent::__construct($exceptions);
-	}
-	
 	protected function prepareSQLInsert(PQDEntity $oEntity, array $fields = null){
 		
-		$this->sql = "INSERT INTO " . $this->table . "(" . PHP_EOL;
+		$this->sql = "INSERT INTO " . $this->getTable() . "(" . PHP_EOL;
 		$comma = "";
-		$fields = is_null($fields) ? $this->fields : $fields;
+		$fields = is_null($fields) ? $this->getFields() : $fields;
 		$paramValues = array();
 		
 		foreach ($fields as $col => $value){
@@ -139,7 +60,7 @@ abstract class PQDDAO extends PQDDb{
 			if($this->skipNull && !isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 				continue;
 			
-			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->colPK | ($col == $this->colPK && !$this->isAutoIncrement))){
+			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->getColPK() | ($col == $this->getColPK() && !$this->isAutoIncrement))){
 				$this->sql .= $comma . "\t" . $col;
 				$comma = "," . PHP_EOL;
 			}
@@ -153,7 +74,7 @@ abstract class PQDDAO extends PQDDb{
 			if($this->skipNull && !isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 				continue;
 			
-			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->colPK | ($col == $this->colPK && !$this->isAutoIncrement))){
+			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->getColPK() | ($col == $this->getColPK() && !$this->isAutoIncrement))){
 				
 				if(isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 					$this->sql .= $comma . "\t" . $this->fieldsDefaultValuesOnInsert[$col];
@@ -171,10 +92,10 @@ abstract class PQDDAO extends PQDDb{
 	
 	protected function prepareSQLUpdate(PQDEntity $oEntity, array $fields = null){
 		
-		$this->sql = "UPDATE " . $this->table . " SET" . PHP_EOL;
+		$this->sql = "UPDATE " . $this->getTable() . " SET" . PHP_EOL;
 		$comma = "";
-		$fields = is_null($fields) ? $this->fields : $fields;
-		$paramValues = array($this->colPK => $this->fields[$this->colPK]);
+		$fields = is_null($fields) ? $this->getFields() : $fields;
+		$paramValues = array($this->getColPK() => $this->getField($this->getColPK()));
 		
 		foreach ($fields as $col => $value){
 			
@@ -182,7 +103,7 @@ abstract class PQDDAO extends PQDDb{
 			if($this->skipNull && !isset($this->fieldsDefaultValuesOnUpdate[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 				continue;
 			
-			if($col != $this->colPK && !isset($this->fieldsIgnoreOnUpdate[$col])){
+			if($col != $this->getColPK() && !isset($this->fieldsIgnoreOnUpdate[$col])){
 				
 				if(isset($this->fieldsDefaultValuesOnUpdate[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 					$this->sql .= $comma . "\t" . $col . " = " . $this->fieldsDefaultValuesOnUpdate[$col];
@@ -195,65 +116,28 @@ abstract class PQDDAO extends PQDDb{
 			}
 		}
 			
-		$this->sql .= PHP_EOL . "WHERE " . $this->colPK . " = :" . $this->colPK . ";";
+		$this->sql .= PHP_EOL . "WHERE " . $this->getColPK() . " = :" . $this->getColPK() . ";";
 		
 		return $this->setParams($oEntity, $paramValues);
 	}
 	
 	protected function prepareSQLDelete(PQDEntity $oEntity){
 		
-		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " " . $this->defaultWhereOnDelete->getWhere() : '';
+		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " " . $this->defaultWhereOnDelete->getWhere(false) : '';
 		
-		$this->sql = "DELETE FROM " . $this->table . " WHERE " . $this->colPK . " = :" . $this->colPK . $strDefaultWhere . ";";
-		return $this->setParams($oEntity, array($this->colPK => $this->fields[$this->colPK]));
-	}
-	
-	protected function retParamType($col){
-		if(is_array($col))
-			$type = $col['type'];
-		else
-			$type = $col;
-		
-		switch ($type) {
-			case 'int':
-				return PQDPDO::PARAM_INT;
-			break;
-			
-			case 'bool':
-				return PQDPDO::PARAM_BOOL;
-			break;
-			
-			default:
-				return PQDPDO::PARAM_STR;
-			break;
-		}
-	}
-	
-	private function setParams(PQDEntity $oEntity, array $params){
-		$st = $this->getConnection($this->indexCon)->prepare($this->sql);
-		$this->setParamValues($st, $oEntity, $params);
-		return $st;
-	}
-	
-	protected function setParamValues(PQDStatement $st, PQDEntity $oEntity, array $aFields){
-		
-		foreach ($aFields as $col => $value){
-			$bind = ":" . $col;
-			$method = 'get' . ucwords($col);
-			
-			$st->bindValue($bind, $oEntity->{$method}(), $this->retParamType($value));
-		}
+		$this->sql = "DELETE FROM " . $this->getTable() . " WHERE " . $this->getColPK() . " = :" . $this->getColPK() . $strDefaultWhere . ";";
+		return $this->setParams($oEntity, array($this->getColPK() => $this->getField($this->getColPK())));
 	}
 	
 	protected function save(PQDEntity &$oEntity){
 		
-		if (is_null($oEntity->{$this->methodGetPk}())) //INSERT
+		if (is_null($oEntity->{$this->getMethodGetPk()}())) //INSERT
 			$st = $this->prepareSQLInsert($oEntity);
 		else
 			$st = $this->prepareSQLUpdate($oEntity);//UPDATE
 		
 		if($st->execute()){
-			$id = is_null($oEntity->{$this->methodGetPk}()) ? $this->getConnection($this->indexCon)->lastInsertId() : $oEntity->{$this->methodGetPk}();
+			$id = is_null($oEntity->{$this->getMethodGetPk()}()) ? $this->getConnection($this->getIndexCon())->lastInsertId() : $oEntity->{$this->getMethodGetPk()}();
 			$oEntity = $this->retEntity($id);
 			return true;
 		}
@@ -275,211 +159,8 @@ abstract class PQDDAO extends PQDDb{
 	 * @param SQLWhere $oWhere
 	 */
 	protected function deleteGeneric(SQLWhere $oWhere){
-		$this->sql = "DELETE FROM " . $this->table . " " . $oWhere->getWhere(true);
-		return $this->getConnection($this->indexCon)->exec($this->sql) !== false;
-	}
-	
-	/**
-	 * 
-	 * @param int $id
-	 * @param string $fetchClass
-	 * @return object
-	 */
-	protected function retEntity($id, $fetchClass = true){
-		
-		$table = !is_null($this->view) ? $this->view: $this->table;
-		$clsFetch = !is_null($this->clsView) ? $this->clsEntity: $this->clsEntity;
-		
-		$this->sql = "SELECT * FROM " . $table . " WHERE " . $this->colPK . " = :" . $this->colPK . ";";
-		
-		$oEntity = new $clsFetch();
-		$oEntity->{$this->methodSetPk}($id);
-		
-		$st = $this->setParams($oEntity, array($this->colPK => $this->fields[$this->colPK]));
-		
-		if($st->execute()){
-			if($fetchClass){
-				$data = $st->fetchAll(PQDPDO::FETCH_CLASS, $clsFetch);
-				if(count($data) == 1)
-					return $data[0];
-				else
-					return new $clsFetch();
-			}
-			else{
-				$data = $st->fetchAll(PQDPDO::FETCH_NAMED);
-				
-				if(count($data) == 1)
-					return $data[0];
-				else
-					return array();
-			}
-		}
-		else{
-			PQDApp::getApp()->getExceptions()->setException( new \Exception("Erro ao retornar Entidade!"));
-			return new $this->clsEntity();
-		}
-	}
-	
-	/**
-	 * Executa uma query
-	 * 
-	 * @param string $fetchClass
-	 * @param string $clsFetch
-	 * @param boolean $setException
-	 * @return array
-	 */
-	private function query($fetchClass = true, $clsFetch, $setException = true){
-		
-		$data = array();
-		if(($st = $this->getConnection($this->indexCon)->query($this->sql)) !== false){
-			if($fetchClass)
-				$data = $st->fetchAll(PQDPDO::FETCH_CLASS, $clsFetch);
-			else
-				$data = $st->fetchAll(PQDPDO::FETCH_NAMED);
-		}
-		else if($setException){
-			PQDApp::getApp()->getExceptions()->setException( new \Exception("Erro ao Executar Consulta!"));
-		}
-		return $data;
-	}
-	
-	/**
-	 * Busca todos os registros da tabela
-	 * 
-	 * @param array $fields
-	 * @param string $fetchClass
-	 * @param array $orderBy
-	 * @param string $asc
-	 */
-	public function fetchAll(array $fields = null, $fetchClass = true, array $orderBy = null, $asc = true){
-		$table = !is_null($this->view) ? $this->view: $this->table;
-		$clsFetch = !is_null($this->clsView) ? $this->clsEntity: $this->clsEntity;
-		
-		if(!is_null($fields))
-			$sqlFields = join(', ', $fields);
-		else
-			$sqlFields = '*';
-		
-		$this->sql = "SELECT ". $sqlFields ." FROM " . $table . (!is_null($this->defaultWhereOnSelect) ? " " . $this->defaultWhereOnSelect->getWhere(true) : '');
-		
-		if (!is_null($orderBy) && count($orderBy) > 0)
-			$this->sql .= " ORDER BY " . join(", ", $orderBy) . ($asc === true ? ' ASC': ' DESC') . ";";
-		else
-			$this->sql .= ";";
-		
-		return $this->query($fetchClass, $clsFetch);
-	}
-	
-	/**
-	 * Retorna o numero de registros dá busca generica
-	 * 
-	 * @param SQLWhere $oWhere
-	 * @return int
-	 */
-	public function retNumReg(SQLWhere $oWhere){
-		
-		if(!is_null($this->defaultWhereOnSelect)){
-			if( $oWhere instanceof SQLJoin)
-				$this->defaultWhereOnSelect->setAlias($oWhere->getAlias());
-			
-			if($oWhere->count() > 0)
-				$oWhere->setAnd();
-			
-			$oWhere->setSQL($this->defaultWhereOnSelect->getWhere(false));
-		}
-		
-		$table = !is_null($this->view) ? $this->view: $this->table;
-		$this->sql = "SELECT COUNT(*) AS numReg FROM " . $table . " " . $oWhere->getWhere(true);
-		$data = $this->query(false, null, false);
-		
-		return count($data) == 1 ? $data[0]['numReg'] : 0;
-	}
-	
-	/**
-	 * Executa uma busca generica na tabela
-	 * 
-	 * @param SQLWhere $oWhere
-	 * @param array $fields
-	 * @param string $fetchClass
-	 * @param array $orderBy
-	 * @param string $asc
-	 * @param int $limit
-	 * @param number $page
-	 * @param array $groupBy
-	 * @return array
-	 */
-	public function genericSearch(SQLWhere $oWhere, array $fields = null, $fetchClass = true, array $orderBy = null, $asc = true, $limit = null, $page = 0, array $groupBy = null){
-		$table = !is_null($this->view) ? $this->view: $this->table;
-		$clsFetch = !is_null($this->clsView) ? $this->clsEntity: $this->clsEntity;
-		
-		$this->sql = "";
-		
-		if(!is_null($fields))
-			$sqlFields = join(', ', $fields);
-		else
-			$sqlFields = '*';
-		
-		$page = !is_null($limit) && $page <= 0 ? 1 : $page;
-
-		//Versões anteriores ao 2012 do SQLServer
-		$rowNumber = "";
-		if(!is_null($limit) && ($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0){
-			
-			if (is_null($orderBy) || count($orderBy) == 0)
-				$orderBy = array($this->colPK);
-			
-			$rowNumber = "ROW_NUMBER() OVER ( ORDER BY " . join(", ", $orderBy) . " ) AS RowNum, ";
-			$orderBy = null;
-			
-			$this->sql .= "SELECT " . $sqlFields . " FROM (";
-		}
-		
-		if(!is_null($this->defaultWhereOnSelect)){
-			if( $oWhere instanceof SQLJoin)
-				$this->getDefaultWhereOnSelect()->setAlias($oWhere->getAlias());
-			
-			if($oWhere->count() > 0){
-				$oWhere->setAnd();
-			}
-			
-			$oWhere->setSQL($this->defaultWhereOnSelect->getWhere(false));
-		}
-
-		$this->sql .= "SELECT " . $rowNumber . $sqlFields . " FROM " . $table . " " . $oWhere->getWhere(true);
-		
-		if (!is_null($groupBy) && count($groupBy) > 0)
-			$this->sql .= " GROUP BY " . join(", ", $groupBy);
-		
-		//ORDER BY 
-		if (!is_null($orderBy) && count($orderBy) > 0)
-			$this->sql .= " ORDER BY " . join(", ", $orderBy) . ($asc === true ? ' ASC': ' DESC');
-		else if(count($this->fieldsDefaultOrderBy) > 0){//Default Order By
-			if( $oWhere instanceof SQLJoin){
-				foreach ($this->fieldsDefaultOrderBy as &$value)
-					$value = $oWhere->getAlias() . "." . $value;
-			}
-			$this->sql .= " ORDER BY " . join(", ", $this->fieldsDefaultOrderBy) . ($this->defaultOrderByAsc === true ? ' ASC': ' DESC');
-		}
-		
-		if(!is_null($limit) && $this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mysql"){
-			$limit = $limit <= 0 ? 12 : $limit;
-			$this->sql .= " LIMIT " . (($page - 1) * $limit) . "," . $limit;
-		}
-		//SQLServer 2012
-		else if(!is_null($limit) && ($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0){
-			
-			//No SQL Server é necessário ORDER BY
-			if (is_null($orderBy) || count($orderBy) == 0)
-				$this->sql .= " ORDER BY " . $this->colPK . ($asc === true ? ' ASC': ' DESC');
-
-			$limit = $limit <= 0 ? 12 : $limit;
-			$this->sql .= " OFFSET " . (($page - 1) * $limit) . " ROWS FETCH NEXT " . $limit . " ROWS ONLY";
-		}
-		//Versões anteriores ao 2012 do SQLServer
-		else if(!is_null($limit) && ($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0)
-				$this->sql .= ") as vw WHERE RowNum BETWEEN " . ((($page - 1) * $limit) + 1) . " AND " . ((($page - 1) * $limit) + $limit);
-		
-		return $this->query($fetchClass, $clsFetch);
+		$this->sql = "DELETE FROM " . $this->getTable() . " " . $oWhere->getWhere(true);
+		return $this->getConnection($this->getIndexCon())->exec($this->sql) !== false;
 	}
 	
 	/**
@@ -487,55 +168,6 @@ abstract class PQDDAO extends PQDDb{
 	 */
 	public function getIsAutoIncrement(){
 		return $this->isAutoIncrement;
-	}
-
-	/**
-	 * @return string $table
-	 */
-	public function getTable(){
-		return $this->table;
-	}
-
-	/**
-	 * @return string $view
-	 */
-	public function getView(){
-		return $this->view;
-	}
-
-	/**
-	 * @return string $colPK
-	 */
-	public function getColPK(){
-		return $this->colPK;
-	}
-
-	/**
-	 * @return string $clsEntity
-	 */
-	public function getClsEntity(){
-		return $this->clsEntity;
-	}
-
-	/**
-	 * @return string $clsView
-	 */
-	public function getClsView(){
-		return $this->clsView;
-	}
-
-	/**
-	 * @return array $field
-	 */
-	public function getField($field){
-		return isset($this->fields[$field]) ? $this->fields[$field] : null;
-	}
-	
-	/**
-	 * @return array $fields
-	 */
-	public function getFields(){
-		return $this->fields;
 	}
 
 	/**
@@ -567,59 +199,10 @@ abstract class PQDDAO extends PQDDb{
 	}
 
 	/**
-	 * @return int $indexCon
-	 */
-	public function getIndexCon(){
-		return $this->indexCon;
-	}
-
-	/**
 	 * @param boolean $isAutoIncrement
 	 */
 	public function setIsAutoIncrement($isAutoIncrement){
 		$this->isAutoIncrement = $isAutoIncrement;
-	}
-
-	/**
-	 * @param string $table
-	 */
-	public function setTable($table){
-		$this->table = $table;
-	}
-
-	/**
-	 * @param string $view
-	 */
-	public function setView($view){
-		$this->view = $view;
-	}
-
-	/**
-	 * @param string $colPK
-	 */
-	public function setColPK($colPK){
-		$this->colPK = $colPK;
-	}
-
-	/**
-	 * @param string $clsEntity
-	 */
-	public function setClsEntity($clsEntity){
-		$this->clsEntity = $clsEntity;
-	}
-
-	/**
-	 * @param string $clsView
-	 */
-	public function setClsView($clsView){
-		$this->clsView = $clsView;
-	}
-
-	/**
-	 * @param array $fields
-	 */
-	public function setFields(array $fields){
-		$this->fields = $fields;
 	}
 
 	/**
@@ -630,10 +213,24 @@ abstract class PQDDAO extends PQDDb{
 	}
 
 	/**
+	 * @param string $fieldIgnoreOnUpdate
+	 */
+	public function addFieldIgnoreOnUpdate($fieldIgnoreOnUpdate){
+		$this->fieldsIgnoreOnUpdate[$fieldIgnoreOnUpdate] = count($this->fieldsIgnoreOnUpdate[$fieldIgnoreOnUpdate]) - 1;
+	}
+
+	/**
 	 * @param array $fieldsIgnoreOnInsert
 	 */
 	public function setFieldsIgnoreOnInsert(array $fieldsIgnoreOnInsert){
 		$this->fieldsIgnoreOnInsert = array_flip($fieldsIgnoreOnInsert);
+	}
+
+	/**
+	 * @param string $fieldIgnoreOnInsert
+	 */
+	public function addFieldIgnoreOnInsert($fieldIgnoreOnInsert){
+		$this->fieldsIgnoreOnInsert[$fieldIgnoreOnInsert] = count($this->fieldsIgnoreOnInsert[$fieldIgnoreOnInsert]) - 1;
 	}
 
 	/**
@@ -642,6 +239,13 @@ abstract class PQDDAO extends PQDDb{
 	public function setFieldsDefaultValuesOnUpdate(array $fieldsDefaultValuesOnUpdate){
 		$this->fieldsDefaultValuesOnUpdate = $fieldsDefaultValuesOnUpdate;
 	}
+	
+	/**
+	 * @param array $fieldDefaultValueOnUpdate
+	 */
+	public function addFieldDefaultValueOnUpdate(array $fieldDefaultValueOnUpdate){
+		$this->fieldsDefaultValuesOnUpdate = $this->fieldsDefaultValuesOnUpdate + $fieldDefaultValueOnUpdate;
+	}
 
 	/**
 	 * @param array $fieldsDefaultValuesOnInsert
@@ -649,47 +253,12 @@ abstract class PQDDAO extends PQDDb{
 	public function setFieldsDefaultValuesOnInsert(array $fieldsDefaultValuesOnInsert){
 		$this->fieldsDefaultValuesOnInsert = $fieldsDefaultValuesOnInsert;
 	}
-
-	/**
-	 * @param array $fieldsDefaultOrderBy
-	 */
-	public function setFieldsDefaultOrderBy(array $fieldsDefaultOrderBy){
-		$this->fieldsDefaultOrderBy = $fieldsDefaultOrderBy;
-	}
 	
 	/**
-	 * @param boolean $defaultOrderByAsc
+	 * @param array $fieldDefaultValueOnInsert
 	 */
-	public function setDefaultOrderByAsc($defaultOrderByAsc){
-		$this->defaultOrderByAsc = $defaultOrderByAsc;
-	}
-
-	/**
-	 * @param number $indexCon
-	 */
-	public function setIndexCon($indexCon){
-		$this->indexCon = $indexCon;
-	}
-	
-	/**
-	 * @return string $methodGetPk
-	 */
-	public function getMethodGetPk(){
-		return $this->methodGetPk;
-	}
-
-	/**
-	 * @return string $methodSetPk
-	 */
-	public function getMethodSetPk(){
-		return $this->methodSetPk;
-	}
-	
-	/**
-	 * @return SQLWhere $defaultWhereOnSelect
-	 */
-	public function getDefaultWhereOnSelect(){
-		return $this->defaultWhereOnSelect;
+	public function addFieldDefaultValueOnInsert(array $fieldDefaultValueOnInsert){
+		$this->fieldsDefaultValuesOnInsert = $this->fieldsDefaultValuesOnInsert + $fieldDefaultValueOnInsert;
 	}
 
 	/**
@@ -700,16 +269,9 @@ abstract class PQDDAO extends PQDDb{
 	}
 
 	/**
-	 * @param \PQD\SQL\SQLWhere $defaultWhereOnSelect
+	 * @param SQLWhere $defaultWhereOnDelete
 	 */
-	public function setDefaultWhereOnSelect($defaultWhereOnSelect){
-		$this->defaultWhereOnSelect = $defaultWhereOnSelect;
-	}
-
-	/**
-	 * @param \PQD\SQL\SQLWhere $defaultWhereOnDelete
-	 */
-	public function setDefaultWhereOnDelete($defaultWhereOnDelete){
+	public function setDefaultWhereOnDelete( SQLWhere $defaultWhereOnDelete){
 		$this->defaultWhereOnDelete = $defaultWhereOnDelete;
 	}
 	
@@ -727,19 +289,5 @@ abstract class PQDDAO extends PQDDb{
 	public function setSkipNull($skipNull) {
 
 		$this->skipNull = $skipNull;
-	}
-	
-	/**
-	 * @return array $fieldsDefaultOrderBy
-	 */
-	public function getFieldsDefaultOrderBy(){
-		return $this->fieldsDefaultOrderBy;
-	}
-	
-	/**
-	 * @return boolean $defaultOrderByAsc
-	 */
-	public function getDefaultOrderByAsc(){
-		return $this->defaultOrderByAsc;
 	}
 }

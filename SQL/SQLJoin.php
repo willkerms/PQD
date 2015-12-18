@@ -11,16 +11,14 @@ namespace PQD\SQL;
  */
 class SQLJoin extends SQLWhere {
 	
-	private $aliasTabela;
-	
 	private $joins = array();
 	
 	/**
 	 * 
-	 * @param string $aliasTabela
+	 * @param string $aliasTable
 	 */
-	public function __construct($aliasTabela){
-		$this->aliasTabela = $aliasTabela;
+	public function __construct($aliasTable){
+		$this->setAlias($aliasTable);
 	}
 	
 	/**
@@ -58,10 +56,13 @@ class SQLJoin extends SQLWhere {
 
 	/**
 	 * 
-	 * @return string
+	 * @return mixed
 	 */
-	public function getJoins(){
-		return $this->aliasTabela . PHP_EOL . join(" " . PHP_EOL, $this->joins);
+	public function getJoins($string = true){
+		if($string)
+			return $this->getAlias() . PHP_EOL . join(" " . PHP_EOL, $this->joins);
+		else 
+			return $this->joins;
 	}
 
 	/**
@@ -77,13 +78,12 @@ class SQLJoin extends SQLWhere {
 		return $this;
 	}
 	
-	/**
-	 * 
-	 * @param string $aliasTabela
-	 * @return SQLJoin
-	 */
-	public function setAlias($aliasTabela){
-		$this->aliasTabela = $aliasTabela;
+	public function setJoins(array $joins){
+		$this->joins = $joins;
+	}
+	
+	public function addJoins(array $joins){
+		$this->joins = array_merge($this->joins, $joins);
 		return $this;
 	}
 	
@@ -91,11 +91,7 @@ class SQLJoin extends SQLWhere {
 	 * 
 	 * @return string
 	 */
-	public function getAlias(){
-		return $this->aliasTabela;
-	}
-	
-	public function getWhere($where = false){
+	public function getWhere($where = true){
 		return $this->getJoins() . " " . PHP_EOL . parent::getWhere($where);
 	}
 }

@@ -242,6 +242,9 @@ class PQDApp {
 			$modulo = $modulo[0] . join('', array_map("ucwords", array_slice($modulo, 1)));
 		}
 
+		if(isset($_GET['rst']))
+			Util::contentType($_GET['rst']);
+		
 		if (is_dir(APP_PATH . 'modulos/' . $modulo)){
 			if (!isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $this->environments[APP_ENVIRONMENT] . "home" && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][APP_URL]))
 				$this->httpError(403);
@@ -298,6 +301,14 @@ class PQDApp {
 			case 500:
 				$oView->title = ': 500 Erro interno do Servidor(Internal Server Error)';
 			break;
+		}
+		if(isset($_GET['rst'])){
+			switch ($_GET['rst']){
+				case 'json':
+					$oView->setAutoRender(false);
+					echo '{"result": "' . Util::utf8_encode(html_entity_decode(str_replace(": ", "", $oView->title))) . '", "errors": ' . $this->getExceptions()->getJsonExceptions() . '}';
+				break;
+			}
 		}
 	}
 	
