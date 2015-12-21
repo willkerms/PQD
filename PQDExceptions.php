@@ -11,6 +11,10 @@ class PQDExceptions {
 	 * @var array[\Exception]
 	 */
 	private static $exceptions = array();
+	
+	private function ignoreOnProduction(\Exception $e, $development = IS_DEVELOPMENT){
+		return !$development && (($e instanceof PQDExceptionsDB) || ($e instanceof PQDExceptionsDev) || ($e instanceof \PDOException));
+	}
 
 	/**
 	 * @return the $exceptions
@@ -31,7 +35,7 @@ class PQDExceptions {
 	
 		foreach ($aExceptions as $e){
 			
-			if(!$development && (($e instanceof PQDExceptionsDB) || ($e instanceof PQDExceptionsDev)) )
+			if( $this->ignoreOnProduction($e, $development) )
 				continue;
 					
 				if ($development === true) {
@@ -65,7 +69,7 @@ class PQDExceptions {
 	
 		foreach ($aExceptions as $key => $e){
 			
-			if(!$development && (($e instanceof PQDExceptionsDB) || ($e instanceof PQDExceptionsDev)) )
+			if( $this->ignoreOnProduction($e, $development) )
 				continue;
 					
 				if ($development === true) {
@@ -132,7 +136,7 @@ class PQDExceptions {
 			
 			foreach ($aExceptions as $e){
 				
-				if(!$development && (($e instanceof PQDExceptionsDB) || ($e instanceof PQDExceptionsDev)) )
+				if( $this->ignoreOnProduction($e, $development) )
 					continue;
 				
 				$count++;

@@ -136,7 +136,7 @@ abstract class PQDDAO extends SQLSelect{
 		else
 			$st = $this->prepareSQLUpdate($oEntity);//UPDATE
 		
-		if($st->execute()){
+		if($st !== false && $st->execute()){
 			$id = is_null($oEntity->{$this->getMethodGetPk()}()) ? $this->getConnection($this->getIndexCon())->lastInsertId() : $oEntity->{$this->getMethodGetPk()}();
 			$oEntity = $this->retEntity($id);
 			return true;
@@ -159,6 +159,8 @@ abstract class PQDDAO extends SQLSelect{
 	 * @param SQLWhere $oWhere
 	 */
 	protected function deleteGeneric(SQLWhere $oWhere){
+		if(is_null($this->getConnection($this->getIndexCon()))) return false;
+		
 		$this->sql = "DELETE FROM " . $this->getTable() . " " . $oWhere->getWhere(true);
 		return $this->getConnection($this->getIndexCon())->exec($this->sql) !== false;
 	}

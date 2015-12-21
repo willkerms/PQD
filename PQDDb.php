@@ -2,6 +2,8 @@
 namespace PQD;
 
 /**
+ * Classe gerenciadora de conexões com o Banco de Dados
+ * 
  * @author Willker Moraes Silva
  * @since 2012-03-30
  */
@@ -65,13 +67,17 @@ class PQDDb{
 		
 		if(!isset(self::$connections[$indexCon])){
 			try {
-				$options = array();
+				$options = array(
+					PQDPDO::ATTR_TIMEOUT => 5
+				);
+				
 				$port = "";
 				if (!is_null(self::$dbs[$indexCon]['port']))
 					$port = ":" . self::$dbs[$indexCon]['port'];
 
 				if(self::$dbs[$indexCon]['driver'] == "mssql" && version_compare(phpversion(), '5.3', '>=') && strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'){
-					self::$connections[$indexCon] = new PQDPDO('sqlsrv:Server=' . self::$dbs[$indexCon]['host'] . $port . ';Database=' . self::$dbs[$indexCon]['db'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], array('ReturnDatesAsStrings' => true));
+					$options['ReturnDatesAsStrings'] = true;
+					self::$connections[$indexCon] = new PQDPDO('sqlsrv:Server=' . self::$dbs[$indexCon]['host'] . $port . ';Database=' . self::$dbs[$indexCon]['db'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
 					self::$connections[$indexCon]->setAttribute(PQDPDO::SQLSRV_ATTR_ENCODING, PQDPDO::SQLSRV_ENCODING_SYSTEM);
 				}
 				else{
@@ -82,7 +88,7 @@ class PQDDb{
 					self::$connections[$indexCon] = new PQDPDO(self::$dbs[$indexCon]['driver'] . ":" . "dbname=" . self::$dbs[$indexCon]['db'] . ";host=" . self::$dbs[$indexCon]['host']. self::$dbs[$indexCon]['port'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
 				}
 			}
-			catch (PQDExceptionsDev $e) {
+			catch (\PDOException $e) {
 				
 				$this->exceptions->setException(new \Exception("Erro ao Conectar ao Banco de Dados(" . self::$dbs[$indexCon]['db'] . ")!", 1));
 				
@@ -98,6 +104,7 @@ class PQDDb{
 	}
 	
 	/**
+	 * Seta uma string de conexão com o banco, retorna o identificador de conexão com este banco
 	 * 
 	 * @param string $driver
 	 * @param string $host
@@ -122,6 +129,8 @@ class PQDDb{
 	}
 	
 	/**
+	 * Retorna o SQL 
+	 * 
 	 * @return string
 	 */
 	public function getSql(){

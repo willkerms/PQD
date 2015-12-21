@@ -137,6 +137,8 @@ abstract class SQLSelect extends PQDDb{
 	 * @return PDOStatement
 	 */
 	protected function setParams(PQDEntity $oEntity, array $params){
+		if(is_null($this->getConnection($this->getIndexCon()))) return false;
+		
 		$st = $this->getConnection($this->indexCon)->prepare($this->sql);
 		$this->setParamValues($st, $oEntity, $params);
 		return $st;
@@ -288,6 +290,9 @@ abstract class SQLSelect extends PQDDb{
 	private function query($fetchClass = true, $clsFetch, $setException = true){
 		
 		$data = array();
+		
+		if(is_null($this->getConnection($this->getIndexCon()))) return $data;
+		
 		if(($st = $this->getConnection($this->indexCon)->query($this->sql)) !== false){
 			if($fetchClass)
 				$data = $st->fetchAll(PQDPDO::FETCH_CLASS, $clsFetch);
@@ -307,6 +312,7 @@ abstract class SQLSelect extends PQDDb{
 	 * @param string $fetchClass
 	 * @param array $orderBy
 	 * @param string $asc
+	 * @return array
 	 */
 	public function fetchAll(array $fields = null, $fetchClass = true, array $orderBy = null, $asc = true){
 		$table = !is_null($this->view) ? $this->view: $this->table;
@@ -357,6 +363,7 @@ abstract class SQLSelect extends PQDDb{
 	 * @return array
 	 */
 	public function genericSearch(SQLWhere $oWhere, array $fields = null, $fetchClass = true, array $orderBy = null, $asc = true, $limit = null, $page = 0, array $groupBy = null){
+		
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
 		
@@ -372,7 +379,7 @@ abstract class SQLSelect extends PQDDb{
 		$isLessSqlSrv11 = false;
 		
 		//Limit para Versões anteriores ao 2012
-		if(!is_null($limit) && ($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0){
+		if(!is_null($limit) && ($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0){
 			
 			$isLessSqlSrv11 = true;
 			
@@ -404,10 +411,10 @@ abstract class SQLSelect extends PQDDb{
 			if($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mysql")
 				$this->sql .= " LIMIT " . (($page - 1) * $limit) . "," . $limit . ";";
 			//SQLServer 2012
-			else if(!is_null($limit) && ($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0)
+			else if(!is_null($limit) && ($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0)
 				$this->sql .= " OFFSET " . (($page - 1) * $limit) . " ROWS FETCH NEXT " . $limit . " ROWS ONLY;";
 			//Versões anteriores ao 2012 do SQLServer
-			else if(!is_null($limit) && ($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0)
+			else if(!is_null($limit) && ($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0)
 				$this->sql .= ") as vw WHERE RowNum BETWEEN " . ((($page - 1) * $limit) + 1) . " AND " . ((($page - 1) * $limit) + $limit) . ";";
 		}
 		else 

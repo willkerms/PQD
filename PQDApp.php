@@ -44,17 +44,22 @@ class PQDApp {
 	/**
 	 * @var array
 	 */
+	private $aFinalClasses = array();
+	
+	/**
+	 * @var array
+	 */
 	private $aHostsEnv = array();
 	
 	/**
 	 * @var PQDDb
 	 */
-	private static $PQDDb;
+	private $PQDDb;
 	
 	/**
 	 * @var PQDExceptions
 	 */
-	private static $exceptions;
+	private $exceptions;
 	
 	
 	/**
@@ -77,7 +82,7 @@ class PQDApp {
 	private $logAction;
 	
 	
-	public function __construct($appPath, $environments = 'admin', $environmentDefault = 'admin'){
+	private function __construct($appPath, $environments = 'admin', $environmentDefault = 'admin'){
 		
 		if(!is_null(self::$oPQDApp))
 			throw new \Exception("Aplicação já Iniciada!", 10);
@@ -112,29 +117,21 @@ class PQDApp {
 		else
 			ini_set("display_errors", "Off");
 		
-		$oApp = new self($appPath, $environments, $environmentDefault);
-		$oApp->iniApp();
-		
-		return $oApp;
+		return (new self($appPath, $environments, $environmentDefault))->iniApp();
 	}
 	
 	/**
 	 * @return PQDExceptions
 	 */
 	public function getExceptions(){
-		
-		if(is_null(self::$exceptions))
-			self::$exceptions = new PQDExceptions();
-			
-		return self::$exceptions;
-		//return self::$exceptions = is_null(self::$exceptions) ? new PQDExceptions(): self::$exceptions;
+		return $this->exceptions = is_null($this->exceptions) ? new PQDExceptions() : $this->exceptions;
 	}
 	
 	/**
 	 * @return PQDDb
 	 */
 	public function getDb(){
-		return self::$PQDDb = is_null(self::$PQDDb) ? new PQDDb($this->getExceptions()): self::$PQDDb;
+		return $this->PQDDb = is_null($this->PQDDb) ? new PQDDb($this->getExceptions()): $this->PQDDb;
 	}
 	
 	/**
@@ -149,40 +146,102 @@ class PQDApp {
 	public function setDbConnection($driver, $host, $dbName, $user, $password, $port = null){
 		return PQDDb::setDbConnection($driver, $host, $dbName, $user, $password, $port = null);
 	}
-	
+
+	/**
+	 * Seta templates que serão utilizados na view
+	 * 
+	 * @param string $head
+	 * @param string $footer
+	 * @return PQDApp
+	 */
 	public function setTemplates($head = 'templates/tpl.head.php', $footer = 'templates/tpl.footer.php'){
 		if (!is_null($head) && !empty($head))
 			define('APP_TEMPLATE_HEAD', $head);
 		
 		if (!is_null($footer) && !empty($footer))
 			define('APP_TEMPLATE_FOOTER', $footer);
+		
+		return $this;
+	}
+	
+	/**
+	 * @return array
+	 */
+	public function getIniClasses(){
+		return $this->aIniClasses;
 	}
 	
 	/**
 	 * Classes que deverão ser inicializadas antes do método view(), essas classes devem conter o metodo estatico run como public
 	 * 
 	 * @param array|string $classes
+	 * @return PQDApp
 	 */
 	public function setIniClasses($classes){
 		$this->aIniClasses = is_array($classes) ? $classes : array($classes);
+		return $this;
+	}
+	
+	/**
+	 * Adiciona uma classe a ser inicializada
+	 * 
+	 * @param string $classes
+	 * @return PQDApp
+	 */
+	public function addIniClasses($classes){
+		array_push($this->aIniClasses, $classes);
+		return $this;
+	}
+	
+	/**
+	 * @return array
+	 */
+	public function getFinalClasses(){
+		return $this->aFinalClasses;
+	}
+	
+	/**
+	 * Classes que deverão ser inicializadas após a execução
+	 * 
+	 * @param array|string $classes
+	 * @return PQDApp
+	 */
+	public function setFinalClasses($classes){
+		$this->aFinalClasses = is_array($classes) ? $classes : array($classes);
+		return $this;
+	}
+	
+	/**
+	 * Adiciona uma classe a ser inicializada após a execução
+	 * 
+	 * @param string $classes
+	 * @return PQDApp
+	 */
+	public function addFinalClasses($classes){
+		array_push($this->aFinalClasses, $classes);
+		return $this;
 	}
 	
 	/**
 	 * Ambientes que exigem atutenticação
 	 * 
 	 * @param array|string $environments
+	 * @return PQDApp
 	 */
 	public function setSecureEnv($environments){
 		$this->secureEnv = is_array($environments) ? array_flip($environments) : array($environments => 0);
+		return $this;
 	}
 	
 	/**
 	 * Mapeamento de hosts aos ambientes exemplo: array('lotus.com.br' => 'admin')
 	 * 
 	 * @param array $aHostsEnv
+	 * @return PQDApp
 	 */
 	public function setHostsEnv(array $aHostsEnv){
 		$this->aHostsEnv = $aHostsEnv;
+		return $this;
 	}
 	
 	/**
@@ -199,22 +258,28 @@ class PQDApp {
 	 */
 	public function setFreePaths(array $paths){
 		$this->aFreePaths = array_flip($paths);
+		return $this;
 	}
 	
 	public function getEnvironments(){
 		return array_keys($this->environments);
 	}
 	
-	private function iniClasses(){
-		foreach ($this->aIniClasses as $class){
+	private function runClasses($aClasses){
+		foreach ($aClasses as $class){
 			if( class_exists($class) &&  method_exists($class, 'run'))
 				$class::run();
 		}
 	}
-	public function view(){
+	
+	/**
+	 * Executa a aplicação!
+	 * 
+	 */
+	public function exec(){
 		
 		$this->setConstants();
-		$this->iniClasses();
+		$this->runClasses($this->aIniClasses);
 		
 		if (isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]) && substr(APP_URL, 0, 5) != 'login'){
 			header('Location: ' . APP_URL_ENVIRONMENT . 'login/' . APP_URL . (($_SERVER['QUERY_STRING'] != '') ? '?' . $_SERVER['QUERY_STRING'] : ''));
@@ -257,7 +322,7 @@ class PQDApp {
 					require_once $file;
 					if(class_exists($ctrl)){
 						
-						$obj = new $ctrl($_POST, $_GET, $_SESSION, self::$exceptions, $_FILES);
+						$obj = new $ctrl($_POST, $_GET, $_SESSION, $this->exceptions, $_FILES);
 						$this->logController = $ctrl;
 						$act = isset($_GET['act']) ? $_GET['act'] : 'view';
 						
@@ -272,12 +337,12 @@ class PQDApp {
 						}
 					}
 					else {
-						self::$exceptions->setException(new \Exception("Classe (". $ctrl .") não encontrada!"));
+						$this->exceptions->setException(new \Exception("Classe (". $ctrl .") não encontrada!"));
 						$this->httpError(500);
 					}
 				}
 				else{
-					self::$exceptions->setException(new \Exception("Arquivo (". $file .".php) não encontrado!"));
+					$this->exceptions->setException(new \Exception("Arquivo (". $file .".php) não encontrado!"));
 					$this->httpError(500);
 				}
 			}
@@ -289,7 +354,7 @@ class PQDApp {
 	public function httpError($httpError){
 		
 		http_response_code($httpError);
-		$oView = new PQDView('templates/' . $httpError. '.php', self::$exceptions);
+		$oView = new PQDView('templates/' . $httpError. '.php', $this->exceptions);
 		
 		switch ($httpError) {
 			case 403:
@@ -306,15 +371,25 @@ class PQDApp {
 			switch ($_GET['rst']){
 				case 'json':
 					$oView->setAutoRender(false);
-					echo '{"result": "' . Util::utf8_encode(html_entity_decode(str_replace(": ", "", $oView->title))) . '", "errors": ' . $this->getExceptions()->getJsonExceptions() . '}';
+					
+					$title = html_entity_decode(str_replace(": ", "", $oView->title));
+					$this->getExceptions()->setException( new \Exception($title));
+					
+					echo '{"result": "' . Util::utf8_encode($title) . '", "errors": ' . $this->getExceptions()->getJsonExceptions() . '}';
 				break;
 			}
 		}
 	}
 	
+	/**
+	 * Seta o diretório para a raiz do projeto e inicializa a função de include das classes
+	 * 
+	 * @return PQDApp
+	 */
 	private function iniApp() {
 		chdir(APP_PATH);
 		$this->setIncludePath();
+		return $this;
 	}
 	
 	private function setConstants() {
@@ -394,7 +469,7 @@ class PQDApp {
 	}
 	
 	public function __destruct() {
-		
+		$this->runClasses($this->aFinalClasses);
 		if (file_exists(APP_PATH . 'logs/')){
 			
 			$log = array(
@@ -405,6 +480,7 @@ class PQDApp {
 				'user_id' => isset($_SESSION['user']['idUsuario']) ? $_SESSION['user']['idUsuario'] : null,
 				'user' => isset($_SESSION['user']['login']) ? $_SESSION['user']['login'] : null,
 				'request_uri' => $_SERVER['REQUEST_URI'],
+				'host' => $_SERVER['HTTP_HOST'],
 				'controller' => $this->logController,
 				'action' => $this->logAction,
 				'app_url' => APP_URL,
@@ -421,9 +497,9 @@ class PQDApp {
 				fwrite($f, Util::json_encode($log) . PHP_EOL);
 				fclose($f);
 				
-				if (self::$exceptions->count() > 0) {
+				if ($this->exceptions->count() > 0) {
 					$f = fopen(APP_PATH . 'logs/error-log-' . date('y-m-W') . '.log', 'a');
-					fwrite($f, '{"date": ' . time() . ', "exceptions": ' . self::$exceptions->getJsonExceptions(true) . '}' . PHP_EOL);
+					fwrite($f, '{"date": ' . time() . ', "exceptions": ' . $this->exceptions->getJsonExceptions(true) . '}' . PHP_EOL);
 					fclose($f);
 				}
 			}

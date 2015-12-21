@@ -3,13 +3,8 @@ namespace PQD;
 
 class PQDPDO extends \PDO{
 	public function __construct($dsn, $username, $passwd, $options){
-		try{
-			parent::__construct($dsn, $username, $passwd, $options);
-			$this->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('PQD\PQDStatement'));
-		}
-		catch(PQDExceptionsDev $e){
-			PQDApp::getApp()->getExceptions()->setException( $e );
-		}
+		parent::__construct($dsn, $username, $passwd, $options);
+		$this->setAttribute(PQDPDO::ATTR_STATEMENT_CLASS, array('PQD\PQDStatement'));
 	}
 	
 	public function query($statement){
