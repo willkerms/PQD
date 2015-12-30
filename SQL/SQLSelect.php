@@ -155,7 +155,8 @@ abstract class SQLSelect extends PQDDb{
 		
 		foreach ($aFields as $col => $value){
 			$bind = ":" . $col;
-			$method = 'get' . ucwords($col);
+			$col = join("", array_map("ucwords", explode("_", $col)));
+			$method = 'get' . $col;
 			
 			$st->bindValue($bind, $oEntity->{$method}(), $this->retParamType($value));
 		}
