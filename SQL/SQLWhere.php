@@ -79,7 +79,7 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setLike($field, $value, $typeLike = self::LIKE){
-		$value = PQDUtil::escapeSQL($value);
+		$value = PQDUtil::escapeSQL(str_replace('*', '%', $value));
 		//array_push($this->filters, $field . str_replace('#', $value, $typeLike));
 		array_push($this->filters, array('field' => $field, 'value' => str_replace('#', $value, $typeLike)));
 		return $this;

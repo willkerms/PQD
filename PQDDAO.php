@@ -218,7 +218,7 @@ abstract class PQDDAO extends SQLSelect{
 	 * @param string $fieldIgnoreOnUpdate
 	 */
 	public function addFieldIgnoreOnUpdate($fieldIgnoreOnUpdate){
-		$this->fieldsIgnoreOnUpdate[$fieldIgnoreOnUpdate] = count($this->fieldsIgnoreOnUpdate[$fieldIgnoreOnUpdate]) - 1;
+		$this->fieldsIgnoreOnUpdate[$fieldIgnoreOnUpdate] = count($this->fieldsIgnoreOnUpdate) - 1;
 	}
 
 	/**
@@ -232,7 +232,7 @@ abstract class PQDDAO extends SQLSelect{
 	 * @param string $fieldIgnoreOnInsert
 	 */
 	public function addFieldIgnoreOnInsert($fieldIgnoreOnInsert){
-		$this->fieldsIgnoreOnInsert[$fieldIgnoreOnInsert] = count($this->fieldsIgnoreOnInsert[$fieldIgnoreOnInsert]) - 1;
+		$this->fieldsIgnoreOnInsert[$fieldIgnoreOnInsert] = count($this->fieldsIgnoreOnInsert) - 1;
 	}
 
 	/**

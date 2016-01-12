@@ -28,7 +28,7 @@ class PQDExceptions {
 	 * @param boolean $development
 	 * @return string
 	 */
-	public function getJsonExceptions($development = IS_DEVELOPMENT){
+	public function getArrayExceptions($development = IS_DEVELOPMENT){
 	
 		$aExceptions = $this->getExceptions();
 		$aExceptionsJSON = array();
@@ -54,7 +54,15 @@ class PQDExceptions {
 				}
 		}
 	
-		return PQDUtil::json_encode($aExceptionsJSON);
+		return $aExceptionsJSON;
+	}
+	/**
+	 *
+	 * @param boolean $development
+	 * @return string
+	 */
+	public function getJsonExceptions($development = IS_DEVELOPMENT){
+		return PQDUtil::json_encode($this->getArrayExceptions($development));
 	}
 	
 	/**

@@ -234,6 +234,7 @@ class PQDUtil {
 		$return = json_decode( $json, $assoc, $depth, $options);
 		
 		if (is_null($return)){
+			echo $json;
 			switch (json_last_error()) {
 				case JSON_ERROR_NONE:
 					PQDApp::getApp()->getExceptions()->setException( new \Exception('JSON - No errors', 10));
@@ -560,5 +561,60 @@ class PQDUtil {
 		}
 		
 		header('Content-Type: ' . $contentType, true);
+	}
+	
+	/**
+	 * Retorna um DOMDocument para o array dado
+	 * 
+	 * @param array $data
+	 * @param \DOMNode $node
+	 * @param \DOMDocument $document
+	 */
+	public static function dom_encode(array $data, \DOMNode &$node = null, \DOMDocument &$document = null){
+		
+		if(is_null($document)){
+			$data = self::utf8_encode($data);
+			$document =  new \DOMDocument();
+			$node = $document->createElement("data");
+			$document->appendChild($node);
+		}
+		
+		foreach($data as $chave => $item) {
+			
+			if(is_array($item)) {
+				$prefixo = (is_numeric($chave)) ? 'item' : '';
+				$child = $document->createElement($prefixo.$chave);
+				$node->appendChild($child);
+				self::dom_encode($item, $child, $document);
+			}
+			else {
+				$prefixo = (is_numeric($chave)) ? 'item' : '';
+				$child = $document->createElement($prefixo.$chave);
+				$node->appendChild($child);
+				$child->appendChild($document->createTextNode($item));
+			}
+		}
+		
+		return $document;
+	}
+	
+	/**
+	 * Converte um array para XML
+	 * 
+	 * @param array $data
+	 * @return string
+	 */
+	public static function toXML(array $data) {
+		return self::dom_encode($data)->saveXML();
+	}
+	
+	/**
+	 * Converte um array para HTML
+	 * 
+	 * @param array $data
+	 * @return string
+	 */
+	public static function toHTML(array $data) {
+		return self::dom_encode($data)->saveHTML();
 	}
 }

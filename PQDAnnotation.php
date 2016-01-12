@@ -35,8 +35,8 @@ class PQDAnnotation{
 	 * @return array
 	 */
 	private function retValues($nameAttr, $str){
-		
-		$annotations = explode(", ", substr($str, strlen($nameAttr)+1, -1));
+		$str = substr($str, strlen($nameAttr)+1, -1);
+		$annotations = explode(", ", $str);
 		$col = array();
 		
 		foreach ($annotations as $description){
@@ -65,29 +65,39 @@ class PQDAnnotation{
 		$return->filters = array();
 		$return->fields = array();
 		
-		preg_match_all('/\@field\([^)]*\)/', file_get_contents($file), $matches);
+		//Todos os comentários dá classe
+		preg_match_all('/(\/\*(.|\s)+?(\*\/))/', file_get_contents($file), $matches);
 			
 		if(isset($matches[0])){
 			
 			$fields = array();
 			$pk = null;
-			foreach($matches[0] as $key => $field){
+			foreach($matches[0] as $key => $comment){
+				preg_match('/\@field\([^)]*\)/', $comment, $field);
 				
-				$col = $this->retValues('@field', $field);
-				
-				if(isset($col['name']))
-					$fields[$col['name']] = $col;
-				else
-					$fields[] = $col;
-				
-				if(isset($col['isPk']) && $col['isPk'] == 'true')
-					$pk = $col['name'];
-				
-				if(isset($col['isFilter']) && $col['isFilter'] == 'true')
-					$return->filters[] = $col;
-				
-				if(isset($col['fk']))
-					$return->fks[] = array($col['name'] => $col['fk']);
+				if(isset($field[0])){
+					$field = $field[0];
+					
+					$col = $this->retValues('@field', $field);
+					
+					preg_match('/\@list\(.*$/m', $comment, $list);
+					if(isset($list[0]))
+						$col['list'] = PQDUtil::json_decode(substr($list[0], strlen('@list')+1, -2));
+					
+					if(isset($col['name']))
+						$fields[$col['name']] = $col;
+					else
+						$fields[] = $col;
+					
+					if(isset($col['isPk']) && $col['isPk'] == 'true')
+						$pk = $col['name'];
+					
+					if(isset($col['isFilter']) && $col['isFilter'] == 'true')
+						$return->filters[] = $col;
+					
+					if(isset($col['fk']))
+						$return->fks[] = array($col['name'] => $col['fk']);
+				}
 			}
 			
 			$return->fields = $fields;
