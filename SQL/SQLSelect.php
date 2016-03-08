@@ -58,14 +58,9 @@ abstract class SQLSelect extends PQDDb{
 	private $fields = array();
 	
 	/**
-	 * @var array
+	 * @var SQLOrderBy
 	 */
-	private $fieldsDefaultOrderBy = array();
-	
-	/**
-	 * @var boolean
-	 */
-	private $defaultOrderByAsc = true;
+	private $defaultOrderBy;
 	
 	/**
 	 * @var SQLWhere
@@ -214,27 +209,21 @@ abstract class SQLSelect extends PQDDb{
 			return '*';
 	}
 	
-	private function retOrderBy(SQLWhere $oWhere = null, array $orderBy = null, $asc = true){
+	private function retOrderBy(SQLWhere $oWhere = null, SQLOrderBy $oOrderBy = null){
 		
-		$sOrder = "";
-		$asc = is_null($orderBy) || count($orderBy) == 0 ? $this->getDefaultOrderByAsc() : $asc;
-		$aOrder = is_null($orderBy) || count($orderBy) == 0 ? $this->getFieldsDefaultOrderBy() : $orderBy;
+		$oOrderBy = is_null($oOrderBy) ? $this->getDefaultOrderBy() : $oOrderBy;
 		$oWhere = is_null($oWhere) ? $this->getDefaultWhereOnSelect() : $oWhere;
 		
-		if (!is_null($aOrder) && count($aOrder) > 0){
+		$return = "";
+		if (!is_null($oOrderBy)){
 			
-			if($oWhere instanceof SQLJoin){
-				foreach ($aOrder as &$field){
-					if(preg_match('/^[a-zA-Z]+\.[a-zA-Z_\-]+/', $field) !== 1){
-						$field = $oWhere->getAlias() . '.' . $field;
-					}
-				}
-			}
+			if($oWhere instanceof SQLJoin)
+				$oOrderBy->setAlias($oWhere->getAlias());
 					
-			$sOrder .= " ORDER BY " . join(", ", $aOrder) . ($asc === true ? ' ASC': ' DESC');
+			$return = $oOrderBy->getOrderBy();
 		}
 		
-		return $sOrder;
+		return $return;
 	}
 	
 	private function retWhere(SQLWhere $oWhere){
@@ -303,6 +292,7 @@ abstract class SQLSelect extends PQDDb{
 		else if($setException){
 			$this->getExceptions()->setException( new \Exception("Erro ao Executar Consulta!"));
 		}
+		
 		return $data;
 	}
 	
@@ -311,11 +301,10 @@ abstract class SQLSelect extends PQDDb{
 	 * 
 	 * @param array $fields
 	 * @param string $fetchClass
-	 * @param array $orderBy
-	 * @param string $asc
+	 * @param SQLOrderBy $oOrderBy
 	 * @return array
 	 */
-	public function fetchAll(array $fields = null, $fetchClass = true, array $orderBy = null, $asc = true){
+	public function fetchAll(array $fields = null, $fetchClass = true, SQLOrderBy $oOrderBy = null){
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
 		
@@ -326,7 +315,7 @@ abstract class SQLSelect extends PQDDb{
 		
 		$this->sql = "SELECT ". $sqlFields ." FROM " . $table . (!is_null($this->defaultWhereOnSelect) ? " " . $this->getDefaultWhereOnSelect()->getWhere(true) : '');
 		
-		$this->sql .= $this->retOrderBy(null, $orderBy, $asc);
+		$this->sql .= $this->retOrderBy(null, $oOrderBy);
 		
 		$this->sql .= ";";
 		
@@ -344,7 +333,7 @@ abstract class SQLSelect extends PQDDb{
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$oWhere = $this->retWhere($oWhere);
 		
-		$this->sql = "SELECT COUNT(*) AS numReg FROM " . $table . " " . $oWhere->getWhere(true) . ";";
+		$this->sql = 'SELECT COUNT(*) AS "numReg" FROM ' . $table . " " . $oWhere->getWhere(true) . ";";
 		$data = $this->query(false, null, false);
 		
 		return count($data) == 1 ? $data[0]['numReg'] : 0;
@@ -356,14 +345,13 @@ abstract class SQLSelect extends PQDDb{
 	 * @param SQLWhere $oWhere
 	 * @param array $fields
 	 * @param string $fetchClass
-	 * @param array $orderBy
-	 * @param string $asc
+	 * @param SQLOrderBy $oOrderBy
 	 * @param int $limit
 	 * @param number $page
-	 * @param array $groupBy
+	 * @param SQLGroupBy $groupBy
 	 * @return array
 	 */
-	public function genericSearch(SQLWhere $oWhere, array $fields = null, $fetchClass = true, array $orderBy = null, $asc = true, $limit = null, $page = 0, array $groupBy = null){
+	public function genericSearch(SQLWhere $oWhere, array $fields = null, $fetchClass = true, SQLOrderBy $oOrderBy = null, $limit = null, $page = 0, SQLGroupBy $oGroupBy = null){
 		
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
@@ -378,16 +366,16 @@ abstract class SQLSelect extends PQDDb{
 		//Versões anteriores ao 2012 do SQLServer
 		$rowNumber = "";
 		$isLessSqlSrv11 = false;
+
+		if($this->getDriverDB($this->getIndexCon()) == "mssql" && is_null($this->getDefaultOrderBy()) && is_null($oOrderBy))
+			$oOrderBy = new SQLOrderBy(array($this->getColPK()));
 		
 		//Limit para Versões anteriores ao 2012
-		if(!is_null($limit) && ($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0){
+		if(!is_null($limit) && ($this->getDriverDB($this->getIndexCon()) == "mssql") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0){
 			
 			$isLessSqlSrv11 = true;
 			
-			if ( is_null($this->getFieldsDefaultOrderBy()) && (is_null($orderBy) || count($orderBy) == 0) )
-				$orderBy = array($this->getColPK());
-			
-			$rowNumber = "ROW_NUMBER() OVER ( " . $this->retOrderBy($oWhere, $orderBy, $asc) . " ) AS RowNum, ";
+			$rowNumber = "ROW_NUMBER() OVER ( " . $this->retOrderBy($oWhere, $oOrderBy) . " ) AS RowNum, ";
 			
 			$this->sql .= "SELECT * FROM (";
 		}
@@ -397,12 +385,12 @@ abstract class SQLSelect extends PQDDb{
 		$this->sql .= "SELECT " . $rowNumber . $sqlFields . " FROM " . $table . " " . $oWhere->getWhere(true);
 		
 		//Group By
-		if (!is_null($groupBy) && count($groupBy) > 0)
-			$this->sql .= " GROUP BY " . join(", ", $groupBy);
+		if (!is_null($oGroupBy))
+			$this->sql .= $oGroupBy->getGroupBy();
 		
 		//ORDER BY 
 		if(!$isLessSqlSrv11)
-			$this->sql .= $this->retOrderBy($oWhere, $orderBy, $asc);
+			$this->sql .= $this->retOrderBy($oWhere, $oOrderBy);
 
 		//Limit
 		if(!is_null($limit)){
@@ -412,10 +400,10 @@ abstract class SQLSelect extends PQDDb{
 			if($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mysql")
 				$this->sql .= " LIMIT " . (($page - 1) * $limit) . "," . $limit . ";";
 			//SQLServer 2012
-			else if(!is_null($limit) && ($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0)
+			else if(!is_null($limit) && $this->getDriverDB($this->getIndexCon()) == "mssql" && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0)
 				$this->sql .= " OFFSET " . (($page - 1) * $limit) . " ROWS FETCH NEXT " . $limit . " ROWS ONLY;";
 			//Versões anteriores ao 2012 do SQLServer
-			else if(!is_null($limit) && ($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mssql" || $this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv") && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0)
+			else if(!is_null($limit) && $this->getDriverDB($this->getIndexCon()) == "mssql" && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0)
 				$this->sql .= ") as vw WHERE RowNum BETWEEN " . ((($page - 1) * $limit) + 1) . " AND " . ((($page - 1) * $limit) + $limit) . ";";
 		}
 		else 
@@ -523,24 +511,10 @@ abstract class SQLSelect extends PQDDb{
 	}
 
 	/**
-	 * @param array $fieldsDefaultOrderBy
+	 * @param SQLOrderBy $oOrderBy
 	 */
-	public function setFieldsDefaultOrderBy(array $fieldsDefaultOrderBy){
-		$this->fieldsDefaultOrderBy = $fieldsDefaultOrderBy;
-	}
-	
-	/**
-	 * @param string $fieldDefaultOrderBy
-	 */
-	public function addFieldDefaultOrderBy($fieldDefaultOrderBy){
-		$this->fieldsDefaultOrderBy[] = $fieldDefaultOrderBy;
-	}
-	
-	/**
-	 * @param boolean $defaultOrderByAsc
-	 */
-	public function setDefaultOrderByAsc($defaultOrderByAsc){
-		$this->defaultOrderByAsc = $defaultOrderByAsc;
+	public function setDefaultOrderBy(SQLOrderBy $oOrderBy){
+		$this->defaultOrderBy = $oOrderBy;
 	}
 
 	/**
@@ -579,17 +553,10 @@ abstract class SQLSelect extends PQDDb{
 	}
 	
 	/**
-	 * @return array $fieldsDefaultOrderBy
+	 * @return SQLOrderBy $defaultOrderBy
 	 */
-	public function getFieldsDefaultOrderBy(){
-		return $this->fieldsDefaultOrderBy;
-	}
-	
-	/**
-	 * @return boolean $defaultOrderByAsc
-	 */
-	public function getDefaultOrderByAsc(){
-		return $this->defaultOrderByAsc;
+	public function getDefaultOrderBy(){
+		return $this->defaultOrderBy;
 	}
 	
 	/**

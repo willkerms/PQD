@@ -12,6 +12,8 @@ use PQD\SQL\SQLSelect;
  */
 abstract class PQDDAO extends SQLSelect{
 	
+	private $operation = null;
+	
 	/**
 	 * @var bool
 	 */
@@ -60,7 +62,7 @@ abstract class PQDDAO extends SQLSelect{
 			if($this->skipNull && !isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 				continue;
 			
-			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->getColPK() | ($col == $this->getColPK() && !$this->isAutoIncrement))){
+			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->getColPK() | ( $col == $this->getColPK() && !is_null($oEntity->{$this->getMethodGetPk()}() ) ) ) ){
 				$this->sql .= $comma . "\t" . $col;
 				$comma = "," . PHP_EOL;
 			}
@@ -74,7 +76,7 @@ abstract class PQDDAO extends SQLSelect{
 			if($this->skipNull && !isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 				continue;
 			
-			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->getColPK() | ($col == $this->getColPK() && !$this->isAutoIncrement))){
+			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->getColPK() | ( $col == $this->getColPK() && !is_null($oEntity->{$this->getMethodGetPk()}() ) ) ) ){
 				
 				if(isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 					$this->sql .= $comma . "\t" . $this->fieldsDefaultValuesOnInsert[$col];
@@ -86,7 +88,7 @@ abstract class PQDDAO extends SQLSelect{
 				$comma = "," . PHP_EOL;
 			}
 		}
-		$this->sql .= ");";
+		$this->sql .= PHP_EOL . ");";
 		return $this->setParams($oEntity, $paramValues);
 	}
 	
@@ -115,15 +117,17 @@ abstract class PQDDAO extends SQLSelect{
 				$comma = "," . PHP_EOL;
 			}
 		}
-			
-		$this->sql .= PHP_EOL . "WHERE " . $this->getColPK() . " = :" . $this->getColPK() . ";";
+		
+		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " AND (" . $this->defaultWhereOnDelete->getWhere(false) . ")" : '';
+		
+		$this->sql .= PHP_EOL . "WHERE " . $this->getColPK() . " = :" . $this->getColPK() . ($this->getOperation() == "D" ? $strDefaultWhere : null) . ";";
 		
 		return $this->setParams($oEntity, $paramValues);
 	}
 	
 	protected function prepareSQLDelete(PQDEntity $oEntity){
 		
-		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " " . $this->defaultWhereOnDelete->getWhere(false) : '';
+		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " AND (" . $this->defaultWhereOnDelete->getWhere(false) . ')' : '';
 		
 		$this->sql = "DELETE FROM " . $this->getTable() . " WHERE " . $this->getColPK() . " = :" . $this->getColPK() . $strDefaultWhere . ";";
 		return $this->setParams($oEntity, array($this->getColPK() => $this->getField($this->getColPK())));
@@ -131,12 +135,20 @@ abstract class PQDDAO extends SQLSelect{
 	
 	protected function save(PQDEntity &$oEntity){
 		
-		if (is_null($oEntity->{$this->getMethodGetPk()}())) //INSERT
+		//Para forçar operações de insert mesmo quando a chave primária já está setada!
+		if (is_null($this->getOperation())){
+			if (is_null($oEntity->{$this->getMethodGetPk()}()))
+				$this->setOperation("I");
+			else
+				$this->setOperation("U");
+		}
+		
+		if ($this->getOperation() == "I") //INSERT
 			$st = $this->prepareSQLInsert($oEntity);
 		else
 			$st = $this->prepareSQLUpdate($oEntity);//UPDATE
 		
-		if($st !== false && $st->execute()){
+		if($st !== false && $st->execute() === true){
 			$id = is_null($oEntity->{$this->getMethodGetPk()}()) ? $this->getConnection($this->getIndexCon())->lastInsertId() : $oEntity->{$this->getMethodGetPk()}();
 			$oEntity = $this->retEntity($id);
 			return true;
@@ -159,9 +171,12 @@ abstract class PQDDAO extends SQLSelect{
 	 * @param SQLWhere $oWhere
 	 */
 	protected function deleteGeneric(SQLWhere $oWhere){
+		
 		if(is_null($this->getConnection($this->getIndexCon()))) return false;
 		
-		$this->sql = "DELETE FROM " . $this->getTable() . " " . $oWhere->getWhere(true);
+		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " AND (" . $this->defaultWhereOnDelete->getWhere(false) . ')' : '';
+		
+		$this->sql = "DELETE FROM " . $this->getTable() . " " . $oWhere->getWhere(true) . $strDefaultWhere;
 		return $this->getConnection($this->getIndexCon())->exec($this->sql) !== false;
 	}
 	
@@ -218,7 +233,7 @@ abstract class PQDDAO extends SQLSelect{
 	 * @param string $fieldIgnoreOnUpdate
 	 */
 	public function addFieldIgnoreOnUpdate($fieldIgnoreOnUpdate){
-		$this->fieldsIgnoreOnUpdate[$fieldIgnoreOnUpdate] = count($this->fieldsIgnoreOnUpdate) - 1;
+		$this->fieldsIgnoreOnUpdate[$fieldIgnoreOnUpdate] = count($this->fieldsIgnoreOnUpdate);
 	}
 
 	/**
@@ -232,7 +247,7 @@ abstract class PQDDAO extends SQLSelect{
 	 * @param string $fieldIgnoreOnInsert
 	 */
 	public function addFieldIgnoreOnInsert($fieldIgnoreOnInsert){
-		$this->fieldsIgnoreOnInsert[$fieldIgnoreOnInsert] = count($this->fieldsIgnoreOnInsert) - 1;
+		$this->fieldsIgnoreOnInsert[$fieldIgnoreOnInsert] = count($this->fieldsIgnoreOnInsert);
 	}
 
 	/**
@@ -291,5 +306,21 @@ abstract class PQDDAO extends SQLSelect{
 	public function setSkipNull($skipNull) {
 
 		$this->skipNull = $skipNull;
+	}
+	
+	/**
+	 * @return string $operation
+	 */
+	public function getOperation() {
+
+		return $this->operation;
+	}
+
+	/**
+	 * @param string $operation
+	 */
+	public function setOperation($operation) {
+
+		$this->operation = $operation;
 	}
 }

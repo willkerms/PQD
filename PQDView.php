@@ -76,23 +76,23 @@ class PQDView {
 			if(!IS_DEVELOPMENT){
 				ob_start();
 				
-				if(!is_null($this->tplHeader) && trim($this->tplHeader) != "")
+				if(!is_null($this->tplHeader) && trim($this->tplHeader) != "" && !IS_CLI)
 					require_once $this->tplHeader;
 				
 				require $this->view;
 				
-				if(!is_null($this->tplFooter) && trim($this->tplFooter) != "")
+				if(!is_null($this->tplFooter) && trim($this->tplFooter) != "" && !IS_CLI)
 					require_once $this->tplFooter;
 				
 				echo PQDUtil::withoutSpaces(ob_get_clean(), true, true);
 			}
 			else{
-				if(!is_null($this->tplHeader) && trim($this->tplHeader) != "")
+				if(!is_null($this->tplHeader) && trim($this->tplHeader) != "" && !IS_CLI)
 					require_once $this->tplHeader;
 				
 				require $this->view;
 				
-				if(!is_null($this->tplFooter) && trim($this->tplFooter) != "")
+				if(!is_null($this->tplFooter) && trim($this->tplFooter) != "" && !IS_CLI)
 					require_once $this->tplFooter;
 			}
 		}

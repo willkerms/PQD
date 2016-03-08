@@ -1,6 +1,7 @@
 <?php
 namespace PQD;
 
+use Zend\Crypt\PublicKey\Rsa\PublicKey;
 /**
  * Classe gerenciadora de conexões com o Banco de Dados
  * 
@@ -48,6 +49,10 @@ class PQDDb{
 	 */
 	protected function getExceptions(){
 		return $this->exceptions;
+	}
+	
+	public function getDriverDB($indexCon = 0){
+		return $this->getConnection($indexCon)->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "sqlsrv" ? "mssql": $this->getConnection($indexCon)->getAttribute(PQDPDO::ATTR_DRIVER_NAME);
 	}
 
 	/**

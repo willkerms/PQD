@@ -232,6 +232,16 @@ class PQDApp {
 		$this->secureEnv = is_array($environments) ? array_flip($environments) : array($environments => 0);
 		return $this;
 	}
+	/**
+	 * Adiciona um ambientes que exige atutenticação
+	 * 
+	 * @param string $environments
+	 * @return PQDApp
+	 */
+	public function addSecureEnv($environments){
+		$this->secureEnv[$environments] = count($this->secureEnv);
+		return $this;
+	}
 	
 	/**
 	 * Mapeamento de hosts aos ambientes exemplo: array('lotus.com.br' => 'admin')
@@ -272,6 +282,20 @@ class PQDApp {
 		}
 	}
 	
+	private function isSafePath(){
+		//Quando o ambiente e mapeado por host, e este ambiente esta acessando outro ambiente, a url a ser considerada é a do ambiente acessado.
+		if(!IS_CLI && isset($this->aHostsEnv[$_SERVER['HTTP_HOST']]) && APP_ENVIRONMENT != $this->aHostsEnv[$_SERVER['HTTP_HOST']])
+			$url = APP_ENVIRONMENT . '/' . APP_URL;
+		else 
+			$url = APP_URL;
+		
+		return 
+			isset($this->secureEnv[APP_ENVIRONMENT]) && 
+			!isset($_SESSION[APP_ENVIRONMENT]) && 
+			substr(APP_URL, 0, 5) != 'login' && 
+			!isset($this->aFreePaths[$url]);
+	}
+	
 	/**
 	 * Executa a aplicação!
 	 * 
@@ -281,7 +305,7 @@ class PQDApp {
 		$this->setConstants();
 		$this->runClasses($this->aIniClasses);
 		
-		if (isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]) && substr(APP_URL, 0, 5) != 'login' && !isset($this->aFreePaths[APP_ENVIRONMENT . '/' . APP_URL])){
+		if ($this->isSafePath() && !IS_CLI){
 			header('Location: ' . APP_URL_ENVIRONMENT . 'login/' . APP_URL . (($_SERVER['QUERY_STRING'] != '') ? '?' . $_SERVER['QUERY_STRING'] : ''));
 			exit();
 		}
@@ -311,7 +335,7 @@ class PQDApp {
 			Util::contentType($_GET['rst']);
 		
 		if (is_dir(APP_PATH . 'modulos/' . $modulo)){
-			if (!isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $this->environments[APP_ENVIRONMENT] . "home" && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][APP_URL]) && !isset($this->aFreePaths[APP_ENVIRONMENT . '/' . APP_URL]))
+			if (!IS_CLI && !isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $this->environments[APP_ENVIRONMENT] . "home" && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][APP_URL]) && !isset($this->aFreePaths[APP_ENVIRONMENT . '/' . APP_URL]))
 				$this->httpError(403);
 			else{
 				$ctrl = ucwords(basename(APP_PATH . 'modulos/' . $modulo)) . 'Ctrl';
@@ -358,15 +382,16 @@ class PQDApp {
 		
 		switch ($httpError) {
 			case 403:
-				$oView->title = ': 403 Acesso Proibido(Forbidden)';
+				$oView->title = '403 Acesso Proibido(Forbidden)';
 			break;
 			case 404:
-				$oView->title = ': 404 N&atilde;o Encontrado(Not Found)';
+				$oView->title = '404 N&atilde;o Encontrado(Not Found)';
 			break;
 			case 500:
-				$oView->title = ': 500 Erro interno do Servidor(Internal Server Error)';
+				$oView->title = '500 Erro interno do Servidor(Internal Server Error)';
 			break;
 		}
+		
 		if(isset($_GET['rst'])){
 			switch ($_GET['rst']){
 				case 'json':
@@ -379,6 +404,11 @@ class PQDApp {
 				break;
 			}
 		}
+		
+		if(IS_CLI){
+			$oView->setAutoRender(false);
+			echo $oView->title . PHP_EOL;
+		}
 	}
 	
 	/**
@@ -387,12 +417,39 @@ class PQDApp {
 	 * @return PQDApp
 	 */
 	private function iniApp() {
+		define("APP_CWD", getcwd());
 		chdir(APP_PATH);
 		$this->setIncludePath();
 		return $this;
 	}
+	private function setSapiConstants(){
+		switch (php_sapi_name()) {
+			case "cli":
+				define('IS_APACHE', false);
+				define('IS_CGI', false);
+				define('IS_CLI', true);
+			break;
+			case "apache":
+				define('IS_APACHE', true);
+				define('IS_CGI', false);
+				define('IS_CLI', false);
+			break;
+			case "cgi":
+				define('IS_APACHE', false);
+				define('IS_CGI', true);
+				define('IS_CLI', false);
+			break;
+			default:
+				define('IS_APACHE', false);
+				define('IS_CGI', false);
+				define('IS_CLI', false);
+			break;
+		}
+	}
 	
 	private function setConstants() {
+		
+		$this->setSapiConstants();
 		
 		//Verificando se está rodando a partir dá pasta /public
 		if(strstr($_SERVER['REQUEST_URI'], basename(APP_PATH) . '/public')){
@@ -427,7 +484,7 @@ class PQDApp {
 			}
 			else{
 				//Quando o ambiente é mapeando em algum host
-				if(isset($this->aHostsEnv[$_SERVER['HTTP_HOST']]) && isset($this->environments[$this->aHostsEnv[$_SERVER['HTTP_HOST']]]))
+				if(isset($_SERVER['HTTP_HOST']) && isset($this->aHostsEnv[$_SERVER['HTTP_HOST']]) && isset($this->environments[$this->aHostsEnv[$_SERVER['HTTP_HOST']]]))
 					define("APP_ENVIRONMENT", $this->aHostsEnv[$_SERVER['HTTP_HOST']]);
 				else
 					define("APP_ENVIRONMENT", $this->envDefault);
@@ -475,17 +532,17 @@ class PQDApp {
 			$log = array(
 	 			'environment' => APP_ENVIRONMENT,
 				'date' => time(),
-				'ip' => $_SERVER['REMOTE_ADDR'],
+				'ip' => isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '::1',
 				'http_user' => isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : null,
 				'user_id' => isset($_SESSION['user']['idUsuario']) ? $_SESSION['user']['idUsuario'] : null,
 				'user' => isset($_SESSION['user']['login']) ? $_SESSION['user']['login'] : null,
 				'request_uri' => $_SERVER['REQUEST_URI'],
-				'host' => $_SERVER['HTTP_HOST'],
+				'host' => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST']: null,
 				'controller' => $this->logController,
 				'action' => $this->logAction,
 				'app_url' => APP_URL,
 				'app_url_public' => APP_URL_PUBLIC,
-				'method' => $_SERVER['REQUEST_METHOD'],
+				'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null,
 				'http_response' => http_response_code()
 			);
 			

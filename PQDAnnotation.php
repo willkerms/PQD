@@ -170,8 +170,9 @@ class PQDAnnotation{
 				$values = $this->retValues('@table', $matches[0]);
 				$table = isset($values[0]) ? array('name' => $values[0]) : $values;
 				
-				if (isset($table['clsView'])) {
-					$fields = $this->getAllFieldsFile(str_replace("\\", '/', $table['clsView']) . ".php");
+				if (isset($table['clsView']) || isset($table['clsDTO'])) {
+					$cls = isset($table['clsView']) ? $table['clsView'] : $table['clsDTO'];
+					$fields = $this->getAllFieldsFile(str_replace("\\", '/', $cls) . ".php");
 					
 					self::$annotation[$this->class]['viewFields'] = $fields->fields;
 					self::$annotation[$this->class]['viewFilters'] = $fields->filters;

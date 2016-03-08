@@ -17,7 +17,7 @@ class PQDExceptions {
 	}
 
 	/**
-	 * @return the $exceptions
+	 * @return array[\Exception] $exceptions
 	 */
 	public function getExceptions() {
 		return self::$exceptions;

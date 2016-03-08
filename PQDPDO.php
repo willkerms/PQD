@@ -13,6 +13,8 @@ class PQDPDO extends \PDO{
 		
 		if($result === false)
 			PQDApp::getApp()->getExceptions()->setException( new PQDExceptionsDB($this->errorInfo(), "Erro na busca: " . $statement));
+		else if(defined("APP_DEBUG_SQL") && APP_DEBUG_SQL === true)
+			PQDApp::getApp()->getExceptions()->setException( new PQDExceptionsDB($this->errorInfo(), "Debug SQL: " . $statement));
 		
 		return $result;
 	}
@@ -23,6 +25,8 @@ class PQDPDO extends \PDO{
 		
 		if($result === false)
 			PQDApp::getApp()->getExceptions()->setException( new PQDExceptionsDB($this->errorInfo(), "Erro ao executar SQL: " . $statement));
+		else if(defined("APP_DEBUG_SQL") && APP_DEBUG_SQL === true)
+			PQDApp::getApp()->getExceptions()->setException( new PQDExceptionsDB($this->errorInfo(), "Debug SQL: " . $statement));
 		
 		return $result;
 	}

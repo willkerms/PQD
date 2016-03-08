@@ -86,11 +86,11 @@ class PQDUtil {
 	 * @author Willker Moraes Silva
 	 * @since 2014-07-17
 	 * @param string $class
-	 * @param \stdClass $array
+	 * @param \stdClass $oData
 	 * @param string $nameSpace
 	 * @return mixed
 	 */
-	public static function setObjs($class, \stdClass $array, $nameSpace){
+	public static function setObjs($class, \stdClass $oData, $nameSpace = null){
 	
 		$objRet = null;
 		if(substr($nameSpace, -2) == "[]"){
@@ -98,12 +98,15 @@ class PQDUtil {
 			$nameSpace = substr($nameSpace, 0, -2);
 		}
 	
-		foreach ($array as $key => $value){
+		foreach ($oData as $key => $value){
 
-			$obj = explode(":", $key);
+			if(!is_null($nameSpace))
+				$obj = explode(":", $key);
+			else
+				$obj =  array(null, $key);
 			
 			if (count($obj) > 0 && $obj[0] == $nameSpace) {
-	
+				
 				if(is_array($objRet)){
 					foreach ($value as $k => $v){
 						if(!isset($objRet[$k]))
@@ -510,6 +513,13 @@ class PQDUtil {
 		$contentType = 'text/html';
 		
 		switch ($type) {
+			case 'css':
+				$contentType = 'text/css';
+			break;
+			case 'js':
+				$contentType = 'text/javascript';
+			break;
+			case 'htm':
 			case 'html':
 				$contentType = 'text/html';
 			break;
@@ -517,6 +527,7 @@ class PQDUtil {
 				$contentType = 'application/json';
 				echo $fileNameOrFirstLine;
 			break;
+			case 'img':
 			case 'jpeg':
 			case 'jpg':
 				$contentType = 'image/jpeg';
@@ -533,6 +544,7 @@ class PQDUtil {
 			case 'svg':
 				$contentType = 'image/svg+xml';
 			break;
+			case 'txt':
 			case 'text':
 				$contentType = 'text/plain';
 			break;
@@ -574,7 +586,7 @@ class PQDUtil {
 		
 		if(is_null($document)){
 			$data = self::utf8_encode($data);
-			$document =  new \DOMDocument();
+			$document =  new \DOMDocument("1.0");
 			$node = $document->createElement("data");
 			$document->appendChild($node);
 		}
