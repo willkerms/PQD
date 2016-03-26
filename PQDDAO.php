@@ -14,6 +14,8 @@ abstract class PQDDAO extends SQLSelect{
 	
 	private $operation = null;
 	
+	private $cleanOperation = false;
+	
 	/**
 	 * @var bool
 	 */
@@ -151,10 +153,20 @@ abstract class PQDDAO extends SQLSelect{
 		if($st !== false && $st->execute() === true){
 			$id = is_null($oEntity->{$this->getMethodGetPk()}()) ? $this->getConnection($this->getIndexCon())->lastInsertId() : $oEntity->{$this->getMethodGetPk()}();
 			$oEntity = $this->retEntity($id);
+			
+			$this->cleanOperation();
+			
 			return true;
 		}
-		else 
+		else {
+			$this->cleanOperation();
 			return false;
+		}
+	}
+	
+	private function cleanOperation(){
+		if($this->cleanOperation)
+			$this->operation = null;
 	}
 	
 	/**
@@ -162,7 +174,11 @@ abstract class PQDDAO extends SQLSelect{
 	 * @param PQDEntity $oEntity
 	 */
 	protected function delete(PQDEntity $oEntity){
-		return $this->prepareSQLDelete($oEntity)->execute();
+		$return = $this->prepareSQLDelete($oEntity)->execute();
+		
+		$this->cleanOperation();
+		
+		return $return;
 	}
 	
 	/**
@@ -177,7 +193,12 @@ abstract class PQDDAO extends SQLSelect{
 		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " AND (" . $this->defaultWhereOnDelete->getWhere(false) . ')' : '';
 		
 		$this->sql = "DELETE FROM " . $this->getTable() . " " . $oWhere->getWhere(true) . $strDefaultWhere;
-		return $this->getConnection($this->getIndexCon())->exec($this->sql) !== false;
+		
+		$return = $this->getConnection($this->getIndexCon())->exec($this->sql) !== false;
+		
+		$this->cleanOperation();
+		
+		return $return;
 	}
 	
 	/**
@@ -322,5 +343,18 @@ abstract class PQDDAO extends SQLSelect{
 	public function setOperation($operation) {
 
 		$this->operation = $operation;
+	}
+	
+	/**
+	 * @return bool $cleanOperation
+	 */
+	public function getCleanOperation() {
+		return $this->cleanOperation;
+	}
+	/**
+	 * @param boolean $cleanOperation
+	 */
+	public function setCleanOperation($cleanOperation) {
+		$this->cleanOperation = $cleanOperation;
 	}
 }

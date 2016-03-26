@@ -228,8 +228,8 @@ class PQDUtil {
 		}
 	}
 	
-	public static function json_encode($value, $options = null){
-		return json_encode( self::utf8_encode($value), $options);
+	public static function json_encode($value, $options = null, $utf8 = true){
+		return json_encode( $utf8 ? self::utf8_encode($value) : $value, $options);
 	}
 	
 	public static function json_decode($json, $assoc = false, $depth = 512, $options = 0){
@@ -376,8 +376,10 @@ class PQDUtil {
 	public static function isCnpj($cnpj){
 		$cnpj = self::onlyNumbers($cnpj);
 	
+		/*
 		if(strlen($cnpj) != 14 || self::isValid($cnpj, "/(^0{14}$)|(^1{14}$)|(^2{14}$)|(^3{14}$)|(^4{14}$)|(^5{14}$)|(^6{14}$)|(^7{14}$)|(^8{14}$)|(^9{14}$)/")) 
 			return false;
+		*/
 				
 		
 		for ($i = 0, $sum = 0; $i < 12; $i++)
@@ -395,9 +397,10 @@ class PQDUtil {
 	
 	public static function isCpf($cpf){
 		$cpf = self::onlyNumbers($cpf);
-		
+		/*
 		if(strlen($cpf) != 11 || self::isValid($cpf, "/(^0{11}$)|(^1{11}$)|(^2{11}$)|(^3{11}$)|(^4{11}$)|(^5{11}$)|(^6{11}$)|(^7{11}$)|(^8{11}$)|(^9{11}$)/"))
 			return false;
+		*/
 		
 		for ($i = 0, $sum = 0; $i < 9; $i++)
 			$sum += (int)substr($cpf, $i, 1) * (10-$i);

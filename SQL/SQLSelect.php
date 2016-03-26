@@ -283,7 +283,7 @@ abstract class SQLSelect extends PQDDb{
 		
 		if(is_null($this->getConnection($this->getIndexCon()))) return $data;
 		
-		if(($st = $this->getConnection($this->indexCon)->query($this->sql)) !== false){
+		if(($st = $this->getConnection($this->getIndexCon())->query($this->sql)) !== false){
 			if($fetchClass)
 				$data = $st->fetchAll(PQDPDO::FETCH_CLASS, $clsFetch);
 			else
@@ -356,6 +356,10 @@ abstract class SQLSelect extends PQDDb{
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
 		
+		$sOrderBy = $this->retOrderBy($oWhere, $oOrderBy);
+		if(empty($sOrderBy) && !is_null($limit) && $this->getDriverDB($this->indexCon) == "mssql")
+			$sOrderBy = " ORDER BY " . $this->getColPK();
+		
 		$this->sql = "";
 		
 		if(!is_null($fields))
@@ -375,7 +379,7 @@ abstract class SQLSelect extends PQDDb{
 			
 			$isLessSqlSrv11 = true;
 			
-			$rowNumber = "ROW_NUMBER() OVER ( " . $this->retOrderBy($oWhere, $oOrderBy) . " ) AS RowNum, ";
+			$rowNumber = "ROW_NUMBER() OVER ( " . $sOrderBy . " ) AS RowNum, ";
 			
 			$this->sql .= "SELECT * FROM (";
 		}
@@ -390,14 +394,14 @@ abstract class SQLSelect extends PQDDb{
 		
 		//ORDER BY 
 		if(!$isLessSqlSrv11)
-			$this->sql .= $this->retOrderBy($oWhere, $oOrderBy);
+			$this->sql .= $sOrderBy;
 
 		//Limit
 		if(!is_null($limit)){
 			$page = !is_null($limit) && $page <= 0 ? 1 : $page;
 			$limit = $limit <= 0 ? 12 : $limit;
 			
-			if($this->getConnection()->getAttribute(PQDPDO::ATTR_DRIVER_NAME) == "mysql")
+			if($this->getDriverDB($this->getIndexCon()) == "mysql")
 				$this->sql .= " LIMIT " . (($page - 1) * $limit) . "," . $limit . ";";
 			//SQLServer 2012
 			else if(!is_null($limit) && $this->getDriverDB($this->getIndexCon()) == "mssql" && version_compare($this->getConnection($this->indexCon)->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0)

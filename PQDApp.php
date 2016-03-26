@@ -271,6 +271,16 @@ class PQDApp {
 		return $this;
 	}
 	
+	/**
+	 * Adiciona caminhos livres que podem ser acessados de qualquer ambiente
+	 * 
+	 * @param string $paths
+	 */
+	public function addFreePaths($paths){
+		$this->aFreePaths[$paths] = count($this->aFreePaths);
+		return $this;
+	}
+	
 	public function getEnvironments(){
 		return array_keys($this->environments);
 	}
