@@ -129,7 +129,7 @@ abstract class SQLSelect extends PQDDb{
 	 * 
 	 * @param PQDEntity $oEntity
 	 * @param array $params
-	 * @return PDOStatement
+	 * @return \PDOStatement
 	 */
 	protected function setParams(PQDEntity $oEntity, array $params){
 		if(is_null($this->getConnection($this->getIndexCon()))) return false;
@@ -217,9 +217,12 @@ abstract class SQLSelect extends PQDDb{
 		$return = "";
 		if (!is_null($oOrderBy)){
 			
+			if($this->getDefaultWhereOnSelect() instanceof SQLJoin)
+				$oOrderBy->setAlias($this->getDefaultWhereOnSelect()->getAlias());
+			
 			if($oWhere instanceof SQLJoin)
 				$oOrderBy->setAlias($oWhere->getAlias());
-					
+			
 			$return = $oOrderBy->getOrderBy();
 		}
 		
@@ -237,7 +240,7 @@ abstract class SQLSelect extends PQDDb{
 				
 				if($oWhereDefault instanceof SQLJoin ){
 					$oWhere2->setJoins(array_merge($oWhereDefault->getJoins(false), $oWhere2->getJoins(false)));
-					$oWhereDefault->clearJoins()->setAlias("");
+					$oWhereDefault->clearJoins()->setAlias($oWhere2->getAlias());
 				}
 				else
 					$oWhereDefault->setAlias($oWhere2->getAlias());
@@ -246,7 +249,7 @@ abstract class SQLSelect extends PQDDb{
 					if($oWhere2->count() > 0)
 						$oWhere2->setAnd();
 					
-					$oWhere2->setSQL($oWhereDefault->getWhere(false));
+					$oWhere2->setSQL(trim($oWhereDefault->getWhere(false)));
 				}
 			}
 			//else if($this->getDefaultWhereOnSelect() instanceof SQLJoin){

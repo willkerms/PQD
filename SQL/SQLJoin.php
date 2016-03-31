@@ -56,11 +56,11 @@ class SQLJoin extends SQLWhere {
 
 	/**
 	 * 
-	 * @return mixed
+	 * @return mixed array|string
 	 */
 	public function getJoins($string = true){
 		if($string)
-			return $this->getAlias() . PHP_EOL . join(" " . PHP_EOL, $this->joins);
+			return $this->getAlias() . " " . join(" " . PHP_EOL, $this->joins);
 		else 
 			return $this->joins;
 	}
@@ -92,6 +92,6 @@ class SQLJoin extends SQLWhere {
 	 * @return string
 	 */
 	public function getWhere($where = true){
-		return $this->getJoins() . " " . PHP_EOL . parent::getWhere($where);
+		return ($where ? $this->getJoins() . " " : '') . parent::getWhere($where);
 	}
 }

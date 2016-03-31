@@ -52,6 +52,11 @@ class PQDApp {
 	private $aHostsEnv = array();
 	
 	/**
+	 * @var array
+	 */
+	private $aEvnTranslateFile = array();
+	
+	/**
 	 * @var PQDDb
 	 */
 	private $PQDDb;
@@ -223,6 +228,28 @@ class PQDApp {
 	}
 	
 	/**
+	 * Ambientes para a tradução de arquivos para diretorio/controllers
+	 * 
+	 * @param array|string $classes
+	 * @return PQDApp
+	 */
+	public function setEvnTranslateFile($environments){
+		$this->aEvnTranslateFile = is_array($environments) ? array_flip($environments) : array($environments => 0);
+		return $this;
+	}
+	
+	/**
+	 * Adiciona um ambiente para a tradução de arquivos para diretorio/controllers
+	 * 
+	 * @param string $classes
+	 * @return PQDApp
+	 */
+	public function addEvnTranslateFile($environment){
+		$this->aEvnTranslateFile[$environment] = count($this->aEvnTranslateFile);
+		return $this;
+	}
+	
+	/**
 	 * Ambientes que exigem atutenticação
 	 * 
 	 * @param array|string $environments
@@ -343,6 +370,13 @@ class PQDApp {
 
 		if(isset($_GET['rst']))
 			Util::contentType($_GET['rst']);
+		
+		if(isset($this->aEvnTranslateFile[APP_ENVIRONMENT]) && !is_dir(APP_PATH . 'modulos/' . $modulo)){
+			$pathinfo = pathinfo($modulo);
+			
+			if(is_dir(APP_PATH . 'modulos/' . $pathinfo['dirname'] . '/' . $pathinfo['filename']))
+				$modulo = $pathinfo['dirname'] . '/' . $pathinfo['filename'];
+		}
 		
 		if (is_dir(APP_PATH . 'modulos/' . $modulo)){
 			if (!IS_CLI && !isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $this->environments[APP_ENVIRONMENT] . "home" && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][APP_URL]) && !isset($this->aFreePaths[APP_ENVIRONMENT . '/' . APP_URL]))

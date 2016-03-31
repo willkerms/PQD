@@ -208,6 +208,11 @@ class PQDAnnotation{
 		}
 	}
 	
+	/**
+	 * Retorna os campos dá classe DTO ou Vw
+	 * 
+	 * @return array
+	 */
 	public function getViewFields(){
 		if(isset(self::$annotation[$this->class]['viewFields']))
 			return self::$annotation[$this->class]['viewFields'];
@@ -217,6 +222,9 @@ class PQDAnnotation{
 		}
 	}
 	
+	/**
+	 * Retorna os filtros cá classe DTO ou Vw
+	 */
 	public function getViewFilters(){
 		if(isset(self::$annotation[$this->class]['viewFilters']))
 			return self::$annotation[$this->class]['viewFilters'];
@@ -226,6 +234,11 @@ class PQDAnnotation{
 		}
 	}
 	
+	/**
+	 * Retorna todos os campos inclusive os que estão na classe DTO ou vw
+	 * 
+	 * @return array
+	 */
 	public function getAllFields(){
 		
 		if(isset(self::$annotation[$this->class]['allFields']))
@@ -237,6 +250,11 @@ class PQDAnnotation{
 		}
 	}
 	
+	/**
+	 * Retorna todos os campos filtros inclusive os dá classe DTO ou vw
+	 * 
+	 * @return array
+	 */
 	public function getAllFilters(){
 		
 		if(isset(self::$annotation[$this->class]['allFilters']))

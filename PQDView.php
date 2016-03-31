@@ -55,10 +55,7 @@ class PQDView {
 	 */
 	function __construct ($view, PQDExceptions $exceptions = null) {
 
-		if(is_file($view))
-			$this->view = realpath($view);
-		else
-			throw new \Exception("Erro ao Carregar View: " . $view, 3);
+		$this->setViewFile($view);
 
 		$this->exceptions = $exceptions;
 		
@@ -126,6 +123,16 @@ class PQDView {
 	 */
 	public function getView() {
 		return $this->view;
+	}
+	
+	/**
+	 * @return string $file
+	 */
+	public function setViewFile($file) {
+		if(is_file($file))
+			$this->view = realpath($file);
+		else
+			throw new \Exception("Erro ao Carregar View: " . $file, 3);
 	}
 
 	/**

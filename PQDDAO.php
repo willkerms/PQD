@@ -51,6 +51,15 @@ abstract class PQDDAO extends SQLSelect{
 	 */
 	private $skipNull = false;
 	
+	
+	/**
+	 * Prepara a inserção de um registro
+	 * 
+	 * @param PQDEntity $oEntity
+	 * @param array $fields
+	 * 
+	 * @return \PDOStatement
+	 */
 	protected function prepareSQLInsert(PQDEntity $oEntity, array $fields = null){
 		
 		$this->sql = "INSERT INTO " . $this->getTable() . "(" . PHP_EOL;
@@ -94,6 +103,14 @@ abstract class PQDDAO extends SQLSelect{
 		return $this->setParams($oEntity, $paramValues);
 	}
 	
+	/**
+	 * Prepara a atualização de um registro
+	 * 
+	 * @param PQDEntity $oEntity
+	 * @param array $fields
+	 * 
+	 * @return \PDOStatement
+	 */
 	protected function prepareSQLUpdate(PQDEntity $oEntity, array $fields = null){
 		
 		$this->sql = "UPDATE " . $this->getTable() . " SET" . PHP_EOL;
@@ -127,6 +144,12 @@ abstract class PQDDAO extends SQLSelect{
 		return $this->setParams($oEntity, $paramValues);
 	}
 	
+	/**
+	 * Prepara a exclusão de um registro
+	 * 
+	 * @param PQDEntity $oEntity
+	 * @return \PDOStatement
+	 */
 	protected function prepareSQLDelete(PQDEntity $oEntity){
 		
 		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " AND (" . $this->defaultWhereOnDelete->getWhere(false) . ')' : '';
