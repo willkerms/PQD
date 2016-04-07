@@ -187,7 +187,7 @@ abstract class PQDDAO extends SQLSelect{
 		}
 	}
 	
-	private function cleanOperation(){
+	protected function cleanOperation(){
 		if($this->cleanOperation)
 			$this->operation = null;
 	}

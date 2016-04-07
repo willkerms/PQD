@@ -55,6 +55,10 @@ abstract class PQDController implements IPQDController{
 	 */
 	protected function setView ($view) {
 
+		//Quando sobre escreve a view não deixa a view antiga ser exibida ao ser limpada pelo garbage collection!
+		if (!is_null($this->getView()))
+			$this->getView()->setAutoRender(false);
+			
 		if (is_object($view) && $view instanceof PQDView)
 			$this->view = $view;
 		else

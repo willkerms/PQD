@@ -467,27 +467,29 @@ class PQDApp {
 		return $this;
 	}
 	private function setSapiConstants(){
-		switch (php_sapi_name()) {
-			case "cli":
-				define('IS_APACHE', false);
-				define('IS_CGI', false);
-				define('IS_CLI', true);
-			break;
-			case "apache":
-				define('IS_APACHE', true);
-				define('IS_CGI', false);
-				define('IS_CLI', false);
-			break;
-			case "cgi":
-				define('IS_APACHE', false);
-				define('IS_CGI', true);
-				define('IS_CLI', false);
-			break;
-			default:
-				define('IS_APACHE', false);
-				define('IS_CGI', false);
-				define('IS_CLI', false);
-			break;
+		if(!defined('IS_APACHE')){
+			switch (php_sapi_name()) {
+				case "cli":
+					define('IS_APACHE', false);
+					define('IS_CGI', false);
+					define('IS_CLI', true);
+				break;
+				case "apache":
+					define('IS_APACHE', true);
+					define('IS_CGI', false);
+					define('IS_CLI', false);
+				break;
+				case "cgi":
+					define('IS_APACHE', false);
+					define('IS_CGI', true);
+					define('IS_CLI', false);
+				break;
+				default:
+					define('IS_APACHE', false);
+					define('IS_CGI', false);
+					define('IS_CLI', false);
+				break;
+			}
 		}
 	}
 	
