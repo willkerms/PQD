@@ -87,7 +87,7 @@ class PQDApp {
 	private $logAction;
 	
 	
-	private function __construct($appPath, $environments = 'admin', $environmentDefault = 'admin'){
+	private function __construct($appPath, $environments = 'admin', $environmentDefault = 'admin', $publicPath = 'public/'){
 		
 		if(!is_null(self::$oPQDApp))
 			throw new \Exception("Aplicação já Iniciada!", 10);
@@ -99,6 +99,7 @@ class PQDApp {
 		$this->envDefault = $environmentDefault;
 		
 		define('APP_PATH', $appPath);
+		define('APP_PATH_PUBLIC', $publicPath);
 		
 		if(!defined('APP_DEBUG'))
 			define('APP_DEBUG', false);
@@ -115,14 +116,14 @@ class PQDApp {
 		return self::$oPQDApp;
 	}
 	
-	public static function run($appPath, $environments, $environmentDefault){
+	public static function run($appPath, $environments, $environmentDefault, $publicPath = 'public/'){
 		
 		if (IS_DEVELOPMENT)
 			ini_set("display_errors", "On");
 		else
 			ini_set("display_errors", "Off");
 		
-		return (new self($appPath, $environments, $environmentDefault))->iniApp();
+		return (new self($appPath, $environments, $environmentDefault, $publicPath))->iniApp();
 	}
 	
 	/**

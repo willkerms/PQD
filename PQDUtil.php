@@ -169,7 +169,9 @@ class PQDUtil {
 	public static function formatDateTimeView($date = null){
 		
 		if(!empty($date)){
-			$nDate = \DateTime::createFromFormat(PQD_FORMAT_DB_DATETIME, $date);
+			
+			$dateTemp = substr($date, 0, strlen(date(PQD_FORMAT_DB_DATETIME)));
+			$nDate = \DateTime::createFromFormat(PQD_FORMAT_DB_DATETIME, $dateTemp);
 			
 			if($nDate instanceof \DateTime)
 				return $nDate->format(PQD_FORMAT_VIEW_DATETIME);
@@ -419,7 +421,7 @@ class PQDUtil {
 	 * @param mixed $var
 	 * @param bool $dump
 	 */
-	public static function print_pre($var, $dump = true){
+	public static function print_pre($var, $dump = false){
 		echo "<pre>";
 
 		print_r($var);
@@ -500,6 +502,10 @@ class PQDUtil {
 		$rgb = array($r, $g, $b);
 		//return implode(",", $rgb); // returns the rgb values separated by commas
 		return $rgb; // returns an array with the rgb values
+	}
+	
+	public static function addZeros($str, $length, $type = STR_PAD_LEFT){
+		return str_pad($str, $length, "0", $type);
 	}
 	
 	public static function rgb2hex($rgb) {
@@ -611,6 +617,14 @@ class PQDUtil {
 		}
 		
 		return $document;
+	}
+	
+	public static function number_format($number, $decimals = 2, $dec_point = ',', $thousands_sep = '.'){
+
+		if(!is_null($number))
+			return number_format($number, $decimals, $dec_point, $thousands_sep);
+		else 
+			return $number;
 	}
 	
 	/**

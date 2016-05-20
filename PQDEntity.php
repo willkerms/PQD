@@ -15,4 +15,9 @@ class PQDEntity {
 	public function toJSON(){
 		return PQDUtil::json_encode($this->toArray());
 	}
+	
+	public function escapeHTML(){
+		PQDUtil::escapeHtml($this);
+		return $this;
+	}
 }

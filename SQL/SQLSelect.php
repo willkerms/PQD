@@ -179,26 +179,36 @@ abstract class SQLSelect extends PQDDb{
 		$st = $this->setParams($oEntity, array($this->colPK => $this->fields[$this->colPK]));
 		
 		if($st->execute()){
-			if($fetchClass){
+			
+			if($fetchClass)
 				$data = $st->fetchAll(PQDPDO::FETCH_CLASS, $clsFetch);
-				if(count($data) == 1)
-					return $data[0];
-				else
-					return new $clsFetch();
-			}
-			else{
+			else
 				$data = $st->fetchAll(PQDPDO::FETCH_NAMED);
-				
-				if(count($data) == 1)
-					return $data[0];
-				else
-					return array();
-			}
+			
+			if(count($data) == 1)
+				return $data[0];
+			else
+				return $this->retEmpty($fetchClass);
 		}
 		else{
 			$this->getExceptions()->setException( new \Exception("Erro ao retornar Entidade!"));
 			return new $this->clsEntity();
 		}
+	}
+	
+	/**
+	 * Retorna uma consulta vazia
+	 *
+	 * @param string $fetchClass
+	 * @return mixed PQDEntity|array
+	 */
+	protected function retEmpty($fetchClass = true){
+		$clsFetch = !is_null($this->getClsView()) ? $this->getClsView(): $this->getClsEntity();
+	
+		if ($fetchClass)
+			return new $clsFetch();
+		else
+			return array();
 	}
 	
 	private function retFieldsSelect(){

@@ -113,9 +113,11 @@ class PQDView {
 
 	/**
 	 * @param bool $autoRender
+	 * @return self
 	 */
 	public function setAutoRender ($autoRender) {
 		$this->autoRender = $autoRender;
+		return $this;
 	}
 
 	/**
@@ -129,6 +131,7 @@ class PQDView {
 	 * @return string $file
 	 */
 	public function setViewFile($file) {
+		$file = str_replace("\\", "/", $file);
 		if(is_file($file))
 			$this->view = realpath($file);
 		else
@@ -152,9 +155,11 @@ class PQDView {
 	/**
 	 * 
 	 * @param booelan $requireHeaderAndFooter
+	 * @return self
 	 */
 	public function setRequireHeaderAndFooter($requireHeaderAndFooter){
 		$this->requireHeaderAndFooter = $requireHeaderAndFooter;
+		return $this;
 	}
 	
 	/**
@@ -167,9 +172,11 @@ class PQDView {
 	/**
 	 * 
 	 * @param string $tplHeader
+	 * @return self
 	 */
 	public function setTplHeader($tplHeader){
 		$this->tplHeader = $tplHeader;
+		return $this;
 	}
 	
 	/**
@@ -182,9 +189,11 @@ class PQDView {
 	/**
 	 * 
 	 * @param string $tplFooter
+	 * @return self
 	 */
 	public function setTplFooter($tplFooter){
 		$this->tplFooter = $tplFooter;
+		return $this;
 	}
 	
 	/**
@@ -196,9 +205,11 @@ class PQDView {
 	
 	/**
 	 * @param array $fields
+	 * @return self
 	 */
 	public function setFields(array $fields){
 		$this->fields = $fields;
+		return $this;
 	}
 	
 	/**
@@ -250,7 +261,7 @@ class PQDView {
 	}
 
 	function __destruct () {
-		if ($this->autoRender)
+		if ($this->autoRender && !(defined("APP_DEBUG_VIEW") && APP_DEBUG_VIEW))
 			$this->render();
 	}
 }

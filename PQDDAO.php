@@ -108,15 +108,16 @@ abstract class PQDDAO extends SQLSelect{
 	 * 
 	 * @param PQDEntity $oEntity
 	 * @param array $fields
+	 * @param SQLWhere $oWhere
 	 * 
 	 * @return \PDOStatement
 	 */
-	protected function prepareSQLUpdate(PQDEntity $oEntity, array $fields = null){
+	protected function prepareSQLUpdate(PQDEntity $oEntity, array $fields = null, SQLWhere $oWhere = null){
 		
 		$this->sql = "UPDATE " . $this->getTable() . " SET" . PHP_EOL;
 		$comma = "";
 		$fields = is_null($fields) ? $this->getFields() : $fields;
-		$paramValues = array($this->getColPK() => $this->getField($this->getColPK()));
+		$paramValues = array();
 		
 		foreach ($fields as $col => $value){
 			
@@ -139,7 +140,12 @@ abstract class PQDDAO extends SQLSelect{
 		
 		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " AND (" . $this->defaultWhereOnDelete->getWhere(false) . ")" : '';
 		
-		$this->sql .= PHP_EOL . "WHERE " . $this->getColPK() . " = :" . $this->getColPK() . ($this->getOperation() == "D" ? $strDefaultWhere : null) . ";";
+		if(!is_null($oWhere))
+			$this->sql .= PHP_EOL . $oWhere->getWhere(true);
+		else{
+			$this->sql .= PHP_EOL . "WHERE " . $this->getColPK() . " = :" . $this->getColPK() . ($this->getOperation() == "D" ? $strDefaultWhere : null) . ";";
+			$paramValues[$this->getColPK()] = $this->getField($this->getColPK());
+		}
 		
 		return $this->setParams($oEntity, $paramValues);
 	}

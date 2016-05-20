@@ -51,7 +51,8 @@ abstract class PQDController implements IPQDController{
 	}
 
 	/**
-	 * @param mixed $view
+	 * @param unknown $view
+	 * @return PQDView
 	 */
 	protected function setView ($view) {
 
@@ -63,6 +64,8 @@ abstract class PQDController implements IPQDController{
 			$this->view = $view;
 		else
 			$this->view = new PQDView($view, $this->exceptions);
+		
+		return $this->getView();
 	}
 
 	/**
