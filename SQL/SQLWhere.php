@@ -3,10 +3,10 @@ namespace PQD\SQL;
 
 use PQD\PQDUtil;
 /**
- * 
- * 
+ *
+ *
  * 2015-12-10 Alteração dos filtros para contemplar os fields e values para fazer joins
- * 
+ *
  * @author Willker Moraes Sivla
  * @since 2012-08-08
  *
@@ -28,7 +28,7 @@ class SQLWhere {
 
 	const BETWEEN			= " BETWEEN #";
 	const NOT_BETWEEN		= " NOT BETWEEN #";
-	
+
 	const BETWEEN_STR			= " BETWEEN '#'";
 	const NOT_BETWEEN_STR		= " NOT BETWEEN '#'";
 
@@ -39,7 +39,7 @@ class SQLWhere {
 	const NUMBER = "#";
 
 	private $filters = array();
-	
+
 	private $alias = null;
 
 	/**
@@ -205,7 +205,7 @@ class SQLWhere {
 			array_push($this->filters, array('field' => $field, 'value' => str_replace('#', join("' AND '", $value), $type)));
 		else
 			array_push($this->filters, array('field' => $field, 'value' => str_replace('#', join(" AND ", $value), $type)));
-			
+
 		return $this;
 	}
 
@@ -240,28 +240,43 @@ class SQLWhere {
 		$this->filters = array();
 		return $this;
 	}
-	
+
 	/**
 	 * @return int
 	 */
 	public function count(){
 		return count($this->filters);
 	}
-	
+
 	public function getFilters(){
 		return $this->filters;
 	}
-	
+
 	public function setAlias($alias){
 		$this->alias = $alias;
 	}
-	
+
 	public function getAlias(){
 		return $this->alias;
 	}
-	
+
+	/**
+	 *
+	 * @param array $filters
+	 * @return self
+	 */
 	public function setFilters(array $filters){
 		$this->filters = $filters;
+		return $this;
+	}
+
+	/**
+	 *
+	 * @param array|string $filters
+	 * @return self
+	 */
+	public function addFilter($filters){
+		array_push($this->filters, $filters);
 		return $this;
 	}
 
@@ -272,7 +287,7 @@ class SQLWhere {
 	 * @return string
 	 */
 	public function getWhere($where = false){
-		
+
 		$sqlWhere = ($where === true && count($this->filters) > 0 ? "WHERE " : "");
 		for ($i = 0, $espace = "", $alias = ""; $i < count($this->filters); $i++) {
 			if (is_array($this->filters[$i])){
@@ -280,18 +295,18 @@ class SQLWhere {
 					if(preg_match('/^[a-zA-Z]+\.[a-zA-Z_\-]+/', $this->filters[$i]['field']) !== 1)
 						$alias = $this->getAlias() . ".";
 				}
-				
+
 				$sqlWhere .= $espace . $alias . $this->filters[$i]['field'] . $this->filters[$i]['value'];
 			}
 			else
 				$sqlWhere .= $espace . $this->filters[$i];
-			
+
 			$espace = " ";
 			$alias = "";
 		}
 
 		return $sqlWhere;
-		
+
 		/*
 		$sqlWhere = "";
 

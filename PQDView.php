@@ -53,7 +53,7 @@ class PQDView {
 	/**
 	 * @param string $view
 	 */
-	function __construct ($view, PQDExceptions $exceptions = null) {
+	function __construct ($view, PQDExceptions $exceptions = null, $autoRender = true, $requireHeaderAndFooter = true) {
 
 		$this->setViewFile($view);
 
@@ -64,6 +64,9 @@ class PQDView {
 		
 		if(defined('APP_TEMPLATE_FOOTER'))
 			$this->tplFooter =  APP_TEMPLATE_FOOTER;
+		
+		$this->setAutoRender($autoRender);
+		$this->setRequireHeaderAndFooter($requireHeaderAndFooter);
 	}
 
 	private function render(){
@@ -229,6 +232,17 @@ class PQDView {
 			return PQDUtil::escapeHtml($this->fields[$field]['description']);
 		else 
 			return 'Without Description';
+	}
+	
+	/**
+	 * @param string $field
+	 * @return array
+	 */
+	public function getField($field){
+		if(isset($this->fields[$field]))
+			return $this->fields[$field];
+		else 
+			return array();
 	}
 	
 	/**

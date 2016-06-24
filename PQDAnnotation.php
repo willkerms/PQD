@@ -84,6 +84,10 @@ class PQDAnnotation{
 					if(isset($list[0]))
 						$col['list'] = PQDUtil::json_decode(substr($list[0], strlen('@list')+1, -2));
 					
+					preg_match('/\@help\(.*$/m', $comment, $help);
+					if(isset($help[0]))
+						$col['help'] = substr($help[0], strlen('@help')+1, -2);
+					
 					if(isset($col['name']))
 						$fields[$col['name']] = $col;
 					else

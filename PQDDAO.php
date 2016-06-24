@@ -267,65 +267,83 @@ abstract class PQDDAO extends SQLSelect{
 
 	/**
 	 * @param boolean $isAutoIncrement
+	 * @return self
 	 */
 	public function setIsAutoIncrement($isAutoIncrement){
 		$this->isAutoIncrement = $isAutoIncrement;
+		return $this;
 	}
 
 	/**
 	 * @param array  $fieldsIgnoreOnUpdate
+	 * @return self
 	 */
 	public function setFieldsIgnoreOnUpdate(array $fieldsIgnoreOnUpdate){
 		$this->fieldsIgnoreOnUpdate = array_flip($fieldsIgnoreOnUpdate);
+		return $this;
 	}
 
 	/**
 	 * @param string $fieldIgnoreOnUpdate
+	 * @return self
 	 */
 	public function addFieldIgnoreOnUpdate($fieldIgnoreOnUpdate){
 		$this->fieldsIgnoreOnUpdate[$fieldIgnoreOnUpdate] = count($this->fieldsIgnoreOnUpdate);
+		return $this;
 	}
 
 	/**
 	 * @param array $fieldsIgnoreOnInsert
+	 * @return self
 	 */
 	public function setFieldsIgnoreOnInsert(array $fieldsIgnoreOnInsert){
 		$this->fieldsIgnoreOnInsert = array_flip($fieldsIgnoreOnInsert);
+		return $this;
 	}
 
 	/**
 	 * @param string $fieldIgnoreOnInsert
+	 * @return self
 	 */
 	public function addFieldIgnoreOnInsert($fieldIgnoreOnInsert){
 		$this->fieldsIgnoreOnInsert[$fieldIgnoreOnInsert] = count($this->fieldsIgnoreOnInsert);
+		return $this;
 	}
 
 	/**
 	 * @param array $fieldsDefaultValuesOnUpdate
+	 * @return self
 	 */
 	public function setFieldsDefaultValuesOnUpdate(array $fieldsDefaultValuesOnUpdate){
 		$this->fieldsDefaultValuesOnUpdate = $fieldsDefaultValuesOnUpdate;
+		return $this;
 	}
 	
 	/**
 	 * @param array $fieldDefaultValueOnUpdate
+	 * @return self
 	 */
 	public function addFieldDefaultValueOnUpdate(array $fieldDefaultValueOnUpdate){
 		$this->fieldsDefaultValuesOnUpdate = $this->fieldsDefaultValuesOnUpdate + $fieldDefaultValueOnUpdate;
+		return $this;
 	}
 
 	/**
 	 * @param array $fieldsDefaultValuesOnInsert
+	 * @return self
 	 */
 	public function setFieldsDefaultValuesOnInsert(array $fieldsDefaultValuesOnInsert){
 		$this->fieldsDefaultValuesOnInsert = $fieldsDefaultValuesOnInsert;
+		return $this;
 	}
 	
 	/**
 	 * @param array $fieldDefaultValueOnInsert
+	 * @return self
 	 */
 	public function addFieldDefaultValueOnInsert(array $fieldDefaultValueOnInsert){
 		$this->fieldsDefaultValuesOnInsert = $this->fieldsDefaultValuesOnInsert + $fieldDefaultValueOnInsert;
+		return $this;
 	}
 
 	/**
@@ -337,9 +355,11 @@ abstract class PQDDAO extends SQLSelect{
 
 	/**
 	 * @param SQLWhere $defaultWhereOnDelete
+	 * @return self
 	 */
 	public function setDefaultWhereOnDelete( SQLWhere $defaultWhereOnDelete){
 		$this->defaultWhereOnDelete = $defaultWhereOnDelete;
+		return $this;
 	}
 	
 	/**
@@ -362,7 +382,6 @@ abstract class PQDDAO extends SQLSelect{
 	 * @return string $operation
 	 */
 	public function getOperation() {
-
 		return $this->operation;
 	}
 
@@ -370,7 +389,6 @@ abstract class PQDDAO extends SQLSelect{
 	 * @param string $operation
 	 */
 	public function setOperation($operation) {
-
 		$this->operation = $operation;
 	}
 	
