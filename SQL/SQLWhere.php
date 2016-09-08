@@ -248,6 +248,9 @@ class SQLWhere {
 		return count($this->filters);
 	}
 
+	/**
+	 * @return array
+	 */
 	public function getFilters(){
 		return $this->filters;
 	}

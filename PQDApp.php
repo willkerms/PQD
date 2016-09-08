@@ -118,10 +118,16 @@ class PQDApp {
 
 	public static function run($appPath, $environments, $environmentDefault, $publicPath = 'public/'){
 
+		if(!defined('IS_DEVELOPMENT'))
+			define('IS_DEVELOPMENT', false);
+
 		if (IS_DEVELOPMENT)
 			ini_set("display_errors", "On");
 		else
 			ini_set("display_errors", "Off");
+
+		if(!isset($_SERVER['QUERY_STRING']))
+			$_SERVER['QUERY_STRING'] = null;
 
 		return (new self($appPath, $environments, $environmentDefault, $publicPath))->iniApp();
 	}

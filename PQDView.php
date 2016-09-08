@@ -26,30 +26,30 @@ class PQDView {
 	 * @var PQDExceptions
 	 */
 	private  $exceptions;
-	
+
 	/**
-	 * 
+	 *
 	 * @var boolean
 	 */
 	private $requireHeaderAndFooter = true;
 
 	/**
-	 * 
+	 *
 	 * @var string
 	 */
 	private $tplHeader = null;
-	
+
 	/**
-	 * 
+	 *
 	 * @var string
 	 */
 	private $tplFooter = null;
-	
+
 	/**
 	 * @var array $fields
 	 */
 	private $fields = array();
-	
+
 	/**
 	 * @param string $view
 	 */
@@ -58,47 +58,48 @@ class PQDView {
 		$this->setViewFile($view);
 
 		$this->exceptions = $exceptions;
-		
+
 		if(defined('APP_TEMPLATE_HEAD'))
 			$this->tplHeader = APP_TEMPLATE_HEAD;
-		
+
 		if(defined('APP_TEMPLATE_FOOTER'))
 			$this->tplFooter =  APP_TEMPLATE_FOOTER;
-		
+
 		$this->setAutoRender($autoRender);
 		$this->setRequireHeaderAndFooter($requireHeaderAndFooter);
 	}
 
 	private function render(){
-		
+
 		if ($this->requireHeaderAndFooter){
 
 			if(!IS_DEVELOPMENT){
 				ob_start();
-				
+
 				if(!is_null($this->tplHeader) && trim($this->tplHeader) != "" && !IS_CLI)
 					require_once $this->tplHeader;
-				
+
 				require $this->view;
-				
+
 				if(!is_null($this->tplFooter) && trim($this->tplFooter) != "" && !IS_CLI)
 					require_once $this->tplFooter;
-				
-				echo PQDUtil::withoutSpaces(ob_get_clean(), true, true);
+
+				//FIXME: Verificar espaços em branco
+				//echo PQDUtil::withoutSpaces(ob_get_clean(), true, true);
 			}
 			else{
 				if(!is_null($this->tplHeader) && trim($this->tplHeader) != "" && !IS_CLI)
 					require_once $this->tplHeader;
-				
+
 				require $this->view;
-				
+
 				if(!is_null($this->tplFooter) && trim($this->tplFooter) != "" && !IS_CLI)
 					require_once $this->tplFooter;
 			}
 		}
 		else
 			require $this->view;
-		
+
 	}
 
 	public function getRender(){
@@ -129,7 +130,7 @@ class PQDView {
 	public function getView() {
 		return $this->view;
 	}
-	
+
 	/**
 	 * @return string $file
 	 */
@@ -154,9 +155,9 @@ class PQDView {
 	public function setExceptions(PQDExceptions $exceptions) {
 		$this->exceptions = $exceptions;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param booelan $requireHeaderAndFooter
 	 * @return self
 	 */
@@ -164,7 +165,7 @@ class PQDView {
 		$this->requireHeaderAndFooter = $requireHeaderAndFooter;
 		return $this;
 	}
-	
+
 	/**
 	 * @return boolean
 	 */
@@ -173,7 +174,7 @@ class PQDView {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param string $tplHeader
 	 * @return self
 	 */
@@ -181,7 +182,7 @@ class PQDView {
 		$this->tplHeader = $tplHeader;
 		return $this;
 	}
-	
+
 	/**
 	 * @return string
 	 */
@@ -190,7 +191,7 @@ class PQDView {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param string $tplFooter
 	 * @return self
 	 */
@@ -198,14 +199,14 @@ class PQDView {
 		$this->tplFooter = $tplFooter;
 		return $this;
 	}
-	
+
 	/**
 	 * @return string
 	 */
 	public function getTplFooter(){
 		return $this->tplFooter;
 	}
-	
+
 	/**
 	 * @param array $fields
 	 * @return self
@@ -214,26 +215,26 @@ class PQDView {
 		$this->fields = $fields;
 		return $this;
 	}
-	
+
 	/**
 	 * @return array
 	 */
 	public function getFields(){
 		return $this->fields;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param string $field
 	 * @return string
 	 */
 	public function e($field){
 		if(isset($this->fields[$field]['description']))
 			return PQDUtil::escapeHtml($this->fields[$field]['description']);
-		else 
+		else
 			return 'Without Description';
 	}
-	
+
 	/**
 	 * @param string $field
 	 * @return array
@@ -241,10 +242,10 @@ class PQDView {
 	public function getField($field){
 		if(isset($this->fields[$field]))
 			return $this->fields[$field];
-		else 
+		else
 			return array();
 	}
-	
+
 	/**
 	 * @param string $name
 	 */

@@ -100,7 +100,7 @@ class PQDUtil {
 
 		foreach ($oData as $key => $value){
 
-			if(!is_null($nameSpace))
+			if(!is_null($nameSpace) && !empty($nameSpace))
 				$obj = explode(":", $key);
 			else
 				$obj =  array(null, $key);
@@ -210,12 +210,21 @@ class PQDUtil {
 		return $date;
 	}
 
+	/**
+	 *
+	 * @param string $date
+	 * @param string $format
+	 * @return \DateTime
+	 */
 	public static function getDateObj($date = null, $format){
 		return \DateTime::createFromFormat($format, $date);
 	}
 
 	public static function onlyNumbers($string){
-		return preg_replace("/[^0-9]/", "", $string);
+		if(!is_null($string))
+			return preg_replace("/[^0-9]/", "", $string);
+		else
+			return $string;
 	}
 
 	public static function formatCpf($cpf){
@@ -469,8 +478,16 @@ class PQDUtil {
 
 		//Without Comments /**/ //
 		if($commentsJS){
-			$aSearch[] = '/(\/\*(.|\s)*?(\*\/))/'; //Comments /* */
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
+			$aSearch[] = '/(\/\*([^\xff])*?(\*\/))/'; //Comments /* */
 			$aSearch[] = "/\/\/.*$/"; // Comments //
+
+			//Retirando JSON
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
+			$matchJSON = '/(\/\*JSON_START\*\/)([^\xff]*)?(\/\*JSON_END\*\/)/i';
+			preg_match_all($matchJSON, $string, $json);
+			foreach ($json[0] as $key => $text)
+				$string = str_replace($text, "__##JSON_" . $key . "##__", $string);
 		}
 
 		//Without HTML Comments <!-- -->
@@ -479,17 +496,40 @@ class PQDUtil {
 			if($commentsJS)
 				array_pop($aSearch); //remove comments from one line because when we have http:// it removes all code
 
-			$aSearch[] = '/(\<\!\-\-(.|\s)*?(\-\-\>))/';
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
+			$aSearch[] = '/(\<\!\-\-([^\xff])*?(\-\-\>))/';
+
+			//Retirando TEXTAREAS
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
+			$matchTextArea = '/(\<textarea)([^\xff])*?(\<\/textarea\>)/i';
+			preg_match_all($matchTextArea, $string, $textareas);
+
+			foreach ($textareas[0] as $key => $text)
+				$string = str_replace($text, "__##TEXTAREA_" . $key . "##__", $string);
 		}
 
-		return preg_replace($aSearch, $aReplace, $string);
+		$string = preg_replace($aSearch, $aReplace, $string);
+
+		if($commentsHTML){
+			foreach ($textareas[0] as $key => $text)
+				$string = str_replace("__##TEXTAREA_" . $key . "##__", $text, $string);
+		}
+
+		if($commentsJS){
+			foreach ($json[0] as $key => $text)
+				$string = str_replace("__##JSON_" . $key . "##__", $text, $string);
+
+			$string = str_replace(array('/*JSON_START*/', '/*JSON_END*/'), "", $string);
+		}
+
+		return $string;
 	}
 
 	public static function getFileWithoutSpaces($file, $commentsJS = true, $commentsHTML = false, $escape = false){
 		if(IS_DEVELOPMENT)
 			return file_get_contents($file);
 		else
-			return self::withoutSpaces(file_get_contents($file), $commentsJS = true, $commentsHTML = false, $escape = false);
+			return self::withoutSpaces(file_get_contents($file), $commentsJS, $commentsHTML, $escape);
 	}
 
 	public static function captcha($largura, $altura, $tamanho_fonte, $quantidade_letras, $pathFont){
@@ -659,155 +699,16 @@ class PQDUtil {
 	}
 
 	/**
-	 * Retorna o dia dá semana
+	 * Separa uma string de acordo com o tamanho e caracter de separação passado
 	 *
-	 * @param string $day
-	 * @param string $type
-	 */
-	public static function retDiaDaSemana($day, $type = 'l'){
-		if ($type == 'l'){
-			switch ($day){
-				case 'Sunday':
-					return 'Domingo';
-				break;
-				case 'Monday':
-					return 'Segunda';
-				break;
-				case 'Tuesday':
-					return 'Terça';
-				break;
-				case 'Wednesday':
-					return 'Quarta';
-				break;
-				case 'Thursday':
-					return 'Quinta';
-				break;
-				case 'Friday':
-					return 'Sexta';
-				break;
-				case 'Saturday':
-					return 'Sábado';
-				break;
-			}
-		}
-		else if ($type == 'D'){
-			switch ($day){
-				case 'Sun':
-					return 'Dom';
-				break;
-				case 'Mon':
-					return 'Seg';
-				break;
-				case 'Tue':
-					return 'Ter';
-				break;
-				case 'Wed':
-					return 'Qua';
-				break;
-				case 'Thu':
-					return 'Qui';
-				break;
-				case 'Fri':
-					return 'Sex';
-				break;
-				case 'Sat':
-					return 'Sáb';
-				break;
-			}
-		}
-		else
-			return $day;
-	}
-
-	/**
-	 * Retorna o Mês
+	 * @param string $str
+	 * @param number $len
+	 * @param string $separation
 	 *
-	 * @param string $month
-	 * @param string $type
+	 * @return string
 	 */
-	public static function retMes($month, $type = 'F'){
-		if ($type == 'F'){
-			switch ($month){
-				case 'January':
-					return 'Janeiro';
-				break;
-				case 'February':
-					return 'Fevereiro';
-				break;
-				case 'March':
-					return 'Março';
-				break;
-				case 'April':
-					return 'Abril';
-				break;
-				case 'May':
-					return 'Maio';
-				break;
-				case 'June':
-					return 'Junho';
-				break;
-				case 'July':
-					return 'Julho';
-				break;
-				case 'August':
-					return 'Agosto';
-				break;
-				case 'September':
-					return 'Setembro';
-				break;
-				case 'October':
-					return 'Outubro';
-				break;
-				case 'November':
-					return 'Novembro';
-				break;
-				case 'December':
-					return 'Dezembro';
-				break;
-			}
-		}
-		else if ($type == 'M'){
-			switch ($month){
-				case 'Jan':
-					return 'Jan';
-				break;
-				case 'Feb':
-					return 'Fev';
-				break;
-				case 'Mar':
-					return 'Mar';
-				break;
-				case 'Apr':
-					return 'Abr';
-				break;
-				case 'May':
-					return 'Mai';
-				break;
-				case 'Jun':
-					return 'Jun';
-				break;
-				case 'Jul':
-					return 'Jul';
-				break;
-				case 'Aug':
-					return 'Ago';
-				break;
-				case 'Sep':
-					return 'Set';
-				break;
-				case 'Oct':
-					return 'Out';
-				break;
-				case 'Nov':
-					return 'Nov';
-				break;
-				case 'Dec':
-					return 'Dez';
-				break;
-			}
-		}
-		else
-			return $month;
+	public static function str_separate($str, $len = 8, $separation = " "){
+		return implode($separation, str_split($str, $len));
 	}
 
 	/**

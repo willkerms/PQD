@@ -8,11 +8,11 @@ require_once 'PQDExceptions.php';
  */
 abstract class PQDController implements IPQDController{
 	/**
-	 * 
+	 *
 	 * @var PQDBo
 	 */
 	protected $oBO;
-	
+
 	/**
 	 * @var PQDView
 	 */
@@ -59,12 +59,12 @@ abstract class PQDController implements IPQDController{
 		//Quando sobre escreve a view não deixa a view antiga ser exibida ao ser limpada pelo garbage collection!
 		if (!is_null($this->getView()))
 			$this->getView()->setAutoRender(false);
-			
+
 		if (is_object($view) && $view instanceof PQDView)
 			$this->view = $view;
 		else
 			$this->view = new PQDView($view, $this->exceptions);
-		
+
 		return $this->getView();
 	}
 
@@ -76,12 +76,12 @@ abstract class PQDController implements IPQDController{
 	 * @param array $files
 	 */
 	function __construct(array $post, array $get, array $session, PQDExceptions $exceptions, array $files = null){
-		
+
 		$this->post = (object)$post;
 		$this->get = (object)$get;
 		$this->session = (object)$session;
 		$this->files = (object)$files;
-		
+
 		$this->exceptions = $exceptions;
 	}
 
@@ -93,14 +93,14 @@ abstract class PQDController implements IPQDController{
 		header('Location: ' . $location, true);
 		exit();
 	}
-	
+
 	/**
 	 * @return array
 	 */
 	public function getGet(){
 		return (array)$this->get;
 	}
-	
+
 	/**
 	 * @return array
 	 */
@@ -114,14 +114,14 @@ abstract class PQDController implements IPQDController{
 	public function getSession(){
 		return (array)$this->session;
 	}
-	
+
 	/**
 	 * @return array
 	 */
 	public function getFiles(){
 		return (array)$this->files;
 	}
-	
+
 	/**
 	 * @return PQDExceptions
 	 */

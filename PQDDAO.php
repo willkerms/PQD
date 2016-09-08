@@ -6,166 +6,166 @@ use PQD\SQL\SQLSelect;
 
 /**
  * Classe de abastração do banco de dados
- * 
+ *
  * @author Willker Moraes Silva
  * @since 2015-11-12
  */
 abstract class PQDDAO extends SQLSelect{
-	
+
 	private $operation = null;
-	
+
 	private $cleanOperation = false;
-	
+
 	/**
 	 * @var bool
 	 */
 	private $isAutoIncrement = true;
-	
+
 	/**
 	 * @var array
 	 */
 	private $fieldsIgnoreOnUpdate = array();
-	
+
 	/**
 	 * @var array
 	 */
 	private $fieldsIgnoreOnInsert = array();
-	
+
 	/**
 	 * @var array
 	 */
 	private $fieldsDefaultValuesOnUpdate = array();
-	
+
 	/**
 	 * @var array
 	 */
 	private $fieldsDefaultValuesOnInsert = array();
-	
+
 	/**
 	 * @var SQLWhere
 	 */
 	private $defaultWhereOnDelete;
-	
+
 	/**
 	 * @var bool
 	 */
 	private $skipNull = false;
-	
-	
+
+
 	/**
 	 * Prepara a inserção de um registro
-	 * 
+	 *
 	 * @param PQDEntity $oEntity
 	 * @param array $fields
-	 * 
+	 *
 	 * @return \PDOStatement
 	 */
 	protected function prepareSQLInsert(PQDEntity $oEntity, array $fields = null){
-		
+
 		$this->sql = "INSERT INTO " . $this->getTable() . "(" . PHP_EOL;
 		$comma = "";
 		$fields = is_null($fields) ? $this->getFields() : $fields;
 		$paramValues = array();
-		
+
 		foreach ($fields as $col => $value){
-			
+
 			//Para não inserir campos que estão nulos
 			if($this->skipNull && !isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 				continue;
-			
+
 			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->getColPK() | ( $col == $this->getColPK() && !is_null($oEntity->{$this->getMethodGetPk()}() ) ) ) ){
 				$this->sql .= $comma . "\t" . $col;
 				$comma = "," . PHP_EOL;
 			}
 		}
-		
+
 		$this->sql .= PHP_EOL . ") VALUES (" . PHP_EOL;
 		$comma = "";
 		foreach ($fields as $col => $value){
-			
+
 			//Para não inserir campos que estão nulos
 			if($this->skipNull && !isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 				continue;
-			
+
 			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->getColPK() | ( $col == $this->getColPK() && !is_null($oEntity->{$this->getMethodGetPk()}() ) ) ) ){
-				
+
 				if(isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 					$this->sql .= $comma . "\t" . $this->fieldsDefaultValuesOnInsert[$col];
 				else{
 					$paramValues[$col] = $value;
 					$this->sql .= $comma . "\t:" . $col;
 				}
-				
+
 				$comma = "," . PHP_EOL;
 			}
 		}
 		$this->sql .= PHP_EOL . ");";
 		return $this->setParams($oEntity, $paramValues);
 	}
-	
+
 	/**
 	 * Prepara a atualização de um registro
-	 * 
+	 *
 	 * @param PQDEntity $oEntity
 	 * @param array $fields
 	 * @param SQLWhere $oWhere
-	 * 
+	 *
 	 * @return \PDOStatement
 	 */
 	protected function prepareSQLUpdate(PQDEntity $oEntity, array $fields = null, SQLWhere $oWhere = null){
-		
+
 		$this->sql = "UPDATE " . $this->getTable() . " SET" . PHP_EOL;
 		$comma = "";
 		$fields = is_null($fields) ? $this->getFields() : $fields;
 		$paramValues = array();
-		
+
 		foreach ($fields as $col => $value){
-			
+
 			//Para não atualizar campos que estão nulos
 			if($this->skipNull && !isset($this->fieldsDefaultValuesOnUpdate[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 				continue;
-			
+
 			if($col != $this->getColPK() && !isset($this->fieldsIgnoreOnUpdate[$col])){
-				
+
 				if(isset($this->fieldsDefaultValuesOnUpdate[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 					$this->sql .= $comma . "\t" . $col . " = " . $this->fieldsDefaultValuesOnUpdate[$col];
 				else{
 					$paramValues[$col] = $value;
 					$this->sql .= $comma . "\t" . $col . " = :" . $col;
 				}
-				
+
 				$comma = "," . PHP_EOL;
 			}
 		}
-		
+
 		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " AND (" . $this->defaultWhereOnDelete->getWhere(false) . ")" : '';
-		
+
 		if(!is_null($oWhere))
 			$this->sql .= PHP_EOL . $oWhere->getWhere(true);
 		else{
 			$this->sql .= PHP_EOL . "WHERE " . $this->getColPK() . " = :" . $this->getColPK() . ($this->getOperation() == "D" ? $strDefaultWhere : null) . ";";
 			$paramValues[$this->getColPK()] = $this->getField($this->getColPK());
 		}
-		
+
 		return $this->setParams($oEntity, $paramValues);
 	}
-	
+
 	/**
 	 * Prepara a exclusão de um registro
-	 * 
+	 *
 	 * @param PQDEntity $oEntity
 	 * @return \PDOStatement
 	 */
 	protected function prepareSQLDelete(PQDEntity $oEntity){
-		
+
 		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " AND (" . $this->defaultWhereOnDelete->getWhere(false) . ')' : '';
-		
+
 		$this->sql = "DELETE FROM " . $this->getTable() . " WHERE " . $this->getColPK() . " = :" . $this->getColPK() . $strDefaultWhere . ";";
 		return $this->setParams($oEntity, array($this->getColPK() => $this->getField($this->getColPK())));
 	}
-	
+
 	protected function save(PQDEntity &$oEntity){
-		
+
 		//Para forçar operações de insert mesmo quando a chave primária já está setada!
 		if (is_null($this->getOperation())){
 			if (is_null($oEntity->{$this->getMethodGetPk()}()))
@@ -173,18 +173,18 @@ abstract class PQDDAO extends SQLSelect{
 			else
 				$this->setOperation("U");
 		}
-		
+
 		if ($this->getOperation() == "I") //INSERT
 			$st = $this->prepareSQLInsert($oEntity);
 		else
 			$st = $this->prepareSQLUpdate($oEntity);//UPDATE
-		
+
 		if($st !== false && $st->execute() === true){
 			$id = is_null($oEntity->{$this->getMethodGetPk()}()) ? $this->getConnection($this->getIndexCon())->lastInsertId() : $oEntity->{$this->getMethodGetPk()}();
 			$oEntity = $this->retEntity($id);
-			
+
 			$this->cleanOperation();
-			
+
 			return true;
 		}
 		else {
@@ -192,44 +192,44 @@ abstract class PQDDAO extends SQLSelect{
 			return false;
 		}
 	}
-	
+
 	protected function cleanOperation(){
 		if($this->cleanOperation)
 			$this->operation = null;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param PQDEntity $oEntity
 	 */
 	protected function delete(PQDEntity $oEntity){
 		$return = $this->prepareSQLDelete($oEntity)->execute();
-		
+
 		$this->cleanOperation();
-		
+
 		return $return;
 	}
-	
+
 	/**
 	 * Executa uma delete generico na tabela
-	 * 
+	 *
 	 * @param SQLWhere $oWhere
 	 */
 	protected function deleteGeneric(SQLWhere $oWhere){
-		
+
 		if(is_null($this->getConnection($this->getIndexCon()))) return false;
-		
+
 		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " AND (" . $this->defaultWhereOnDelete->getWhere(false) . ')' : '';
-		
+
 		$this->sql = "DELETE FROM " . $this->getTable() . " " . $oWhere->getWhere(true) . $strDefaultWhere;
-		
+
 		$return = $this->getConnection($this->getIndexCon())->exec($this->sql) !== false;
-		
+
 		$this->cleanOperation();
-		
+
 		return $return;
 	}
-	
+
 	/**
 	 * @return bool $isAutoIncrement
 	 */
@@ -318,7 +318,7 @@ abstract class PQDDAO extends SQLSelect{
 		$this->fieldsDefaultValuesOnUpdate = $fieldsDefaultValuesOnUpdate;
 		return $this;
 	}
-	
+
 	/**
 	 * @param array $fieldDefaultValueOnUpdate
 	 * @return self
@@ -336,7 +336,7 @@ abstract class PQDDAO extends SQLSelect{
 		$this->fieldsDefaultValuesOnInsert = $fieldsDefaultValuesOnInsert;
 		return $this;
 	}
-	
+
 	/**
 	 * @param array $fieldDefaultValueOnInsert
 	 * @return self
@@ -361,7 +361,7 @@ abstract class PQDDAO extends SQLSelect{
 		$this->defaultWhereOnDelete = $defaultWhereOnDelete;
 		return $this;
 	}
-	
+
 	/**
 	 * @return boolean $skipNull
 	 */
@@ -377,7 +377,7 @@ abstract class PQDDAO extends SQLSelect{
 
 		$this->skipNull = $skipNull;
 	}
-	
+
 	/**
 	 * @return string $operation
 	 */
@@ -391,7 +391,7 @@ abstract class PQDDAO extends SQLSelect{
 	public function setOperation($operation) {
 		$this->operation = $operation;
 	}
-	
+
 	/**
 	 * @return bool $cleanOperation
 	 */
