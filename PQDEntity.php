@@ -7,17 +7,53 @@ namespace PQD;
  *
  */
 class PQDEntity {
-	
+
+	/**
+	 * @return array
+	 */
 	public function toArray(){
 		return get_object_vars($this);
 	}
-	
+
+	/**
+	 * @return string
+	 */
 	public function toJSON(){
 		return PQDUtil::json_encode($this->toArray());
 	}
-	
+
+	/**
+	 * @return self
+	 */
 	public function escapeHTML(){
-		PQDUtil::escapeHtml($this);
-		return $this;
+		return PQDUtil::escapeHtml($this);
+	}
+
+	/**
+	 * @return self
+	 */
+	public function utf8_encode(){
+		return PQDUtil::utf8_encode($this);
+	}
+
+	/**
+	 * @return self
+	 */
+	public function utf8_decode(){
+		return PQDUtil::utf8_decode($this);
+	}
+
+	/**
+	 * @return self
+	 */
+	public function upperCase(){
+		return PQDUtil::strtoupper($this);
+	}
+
+	/**
+	 * @return self
+	 */
+	public function escapeJS(){
+		return PQDUtil::escapeJS($this);
 	}
 }

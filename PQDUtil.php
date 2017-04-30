@@ -158,10 +158,40 @@ class PQDUtil {
 		return $date;
 	}
 
+	/**
+	 * Quando returnNull = true, caso o número não seja maior que zero retorna NULL
+	 * Quando returnNull = false, formata o número do jeito que foi enviado independentemente do valor
+	 *
+	 * @param float $number
+	 * @param number $precision
+	 * @param boolean $returnNull
+	 *
+	 * @return NULL|string
+	 */
+	public static function formatNumberXML($number, $precision = 2, $returnNull = false){
+		if($returnNull)
+			return !is_null($number) && $number > 0 ? number_format($number, $precision, '.', '') : null;
+		else
+			return number_format($number, $precision, '.', '');
+	}
+
+	/**
+	 * Formata um número no padrão Brasileiro
+	 *
+	 * @param number $number
+	 * @param number $decimal
+	 * @return string
+	 */
 	public static function formatNumberView($number, $decimal = 2){
 		return number_format($number, $decimal, ",", ".");
 	}
 
+	/**
+	 * Formata um número no padrão do Banco de Dados
+	 *
+	 * @param number $number
+	 * @return number
+	 */
 	public static function formatNumberDb($number){
 		return (float)str_replace(array('.', ','), array('', '.'), $number);
 	}
@@ -580,7 +610,7 @@ class PQDUtil {
 		return $hex; // returns the hex value including the number sign (#)
 	}
 
-	public static function contentType($type = 'json', $fileNameOrFirstLine = ")]}',\n"){
+	public static function contentType($type = 'json', $fileName = null){
 
 		$contentType = 'text/html';
 
@@ -597,7 +627,6 @@ class PQDUtil {
 			break;
 			case 'json':
 				$contentType = 'application/json';
-				echo $fileNameOrFirstLine;
 			break;
 			case 'img':
 			case 'jpeg':
@@ -625,7 +654,6 @@ class PQDUtil {
 
 				$contentType = $type == 'xls' ? 'application/vnd.ms-excel' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-				header('Content-Disposition: attachment;filename="' . $fileNameOrFirstLine . '"');
 				header('Cache-Control: max-age=0');
 				// If you're serving to IE 9, then the following may be needed
 				header('Cache-Control: max-age=1');
@@ -638,13 +666,17 @@ class PQDUtil {
 			case 'pdf':
 				// Redirect output to a client’s web browser (PDF)
 				$contentType = 'application/pdf';
-
-				header('Content-Disposition: attachment;filename="' . $fileNameOrFirstLine . '"');
 				header('Cache-Control: max-age=0');
 			break;
 		}
 
 		header('Content-Type: ' . $contentType, true);
+
+		if (!is_null($fileName))
+			header('Content-Disposition: attachment;filename="' . $fileName . '"');
+
+		if ($type == 'json' && defined("PQD_FIRST_LINE_JSON"))
+			echo PQD_FIRST_LINE_JSON;
 	}
 
 	/**

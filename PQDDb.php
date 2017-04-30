@@ -74,7 +74,7 @@ class PQDDb{
 
 		if (count(self::$dbs) == 0){
 			$this->exceptions->setException(new \Exception("Configurações de conexão com o Banco de Dados não indefinidas!", 2));
-			return;
+			return null;
 		}
 
 		//Somente para não tentar conectar em bancos que já não conectaram dá primeira tentativa
@@ -84,6 +84,8 @@ class PQDDb{
 		if(!isset(self::$connections[$indexCon])){
 			try {
 
+				if (!isset(self::$dbs[$indexCon]))
+					throw new \Exception("Parâmetros não setados para a conexão!", 12);
 
 				$options = array();
 
@@ -94,10 +96,12 @@ class PQDDb{
 				if (!is_null(self::$dbs[$indexCon]['port']))
 					$port = ":" . self::$dbs[$indexCon]['port'];
 
-				if(self::$dbs[$indexCon]['driver'] == "mssql" && version_compare(phpversion(), '5.3', '>=') && strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'){
+				if(self::$dbs[$indexCon]['driver'] == "mssql" && extension_loaded('pdo_sqlsrv')){
 					$options['ReturnDatesAsStrings'] = true;
 					self::$connections[$indexCon] = new PQDPDO('sqlsrv:Server=' . self::$dbs[$indexCon]['host'] . $port . ';Database=' . self::$dbs[$indexCon]['db'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
-					self::$connections[$indexCon]->setAttribute(PQDPDO::SQLSRV_ATTR_ENCODING, PQDPDO::SQLSRV_ENCODING_SYSTEM);
+
+					if(strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
+						self::$connections[$indexCon]->setAttribute(PQDPDO::SQLSRV_ATTR_ENCODING, PQDPDO::SQLSRV_ENCODING_SYSTEM);
 				}
 				else if(self::$dbs[$indexCon]['driver'] == "sqlite"){
 					self::$connections[$indexCon] = new PQDPDO(self::$dbs[$indexCon]['driver'] . ":" . self::$dbs[$indexCon]['db'], null, null, $options);

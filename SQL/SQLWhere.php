@@ -14,7 +14,9 @@ use PQD\PQDUtil;
 class SQLWhere {
 
 	const IN = ' IN(#)';
+	const IN_STR = " IN('#')";
 	const NOT_IN = ' NOT IN(#)';
+	const NOT_IN_STR = " NOT IN('#')";
 
 	const LIKE_LEFT 	= " LIKE '%#'";
 	const LIKE_RIGHT 	= " LIKE '#%'";
@@ -96,6 +98,7 @@ class SQLWhere {
 	public function setEqual($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
 		//array_push($this->filters, $field . " = " . str_replace('#', $value, $type));
+		$value = is_null($value) && $type == self::NUMBER ? 'NULL': $value;
 		array_push($this->filters, array('field' => $field, 'value' => " = " . str_replace('#', $value, $type)));
 		return $this;
 	}
@@ -111,6 +114,7 @@ class SQLWhere {
 	public function setDiff($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
 		//array_push($this->filters, $field . " <> " . str_replace('#', $value, $type));
+		$value = is_null($value) && $type == self::NUMBER ? 'NULL': $value;
 		array_push($this->filters, array('field' => $field, 'value' => " <> " . str_replace('#', $value, $type)));
 		return $this;
 	}
@@ -126,6 +130,7 @@ class SQLWhere {
 	public function setMore($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
 		//array_push($this->filters, $field . " > " . str_replace('#', $value, $type));
+		$value = is_null($value) && $type == self::NUMBER ? 'NULL': $value;
 		array_push($this->filters, array('field' => $field, 'value' => " > " . str_replace('#', $value, $type)));
 		return $this;
 	}
@@ -141,6 +146,7 @@ class SQLWhere {
 	public function setMoreEqual($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
 		//array_push($this->filters, $field . " >= " . str_replace('#', $value, $type));
+		$value = is_null($value) && $type == self::NUMBER ? 'NULL': $value;
 		array_push($this->filters, array('field' => $field, 'value' => " >= " . str_replace('#', $value, $type)));
 		return $this;
 	}
@@ -156,6 +162,7 @@ class SQLWhere {
 	public function setLess($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
 		//array_push($this->filters, $field . " < " . str_replace('#', $value, $type));
+		$value = is_null($value) && $type == self::NUMBER ? 'NULL': $value;
 		array_push($this->filters, array('field' => $field, 'value' => " < " . str_replace('#', $value, $type)));
 		return $this;
 	}
@@ -171,6 +178,7 @@ class SQLWhere {
 	public function setLessEqual($field, $value, $type = self::STRING){
 		$value = PQDUtil::escapeSQL($value);
 		//array_push($this->filters, $field . " <= " . str_replace('#', $value, $type));
+		$value = is_null($value) && $type == self::NUMBER ? 'NULL': $value;
 		array_push($this->filters, array('field' => $field, 'value' => " <= " . str_replace('#', $value, $type)));
 		return $this;
 	}
@@ -186,7 +194,7 @@ class SQLWhere {
 	public function setIn($field, array $value, $type = self::IN){
 		$value = PQDUtil::escapeSQL($value);
 		//array_push($this->filters, $field . str_replace('#', join(",", $value), $type));
-		array_push($this->filters, array('field' => $field, 'value' => str_replace('#', join(",", $value), $type)));
+		array_push($this->filters, array('field' => $field, 'value' => str_replace('#', join($type == self::IN_STR || $type == self::NOT_IN_STR ? "', '": ",", $value), $type)));
 		return $this;
 	}
 

@@ -229,8 +229,10 @@ class PQDView {
 	 * @return string
 	 */
 	public function e($field){
-		if(isset($this->fields[$field]['description']))
+		if(is_string($field) && isset($this->fields[$field]['description']))
 			return PQDUtil::escapeHtml($this->fields[$field]['description']);
+		else if(is_array($field) && isset($field['description']))
+			return PQDUtil::escapeHtml($field['description']);
 		else
 			return 'Without Description';
 	}

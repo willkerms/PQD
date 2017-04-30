@@ -170,8 +170,9 @@ abstract class SQLSelect extends PQDDb{
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
 		$joins = $this->getDefaultWhereOnSelect() instanceof SQLJoin ? ' ' . $this->getDefaultWhereOnSelect()->getJoins(): '';
 		$alias = $this->getDefaultWhereOnSelect() instanceof SQLJoin ? $this->getDefaultWhereOnSelect()->getAlias() . ".": '';
+		$where = $this->getDefaultWhereOnSelect() instanceof SQLWhere ? ' AND ' . $this->getDefaultWhereOnSelect()->getWhere(false): '';
 
-		$this->sql = "SELECT " . $this->retFieldsSelect() . " FROM " . $table . $joins . " WHERE " . $alias . $this->colPK . " = :" . $this->colPK . ";";
+		$this->sql = "SELECT " . $this->retFieldsSelect() . " FROM " . $table . $joins . " WHERE (" . $alias . $this->colPK . " = :" . $this->colPK . ')' . $where . ";";
 
 		$oEntity = new $clsFetch();
 		$oEntity->{$this->methodSetPk}($id);
@@ -383,9 +384,11 @@ abstract class SQLSelect extends PQDDb{
 		//Versões anteriores ao 2012 do SQLServer
 		$rowNumber = "";
 		$isLessSqlSrv11 = false;
-
+		/*
+		 Todos os tratamentos para OrderBy estão acima
 		if($this->getDriverDB($this->getIndexCon()) == "mssql" && is_null($this->getDefaultOrderBy()) && is_null($oOrderBy))
 			$oOrderBy = new SQLOrderBy(array($this->getColPK()));
+		*/
 
 		//Limit para Versões anteriores ao 2012
 		if(!is_null($limit) && ($this->getDriverDB($this->getIndexCon()) == "mssql")){
