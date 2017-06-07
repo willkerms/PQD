@@ -501,6 +501,10 @@ class PQDApp {
 		}
 	}
 
+	/**
+	 * Seta constante IS_MOBILE, que verifica quando o sistema está sendo acessado via dispositivos moveis.
+	 *
+	 */
 	private function setMobileConstants(){
 
 		if (isset($_SERVER['HTTP_USER_AGENT']) && !empty($_SERVER['HTTP_USER_AGENT'])){
