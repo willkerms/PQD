@@ -168,7 +168,7 @@ abstract class SQLSelect extends PQDDb{
 
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
-		$joins = $this->getDefaultWhereOnSelect() instanceof SQLJoin ? ' ' . $this->getDefaultWhereOnSelect()->getJoins(): '';
+		$joins = $this->getDefaultWhereOnSelect() instanceof SQLJoin ? ' ' . $this->getDefaultWhereOnSelect()->getJoins(true): '';
 		$alias = $this->getDefaultWhereOnSelect() instanceof SQLJoin ? $this->getDefaultWhereOnSelect()->getAlias() . ".": '';
 		$where = $this->getDefaultWhereOnSelect() instanceof SQLWhere ? ' AND ' . $this->getDefaultWhereOnSelect()->getWhere(false): '';
 
@@ -250,7 +250,7 @@ abstract class SQLSelect extends PQDDb{
 			if( $oWhere2 instanceof SQLJoin ){
 
 				if($oWhereDefault instanceof SQLJoin ){
-					$oWhere2->setJoins(array_merge($oWhereDefault->getJoins(false), $oWhere2->getJoins(false)));
+					$oWhere2->setJoins(array_merge($oWhereDefault->getJoins(), $oWhere2->getJoins()));
 					$oWhereDefault->clearJoins()->setAlias($oWhere2->getAlias());
 				}
 				else
