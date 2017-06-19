@@ -107,11 +107,11 @@ class PQDExceptions {
 		if($html != ''){
 
 			if($development)
-				$html = '<table class="table table-striped table-bordered table-condensed table-errors"><tr class="danger"><th>&nbsp;</th><th>Erro(s)</th></tr>' . $html;
+				$html = '<div class="table-responsive"><table class="table table-striped table-bordered table-condensed table-errors"><tr class="danger"><th>&nbsp;</th><th>Erro(s)</th></tr>' . $html;
 			else
-				$html = '<table class="table table-striped table-bordered table-errors">' . $html;
+				$html = '<div class="table-responsive"><table class="table table-striped table-bordered table-errors">' . $html;
 
-			$html .= '</table>';
+			$html .= '</table></div>';
 		}
 
 		return $html;
