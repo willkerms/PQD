@@ -87,6 +87,15 @@ class PQDApp {
 	private $logAction;
 
 
+	/**
+	 * Passar os caminhos absolutos das pastas
+	 *
+	 * @param string $appPath
+	 * @param array|string $environments
+	 * @param string $environmentDefault
+	 * @param string $publicPath
+	 * @throws \Exception
+	 */
 	private function __construct($appPath, $environments = 'admin', $environmentDefault = 'admin', $publicPath = 'public/'){
 
 		if(!is_null(self::$oPQDApp))
@@ -99,7 +108,7 @@ class PQDApp {
 		$this->envDefault = $environmentDefault;
 
 		define('APP_PATH', $appPath);
-		define('APP_PATH_PUBLIC', $publicPath);
+		define('APP_PATH_PUBLIC', $publicPath == 'public/' ? APP_PATH . $publicPath : $publicPath);
 
 		if(!defined('APP_DEBUG'))
 			define('APP_DEBUG', false);
@@ -116,6 +125,16 @@ class PQDApp {
 		return self::$oPQDApp;
 	}
 
+	/**
+	 * Passar os caminhos absolutos nas variáveis $appPath, $publicPath
+	 *
+	 * @param string $appPath
+	 * @param string|array $environments
+	 * @param string $environmentDefault
+	 * @param string $publicPath
+	 *
+	 * @return \PQD\PQDApp
+	 */
 	public static function run($appPath, $environments, $environmentDefault, $publicPath = 'public/'){
 
 		if(!defined('IS_DEVELOPMENT'))
