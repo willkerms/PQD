@@ -278,7 +278,7 @@ class PQDUtil {
 		$return = json_decode( $json, $assoc, $depth, $options);
 
 		if (is_null($return)){
-			echo $json;
+			//echo $json;
 			switch (json_last_error()) {
 				case JSON_ERROR_NONE:
 					PQDApp::getApp()->getExceptions()->setException( new \Exception('JSON - No errors', 10));
