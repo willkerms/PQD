@@ -57,6 +57,11 @@ class PQDApp {
 	private $aEvnTranslateFile = array();
 
 	/**
+	 * @var array
+	 */
+	private $aAlias = array();
+
+	/**
 	 * @var PQDDb
 	 */
 	private $PQDDb;
@@ -265,6 +270,31 @@ class PQDApp {
 	}
 
 	/**
+	 * Seta os alias de url
+	 *
+	 * @param array $aAlias
+	 * @return PQDApp
+	 */
+	public function setAlias(array $aAlias){
+		$this->aAlias = $aAlias;
+		return $this;
+	}
+
+	/**
+	 * Adiciona um alias a uma url.
+	 *
+	 * Exemplo: se a url requisitada for admin pode-se mapear para sys/admin
+	 *
+	 * @param string $origin
+	 * @param string $dest
+	 * @return PQDApp
+	 */
+	public function addAlias($origin, $dest){
+		$this->aAlias[$origin] = $dest;
+		return $this;
+	}
+
+	/**
 	 * Adiciona um ambiente para a tradução de arquivos para diretorio/controllers
 	 *
 	 * @param string $classes
@@ -338,10 +368,19 @@ class PQDApp {
 		return array_keys($this->environments);
 	}
 
+	/**
+	 * Retor os alias setados
+	 */
+	public function getAlias(){
+		return $this->aAlias;
+	}
+
 	private function runClasses($aClasses){
 		foreach ($aClasses as $class){
 			if( class_exists($class) &&  method_exists($class, 'run'))
 				$class::run();
+			else
+				$this->getExceptions()->setException(new \Exception("Classe(" . $class . ") ou metodo(run) não encontrado!"));
 		}
 	}
 
@@ -365,17 +404,15 @@ class PQDApp {
 	 */
 	public function exec(){
 
-		$this->setConstants();
-		$this->runClasses($this->aIniClasses);
+		$this->setConstants();//Seta as contantes
+		$this->runClasses($this->aIniClasses);//Inicia as classes que devem ser iniciadas antes da aplicação
 
-		if ($this->isSafePath() && !IS_CLI){
+		if ($this->isSafePath() && !IS_CLI){ //Verifica se é uma url que deve estar autenticado
 			header('Location: ' . APP_URL_ENVIRONMENT . 'login/' . APP_URL . (($_SERVER['QUERY_STRING'] != '') ? '?' . $_SERVER['QUERY_STRING'] : ''));
 			exit();
 		}
 
-		//Requisitando arquivos necessários
-
-		if (APP_URL == '')
+		if (APP_URL == '')//Quando não requisita nenhuma url aponta para o home
 			$modulo = "home";
 		else{
 			if( isset($this->secureEnv[APP_ENVIRONMENT]) && $this->aUrlRequestPublic[0] == "login")
@@ -404,6 +441,9 @@ class PQDApp {
 				$modulo = $pathinfo['dirname'] . '/' . $pathinfo['filename'];
 		}
 
+		if(!is_dir(APP_PATH . 'modulos/' . $modulo) && isset($this->aAlias[$modulo]))
+			$modulo = $this->aAlias[$modulo];
+
 		if (is_dir(APP_PATH . 'modulos/' . $modulo)){
 			if (!IS_CLI && !isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $this->environments[APP_ENVIRONMENT] . "home" && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][APP_URL]) && !isset($this->aFreePaths[APP_ENVIRONMENT . '/' . APP_URL]))
 				$this->httpError(403);
@@ -412,37 +452,49 @@ class PQDApp {
 				$file = APP_PATH . 'modulos/' . $modulo . '/' . $ctrl . '.php';
 				$ctrl = str_replace('/', "\\", '/modulos/' . $modulo . '/' . $ctrl);
 
-				if(file_exists($file)){
-					require_once $file;
-					if(class_exists($ctrl)){
-
-						$obj = new $ctrl($_POST, $_GET, $_SESSION, $this->exceptions, $_FILES);
-						$this->logController = $ctrl;
-						$act = isset($_GET['act']) ? $_GET['act'] : 'view';
-
-						if(count($this->aUrlRequestPublic) > 1 && $this->aUrlRequestPublic[0] == 'login' && !method_exists($obj, $act))
-							$act = 'view';
-
-						if(!method_exists($obj, $act))
-							$this->httpError(500);
-						else{
-							$this->logAction = $act;
-							$obj->{$act}();
-						}
-					}
-					else {
-						$this->exceptions->setException(new \Exception("Classe (". $ctrl .") não encontrada!"));
-						$this->httpError(500);
-					}
-				}
-				else{
-					$this->exceptions->setException(new \Exception("Arquivo (". $file .".php) não encontrado!"));
-					$this->httpError(500);
-				}
+				$this->execClass($file, $ctrl);//Executa a classe
 			}
 		}
 		else
 			$this->httpError(404);
+	}
+
+	/**
+	 * Executa o controller requisitado
+	 *
+	 * @param string $file
+	 * @param string $ctrl
+	 * @param string $modulo
+	 */
+	private function execClass($file, $ctrl){
+
+		if(file_exists($file)){
+			require_once $file;
+			if(class_exists($ctrl)){
+
+				$obj = new $ctrl($_POST, $_GET, $_SESSION, $this->exceptions, $_FILES);
+				$this->logController = $ctrl;
+				$act = isset($_GET['act']) ? $_GET['act'] : 'view';
+
+				if(count($this->aUrlRequestPublic) > 1 && $this->aUrlRequestPublic[0] == 'login' && !method_exists($obj, $act))
+					$act = 'view';
+
+					if(!method_exists($obj, $act))
+						$this->httpError(500);
+					else{
+						$this->logAction = $act;
+						$obj->{$act}();
+					}
+			}
+			else {
+				$this->exceptions->setException(new \Exception("Classe (". $ctrl .") não encontrada!"));
+				$this->httpError(500);
+			}
+		}
+		else{
+			$this->exceptions->setException(new \Exception("Arquivo (". $file .".php) não encontrado!"));
+			$this->httpError(500);
+		}
 	}
 
 	public function httpError($httpError){

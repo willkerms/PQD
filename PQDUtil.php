@@ -612,6 +612,9 @@ class PQDUtil {
 
 	public static function contentType($type = 'json', $fileName = null){
 
+		if(IS_CLI)
+			return;
+
 		$contentType = 'text/html';
 
 		switch ($type) {
