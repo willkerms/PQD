@@ -368,6 +368,10 @@ class PQDApp {
 		return array_keys($this->environments);
 	}
 
+	public function getEnvironmentsPaths(){
+		return $this->environments;
+	}
+
 	/**
 	 * Retor os alias setados
 	 */
