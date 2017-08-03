@@ -192,9 +192,13 @@ class SQLWhere {
 	 * @return SQLWhere
 	 */
 	public function setIn($field, array $value, $type = self::IN){
-		$value = PQDUtil::escapeSQL($value);
-		//array_push($this->filters, $field . str_replace('#', join(",", $value), $type));
-		array_push($this->filters, array('field' => $field, 'value' => str_replace('#', join($type == self::IN_STR || $type == self::NOT_IN_STR ? "', '": ",", $value), $type)));
+
+		if (count($value) > 0){
+			$value = PQDUtil::escapeSQL($value);
+			//array_push($this->filters, $field . str_replace('#', join(",", $value), $type));
+			array_push($this->filters, array('field' => $field, 'value' => str_replace('#', join($type == self::IN_STR || $type == self::NOT_IN_STR ? "', '": ",", $value), $type)));
+		}
+
 		return $this;
 	}
 
