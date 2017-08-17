@@ -10,5 +10,21 @@
         }
     ],
     "minimum-stability": "dev",
-    "require": {}
+    "require": {},
+    "autoload": {
+        "psr-4": {
+          "PQD": "./"
+        },
+        "psr-0": {
+            "": ["./"]
+        },
+        "classmap": [
+            "./DB/",
+            "./DBF/",
+            "./LDAP/",
+            "./REPORT/",
+            "./SQL/",
+            "./VIEW/"
+        ]
+    }
 }
