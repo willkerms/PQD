@@ -164,7 +164,7 @@ abstract class SQLSelect extends PQDDb{
 	 * @param string $fetchClass
 	 * @return object
 	 */
-	protected function retEntity($id, $fetchClass = true){
+	public function retEntity($id, $fetchClass = true){
 
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
