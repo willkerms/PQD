@@ -142,6 +142,9 @@ class PQDApp {
 	 */
 	public static function run($appPath, $environments, $environmentDefault, $publicPath = 'public/'){
 
+		if (substr($appPath, -1) != '/' && substr($appPath, -1) != '\\')
+			$appPath .= '/';
+
 		if(!defined('IS_DEVELOPMENT'))
 			define('IS_DEVELOPMENT', false);
 
