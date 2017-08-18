@@ -404,4 +404,13 @@ abstract class PQDDAO extends SQLSelect{
 	public function setCleanOperation($cleanOperation) {
 		$this->cleanOperation = $cleanOperation;
 	}
+
+	/**
+	 * {@inheritDoc}
+	 * @see \PQD\PQDDb::getConnection()
+	 * @return PQDPDO
+	 */
+	public function getConnection() {
+		return parent::getConnection($this->getIndexCon());
+	}
 }
