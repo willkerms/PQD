@@ -10,9 +10,9 @@ namespace PQD;
  */
 class PQDAnnotation{
 
-	private static $annotation = array();
+	protected static $annotation = array();
 
-	private $class;
+	protected $class;
 
 	/**
 	 * @param string $classFile
