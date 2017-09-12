@@ -268,4 +268,11 @@ class PQDAnnotation{
 			return self::$annotation[$this->class]['allFilters'];
 		}
 	}
+
+	/**
+	 * @return the $class
+	 */
+	public function getClass() {
+		return $this->class;
+	}
 }
