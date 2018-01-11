@@ -132,9 +132,9 @@ abstract class SQLSelect extends PQDDb{
 	 * @return \PDOStatement
 	 */
 	protected function setParams(PQDEntity $oEntity, array $params){
-		if(is_null($this->getConnection())) return false;
+		if(is_null($this->getConnection($this->getIndexCon()))) return false;
 
-		$st = $this->getConnection()->prepare($this->sql);
+		$st = $this->getConnection($this->getIndexCon())->prepare($this->sql);
 		$this->setParamValues($st, $oEntity, $params);
 		return $st;
 	}
@@ -295,9 +295,9 @@ abstract class SQLSelect extends PQDDb{
 
 		$data = array();
 
-		if(is_null($this->getConnection())) return $data;
+		if(is_null($this->getConnection($this->getIndexCon()))) return $data;
 
-		if(($st = $this->getConnection()->query($this->sql)) !== false){
+		if(($st = $this->getConnection($this->getIndexCon())->query($this->sql)) !== false){
 			if($fetchClass)
 				$data = $st->fetchAll(PQDPDO::FETCH_CLASS, $clsFetch);
 			else
@@ -392,7 +392,7 @@ abstract class SQLSelect extends PQDDb{
 
 		//Limit para Versões anteriores ao 2012
 		if(!is_null($limit) && ($this->getDriverDB($this->getIndexCon()) == "mssql")){
-			if($this->getDriverDB($this->getIndexCon(), true) == "dblib" || version_compare($this->getConnection()->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0){
+			if($this->getDriverDB($this->getIndexCon(), true) == "dblib" || version_compare($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0){
 				$isLessSqlSrv11 = true;
 
 				$rowNumber = "ROW_NUMBER() OVER ( " . $sOrderBy . " ) AS RowNum, ";
@@ -422,7 +422,7 @@ abstract class SQLSelect extends PQDDb{
 				$this->sql .= " LIMIT " . (($page - 1) * $limit) . "," . $limit . ";";
 			else if(!is_null($limit) && $this->getDriverDB($this->getIndexCon()) == "mssql"){
 				//SQLServer 2012
-				if($this->getDriverDB($this->getIndexCon(), true) != "dblib" && version_compare($this->getConnection()->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0)
+				if($this->getDriverDB($this->getIndexCon(), true) != "dblib" && version_compare($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0)
 					$this->sql .= " OFFSET " . (($page - 1) * $limit) . " ROWS FETCH NEXT " . $limit . " ROWS ONLY;";
 				else//Versões anteriores ao 2012 do SQLServer
 					$this->sql .= ") as vw WHERE RowNum BETWEEN " . ((($page - 1) * $limit) + 1) . " AND " . ((($page - 1) * $limit) + $limit) . ";";

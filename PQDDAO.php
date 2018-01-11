@@ -180,7 +180,7 @@ abstract class PQDDAO extends SQLSelect{
 			$st = $this->prepareSQLUpdate($oEntity);//UPDATE
 
 		if($st !== false && $st->execute() === true){
-			$id = is_null($oEntity->{$this->getMethodGetPk()}()) ? $this->getConnection()->lastInsertId() : $oEntity->{$this->getMethodGetPk()}();
+			$id = is_null($oEntity->{$this->getMethodGetPk()}()) ? $this->getConnection($this->getIndexCon())->lastInsertId() : $oEntity->{$this->getMethodGetPk()}();
 			$oEntity = $this->retEntity($id);
 
 			$this->cleanOperation();
@@ -217,13 +217,13 @@ abstract class PQDDAO extends SQLSelect{
 	 */
 	protected function deleteGeneric(SQLWhere $oWhere){
 
-		if(is_null($this->getConnection())) return false;
+		if(is_null($this->getConnection($this->getIndexCon()))) return false;
 
 		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " AND (" . $this->defaultWhereOnDelete->getWhere(false) . ')' : '';
 
 		$this->sql = "DELETE FROM " . $this->getTable() . " " . $oWhere->getWhere(true) . $strDefaultWhere;
 
-		$return = $this->getConnection()->exec($this->sql) !== false;
+		$return = $this->getConnection($this->getIndexCon())->exec($this->sql) !== false;
 
 		$this->cleanOperation();
 
