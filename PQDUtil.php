@@ -39,18 +39,9 @@ class PQDUtil {
 	 * @return mixed
 	 */
 	public static function escapeSQL($data){
-		if (is_string($data))
-			$data = str_replace("'", "''", stripslashes($data));
-		else if ( is_array($data)){
-			foreach ($data as $key => $value)
-				$data[$key] = self::escapeSQL($value);
-		}
-		else if(is_object($data)){
-			foreach ($data as $key => $value)
-				$data->{$key} = self::escapeSQL($value);
-		}
-
-		return $data;
+		return self::recursive($data, function($data){
+			return str_replace("'", "''", stripslashes($data));
+		});
 	}
 
 	/**
@@ -370,7 +361,10 @@ class PQDUtil {
 	}
 
 	public static function escapeHtml($data, $charset = 'UTF-8', $flags = null){
-		return self::recursive($data, "htmlentities", array($flags, defined('PQD_CHARSET') ? PQD_CHARSET : $charset));
+		return self::recursive($data, "htmlentities", array(
+			$flags,
+			defined('PQD_CHARSET') ? PQD_CHARSET : $charset
+		));
 	}
 
 	/**
