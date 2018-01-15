@@ -56,4 +56,11 @@ class PQDEntity {
 	public function escapeJS(){
 		return PQDUtil::escapeJS($this);
 	}
+
+	/**
+	 * @return self
+	 */
+	public function trim(){
+		return PQDUtil::trim($this);
+	}
 }
