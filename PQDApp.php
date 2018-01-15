@@ -118,6 +118,9 @@ class PQDApp {
 		if(!defined('APP_DEBUG'))
 			define('APP_DEBUG', false);
 
+		if(!defined('PQD_ORM_FORMAT_FIELD'))
+			define('PQD_ORM_FORMAT_FIELD', true);
+
 		self::$oPQDApp = $this;
 
 		if (!file_exists(APP_PATH . 'logs/')){

@@ -150,7 +150,10 @@ abstract class SQLSelect extends PQDDb{
 
 		foreach ($aFields as $col => $value){
 			$bind = ":" . $col;
-			$col = join("", array_map("ucwords", explode("_", $col)));
+
+			if(PQD_ORM_FORMAT_FIELD)
+				$col = join("", array_map("ucwords", explode("_", $col)));
+
 			$method = 'get' . $col;
 
 			$st->bindValue($bind, $oEntity->{$method}(), $this->retParamType($value));
@@ -558,6 +561,20 @@ abstract class SQLSelect extends PQDDb{
 	 */
 	public function getMethodSetPk(){
 		return $this->methodSetPk;
+	}
+
+	/**
+	 * @param string $methodGetPk
+	 */
+	public function setMethodGetPk($methodGetPk){
+		$this->methodGetPk = $methodGetPk;
+	}
+
+	/**
+	 * @param string $methodSetPk
+	 */
+	public function setMethodSetPk($methodSetPk){
+		$this->methodSetPk = $methodSetPk;
 	}
 
 	/**
