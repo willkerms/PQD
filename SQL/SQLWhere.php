@@ -307,7 +307,7 @@ class SQLWhere {
 		for ($i = 0, $espace = "", $alias = ""; $i < count($this->filters); $i++) {
 			if (is_array($this->filters[$i])){
 				if(!is_null($this->getAlias())){
-					if(preg_match('/^[a-zA-Z]+\.[a-zA-Z_\-]+/', $this->filters[$i]['field']) !== 1)
+					if(preg_match('/^[a-zA-Z0-9]+\.[a-zA-Z_\-0-9]+/', $this->filters[$i]['field']) !== 1)
 						$alias = $this->getAlias() . ".";
 				}
 
