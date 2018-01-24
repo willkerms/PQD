@@ -54,23 +54,24 @@ class DbfToSQL extends Dbf {
 		$this->db = $db;
 	}
 
-	public function generateTable(){
-		$this->sql .= "CREATE TABLE $this->tableName(" . PHP_EOL;
+	public function retSQLTable(){
+
+		$sql = "CREATE TABLE $this->tableName(" . PHP_EOL;
 
 		$virgula = "\t";
 
 		switch ($this->db){
 			case self::DB_SQLITE:
-				$this->sql .=  $virgula . "$this->idField INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT";
+				$sql .=  $virgula . "$this->idField INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT";
 			break;
 			case self::DB_SQLSERVER:
-				$this->sql .=  $virgula . "$this->idField INTEGER NOT NULL PRIMARY KEY IDENTITY";
+				$sql .=  $virgula . "$this->idField INTEGER NOT NULL PRIMARY KEY IDENTITY";
 			break;
 			case self::DB_MYSQL:
-				$this->sql .=  $virgula . "$this->idField INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT";
+				$sql .=  $virgula . "$this->idField INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT";
 			break;
 			case self::DB_PGSQL:
-				$this->sql .=  $virgula . "$this->idField SERIAL";
+				$sql .=  $virgula . "$this->idField SERIAL";
 			break;
 		}
 
@@ -79,30 +80,62 @@ class DbfToSQL extends Dbf {
 
 			//Caracter
 			if($this->header[$i]['type'] == 'character' || $this->header[$i]['type'] == 'date'){
-				$this->sql .= $virgula . $this->header[$i]['name'] . ' VARCHAR(' . $this->header[$i]['length'] . ')';
+				$sql .= $virgula . $this->header[$i]['name'] . ' VARCHAR(' . $this->header[$i]['length'] . ')';
 			}
 
 			//Int
 			else if($this->header[$i]['type'] == 'number' && $this->header[$i]['precision'] == 0){
-				$this->sql .= $virgula . $this->header[$i]['name'] . ' INTEGER ';
+				$sql .= $virgula . $this->header[$i]['name'] . ' INTEGER ';
 			}
 
 			//Float
 			else if($this->header[$i]['type'] == 'number' && $this->header[$i]['precision'] != 0){
-				$this->sql .= $virgula . $this->header[$i]['name'] . ' REAL';
+				$sql .= $virgula . $this->header[$i]['name'] . ' REAL';
 			}
 
 			//Logical
 			else if($this->header[$i]['type'] == 'boolean'){
-				$this->sql .= $virgula . $this->header[$i]['name'] . ' BIT';
+				$sql .= $virgula . $this->header[$i]['name'] . ' BIT';
 			}
 		}
 
-		$this->sql .=  $virgula . "$this->deleteField BIT NOT NULL DEFAULT 0";
-		$this->sql .= PHP_EOL . " );" . PHP_EOL;
-		$this->sql .= "CREATE INDEX {$this->tableName}_$this->idField ON $this->tableName ($this->idField);" . PHP_EOL;
+		$sql .=  $virgula . "$this->deleteField BIT NOT NULL DEFAULT 0";
+		$sql .= PHP_EOL . " );" . PHP_EOL;
+		$sql .= "CREATE INDEX {$this->tableName}_$this->idField ON $this->tableName ($this->idField);" . PHP_EOL;
+
+		return $sql;
+	}
+
+	public function generateTable(){
+
+		$this->sql .= $this->retSQLTable();
 
 		return $this;
+	}
+
+	public function retSQLRecord($numRecord){
+
+		$data = $this->getRecord($numRecord, Dbf::FETCH_NUM);
+		$deleted = array_pop($data);
+
+		$data = array_map("trim", $data);
+
+		$sql = "INSERT INTO " . $this->tableName . "( ";
+		for ($j = 0; $j < $this->getNumFields(); $j++)
+			$sql .= $this->header[$j]['name'] . ", ";
+
+		$sql .= "$this->deleteField) VALUES ( ";
+
+		foreach ($data as $key => $value){
+			if ($this->header[$key]['type'] == 'character' || $this->header[$key]['type'] == 'date')//Caracter
+				$sql .= "'" . str_replace("'", "''", $value) . "', ";
+			else if ($this->header[$key]['type'] == 'number' || $this->header[$key]['type'] == 'boolean')
+				$sql .= $value . ", ";
+		}
+
+		$sql .= "$deleted);" . PHP_EOL;
+
+		return $sql;
 	}
 
 	/**
@@ -112,29 +145,10 @@ class DbfToSQL extends Dbf {
 	public function generateRecords($top = 0){
 
 		for ($i = 1; $i <= $this->getNumRecords(); $i++) {
+			$this->sql .= $this->retSQLRecord($i);
 
-			$data = $this->getRecord($i, Dbf::FETCH_NUM);
-			$deleted = array_pop($data);
-
-			$data = array_map("trim", $data);
-
-			$this->sql .= "INSERT INTO " . $this->tableName . "( ";
-			for ($j = 0; $j < $this->getNumFields(); $j++)
-
-				$this->sql .= $this->header[$j]['name'] . ", ";
-				$this->sql .= "$this->deleteField) VALUES ( ";
-
-				foreach ($data as $key => $value){
-					if ($this->header[$key]['type'] == 'character' || $this->header[$key]['type'] == 'date')//Caracter
-						$this->sql .= "'" . str_replace("'", "''", $value) . "', ";
-					else if ($this->header[$key]['type'] == 'number' || $this->header[$key]['type'] == 'boolean')
-						$this->sql .= $value . ", ";
-				}
-
-				$this->sql .= "$deleted);" . PHP_EOL;
-
-				if($i == $top)
-					break;
+			if($i == $top)
+				break;
 		}
 
 		return $this;
