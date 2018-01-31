@@ -325,18 +325,18 @@ class PQDUtil {
 
 		if ( is_array($data)){
 			foreach ($data as $key => $value)
-				$data[$key] = self::recursive($value, $function);
+				$data[$key] = self::recursive($value, $function, $args);
 		}
 		else if(is_object($data)){
 			foreach ($data as $key => $value)
-				$data->{$key} = self::recursive($value, $function);
+				$data->{$key} = self::recursive($value, $function, $args);
 
 			$oReflection = new \ReflectionObject($data);
 			$aMethods = $oReflection->getMethods();
 
 			foreach ($aMethods as $oReflectionMethod ){
 				if (substr($oReflectionMethod->name, 0, 3) == "set" && method_exists($data, "get" . substr($oReflectionMethod->name, 3)))
-					$data->{$oReflectionMethod->name}(self::recursive($data->{"get" . substr($oReflectionMethod->name, 3)}(), $function));
+					$data->{$oReflectionMethod->name}(self::recursive($data->{"get" . substr($oReflectionMethod->name, 3)}(), $function, $args));
 			}
 		}
 		else if(!is_null($data) && is_string($data)){
