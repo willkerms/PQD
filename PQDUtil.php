@@ -31,6 +31,11 @@ class PQDUtil {
 
 	const IS_INT = '/^[0-9]+$/';
 
+	const FORMAT_DB_DATE = 'Y-m-d';
+	const FORMAT_DB_DATETIME = 'Y-m-d H:i:s';
+
+	const FORMAT_VIEW_DATE = 'd/m/Y';
+	const FORMAT_VIEW_DATETIME = 'd/m/Y H:i:s';
 
 	/**
 	 * Escape $data as SQL Server string
@@ -135,13 +140,13 @@ class PQDUtil {
 		return is_null($objRet) ? new $class() : $objRet;
 	}
 
-	public static function formatDateView($date = null){
+	public static function formatDateView($date = null, $formatVW = self::FORMAT_VIEW_DATE, $formatDB = self::FORMAT_DB_DATE){
 		if(!empty($date)){
 
-			$nDate = \DateTime::createFromFormat(PQD_FORMAT_DB_DATE, $date);
+			$nDate = \DateTime::createFromFormat($formatDB, $date);
 
 			if($nDate instanceof \DateTime)
-				return $nDate->format(PQD_FORMAT_VIEW_DATE);
+				return $nDate->format($formatVW);
 			else
 				return $date;
 		}
@@ -187,15 +192,15 @@ class PQDUtil {
 		return (float)str_replace(array('.', ','), array('', '.'), $number);
 	}
 
-	public static function formatDateTimeView($date = null){
+	public static function formatDateTimeView($date = null, $formatVW = self::FORMAT_VIEW_DATETIME, $formatDB = self::FORMAT_DB_DATETIME){
 
 		if(!empty($date)){
 
-			$dateTemp = substr($date, 0, strlen(date(PQD_FORMAT_DB_DATETIME)));
-			$nDate = \DateTime::createFromFormat(PQD_FORMAT_DB_DATETIME, $dateTemp);
+			$dateTemp = substr($date, 0, strlen(date($formatDB)));
+			$nDate = \DateTime::createFromFormat($formatDB, $dateTemp);
 
 			if($nDate instanceof \DateTime)
-				return $nDate->format(PQD_FORMAT_VIEW_DATETIME);
+				return $nDate->format($formatVW);
 			else
 				return $date;
 		}
@@ -203,13 +208,13 @@ class PQDUtil {
 		return $date;
 	}
 
-	public static function formatDateDB($date = null){
+	public static function formatDateDB($date = null, $formatVW = self::FORMAT_VIEW_DATE, $formatDB = self::FORMAT_DB_DATE){
 
 		if(!empty($date)){
-			$nDate = \DateTime::createFromFormat(PQD_FORMAT_VIEW_DATE, $date);
+			$nDate = \DateTime::createFromFormat($formatVW, $date);
 
 			if($nDate instanceof \DateTime)
-				return $nDate->format(PQD_FORMAT_DB_DATE);
+				return $nDate->format($formatDB);
 			else
 				return $date;
 		}
@@ -217,13 +222,13 @@ class PQDUtil {
 		return $date;
 	}
 
-	public static function formatDateTimeDB($date = null){
+	public static function formatDateTimeDB($date = null, $formatVW = self::FORMAT_VIEW_DATETIME, $formatDB = self::FORMAT_DB_DATETIME){
 
 		if(!empty($date)){
-			$nDate = \DateTime::createFromFormat(PQD_FORMAT_VIEW_DATETIME, $date);
+			$nDate = \DateTime::createFromFormat($formatVW, $date);
 
 			if($nDate instanceof \DateTime)
-				return $nDate->format(PQD_FORMAT_DB_DATETIME);
+				return $nDate->format($formatDB);
 			else
 				return $date;
 		}
