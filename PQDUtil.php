@@ -140,20 +140,6 @@ class PQDUtil {
 		return is_null($objRet) ? new $class() : $objRet;
 	}
 
-	public static function formatDateView($date = null, $formatVW = self::FORMAT_VIEW_DATE, $formatDB = self::FORMAT_DB_DATE){
-		if(!empty($date)){
-
-			$nDate = \DateTime::createFromFormat($formatDB, $date);
-
-			if($nDate instanceof \DateTime)
-				return $nDate->format($formatVW);
-			else
-				return $date;
-		}
-
-		return $date;
-	}
-
 	/**
 	 * Quando returnNull = true, caso o número não seja maior que zero retorna NULL
 	 * Quando returnNull = false, formata o número do jeito que foi enviado independentemente do valor
@@ -192,48 +178,35 @@ class PQDUtil {
 		return (float)str_replace(array('.', ','), array('', '.'), $number);
 	}
 
-	public static function formatDateTimeView($date = null, $formatVW = self::FORMAT_VIEW_DATETIME, $formatDB = self::FORMAT_DB_DATETIME){
-
+	public static function formatDate($date = null, $from = self::FORMAT_VIEW_DATETIME, $to = self::FORMAT_DB_DATETIME){
 		if(!empty($date)){
 
-			$dateTemp = substr($date, 0, strlen(date($formatDB)));
-			$nDate = \DateTime::createFromFormat($formatDB, $dateTemp);
+			$dateTemp = substr($date, 0, strlen(date($from)));
+			$nDate = \DateTime::createFromFormat($from, $dateTemp);
 
 			if($nDate instanceof \DateTime)
-				return $nDate->format($formatVW);
-			else
-				return $date;
+				return $nDate->format($to);
+				else
+					return $date;
 		}
 
 		return $date;
+	}
+
+	public static function formatDateView($date = null, $formatVW = self::FORMAT_VIEW_DATE, $formatDB = self::FORMAT_DB_DATE){
+		return self::formatDate($date, $formatDB, $formatVW);
+	}
+
+	public static function formatDateTimeView($date = null, $formatVW = self::FORMAT_VIEW_DATETIME, $formatDB = self::FORMAT_DB_DATETIME){
+		return self::formatDate($date, $formatDB, $formatVW);
 	}
 
 	public static function formatDateDB($date = null, $formatVW = self::FORMAT_VIEW_DATE, $formatDB = self::FORMAT_DB_DATE){
-
-		if(!empty($date)){
-			$nDate = \DateTime::createFromFormat($formatVW, $date);
-
-			if($nDate instanceof \DateTime)
-				return $nDate->format($formatDB);
-			else
-				return $date;
-		}
-
-		return $date;
+		return self::formatDate($date, $formatVW, $formatDB);
 	}
 
 	public static function formatDateTimeDB($date = null, $formatVW = self::FORMAT_VIEW_DATETIME, $formatDB = self::FORMAT_DB_DATETIME){
-
-		if(!empty($date)){
-			$nDate = \DateTime::createFromFormat($formatVW, $date);
-
-			if($nDate instanceof \DateTime)
-				return $nDate->format($formatDB);
-			else
-				return $date;
-		}
-
-		return $date;
+		return self::formatDate($date, $formatVW, $formatDB);
 	}
 
 	/**
@@ -303,29 +276,6 @@ class PQDUtil {
 		return $return;
 	}
 
-	/**
-	 * @author Willker Moraes Silva
-	 * @since 2015-11-11
-	 * @param mixed $data
-	 */
-	public static function escapeJS($data){
-		return self::recursive($data, function($data){
-			$return = "";
-			for ($i=0, $return = ""; $i<strlen($data); $i++)
-				$return .= '\x' . dechex(ord(substr($data, $i, 1)));
-
-			return $return;
-		});
-	}
-
-	public static function utf8_encode($data){
-		return self::recursive($data, "utf8_encode");
-	}
-
-	public static function utf8_decode($data){
-		return self::recursive($data, "utf8_decode");
-	}
-
 	public static function recursive($data, $function, array $args = null){
 
 		if ( is_array($data)){
@@ -356,6 +306,30 @@ class PQDUtil {
 
 		return $data;
 	}
+
+	/**
+	 * @author Willker Moraes Silva
+	 * @since 2015-11-11
+	 * @param mixed $data
+	 */
+	public static function escapeJS($data){
+		return self::recursive($data, function($data){
+			$return = "";
+			for ($i=0, $return = ""; $i<strlen($data); $i++)
+				$return .= '\x' . dechex(ord(substr($data, $i, 1)));
+
+			return $return;
+		});
+	}
+
+	public static function utf8_encode($data){
+		return self::recursive($data, "utf8_encode");
+	}
+
+	public static function utf8_decode($data){
+		return self::recursive($data, "utf8_decode");
+	}
+
 
 	public static function strtoupper($data){
 		return self::recursive($data, "strtoupper");
