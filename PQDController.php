@@ -54,7 +54,7 @@ abstract class PQDController implements IPQDController{
 	 * @param unknown $view
 	 * @return PQDView
 	 */
-	public function setView ($view) {
+	public function setView ($view, $autoRender = true, $requireHeaderAndFooter = true) {
 
 		//Quando sobre escreve a view não deixa a view antiga ser exibida ao ser limpada pelo garbage collection!
 		if (!is_null($this->getView()))
@@ -63,7 +63,7 @@ abstract class PQDController implements IPQDController{
 		if (is_object($view) && $view instanceof PQDView)
 			$this->view = $view;
 		else
-			$this->view = new PQDView($view, $this->exceptions);
+			$this->view = new PQDView($view, $this->exceptions, $autoRender, $requireHeaderAndFooter);
 
 		return $this->getView();
 	}
