@@ -46,7 +46,7 @@ abstract class PQDController implements IPQDController{
 	/**
 	 * @return PQDView $view
 	 */
-	protected function getView () {
+	public function getView () {
 		return $this->view;
 	}
 
@@ -54,7 +54,7 @@ abstract class PQDController implements IPQDController{
 	 * @param unknown $view
 	 * @return PQDView
 	 */
-	protected function setView ($view) {
+	public function setView ($view) {
 
 		//Quando sobre escreve a view não deixa a view antiga ser exibida ao ser limpada pelo garbage collection!
 		if (!is_null($this->getView()))
