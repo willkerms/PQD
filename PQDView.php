@@ -51,6 +51,11 @@ class PQDView {
 	private $fields = array();
 
 	/**
+	 * @var bool $escape
+	 */
+	private $escape = true;
+
+	/**
 	 * @param string $view
 	 */
 	function __construct ($view, PQDExceptions $exceptions = null, $autoRender = true, $requireHeaderAndFooter = true) {
@@ -230,9 +235,9 @@ class PQDView {
 	 */
 	public function e($field){
 		if(is_string($field) && isset($this->fields[$field]['description']))
-			return PQDUtil::escapeHtml($this->fields[$field]['description']);
+			return $this->escape ? PQDUtil::escapeHtml($this->fields[$field]['description']) : $this->fields[$field]['description'];
 		else if(is_array($field) && isset($field['description']))
-			return PQDUtil::escapeHtml($field['description']);
+			return $this->escape ? PQDUtil::escapeHtml($field['description']) : $field['description'];
 		else
 			return 'Without Description';
 	}
@@ -280,5 +285,18 @@ class PQDView {
 	function __destruct () {
 		if ($this->autoRender && !(defined("APP_DEBUG_VIEW") && APP_DEBUG_VIEW))
 			$this->render();
+	}
+	/**
+	 * @return the $escape
+	 */
+	public function getEscape() {
+		return $this->escape;
+	}
+
+	/**
+	 * @param boolean $escape
+	 */
+	public function setEscape($escape) {
+		$this->escape = $escape;
 	}
 }
