@@ -335,6 +335,10 @@ class PQDUtil {
 		return self::recursive($data, "strtoupper");
 	}
 
+	public static function strtolower($data){
+		return self::recursive($data, "strtolower");
+	}
+
 	public static function trim($data){
 		return self::recursive($data, "trim");
 	}

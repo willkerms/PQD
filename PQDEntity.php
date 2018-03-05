@@ -53,6 +53,13 @@ class PQDEntity {
 	/**
 	 * @return self
 	 */
+	public function lowerCase(){
+		return PQDUtil::strtolower($this);
+	}
+
+	/**
+	 * @return self
+	 */
 	public function escapeJS(){
 		return PQDUtil::escapeJS($this);
 	}
