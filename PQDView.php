@@ -107,6 +107,11 @@ class PQDView {
 
 	}
 
+	/**
+	 * get view output
+	 *
+	 * @return string
+	 */
 	public function getRender(){
 		ob_start();
 		$this->render();
@@ -294,6 +299,8 @@ class PQDView {
 	}
 
 	/**
+	 * If it's necessary to escape on print fields
+	 *
 	 * @param boolean $escape
 	 */
 	public function setEscape($escape) {

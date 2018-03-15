@@ -627,7 +627,7 @@ class PQDApp {
 		$pathPublic = $path;//Caminho a partir dá pasta /public
 		if (count($path) > 0) {
 
-			if(isset($this->environments[$path[0]])){
+			if(isset($this->environments[$path[0]]) && !$this->isHostEnv()){
 				$pathPublic = array_slice($path, 1);
 				$pathString = join('/', $pathPublic);
 			}
@@ -639,13 +639,13 @@ class PQDApp {
 			define('APP_URL', $pathString);
 
 			//Setando ambiente de trabalho
-			if(isset($this->environments[$path[0]])){
+			if(isset($this->environments[$path[0]]) && !$this->isHostEnv()){
 				define("APP_ENVIRONMENT", $path[0]);
 				define('APP_URL_ENVIRONMENT', APP_URL_PUBLIC . APP_ENVIRONMENT . '/');
 			}
 			else{
 				//Quando o ambiente é mapeando em algum host
-				if(isset($_SERVER['HTTP_HOST']) && isset($this->aHostsEnv[$_SERVER['HTTP_HOST']]) && isset($this->environments[$this->aHostsEnv[$_SERVER['HTTP_HOST']]]))
+				if($this->isHostEnv())
 					define("APP_ENVIRONMENT", $this->aHostsEnv[$_SERVER['HTTP_HOST']]);
 				else
 					define("APP_ENVIRONMENT", $this->envDefault);
@@ -655,7 +655,7 @@ class PQDApp {
 		}
 		else{
 			//Quando o ambiente é mapeando em algum host
-			if(isset($this->aHostsEnv[$_SERVER['HTTP_HOST']]) && isset($this->environments[$this->aHostsEnv[$_SERVER['HTTP_HOST']]]))
+			if($this->isHostEnv())
 				define("APP_ENVIRONMENT", $this->aHostsEnv[$_SERVER['HTTP_HOST']]);
 			else
 				define("APP_ENVIRONMENT", $this->envDefault);
@@ -666,6 +666,10 @@ class PQDApp {
 
 		$this->aUrlRequest = $path;
 		$this->aUrlRequestPublic = $pathPublic;
+	}
+
+	private function isHostEnv(){
+		return isset($_SERVER['HTTP_HOST']) && isset($this->aHostsEnv[$_SERVER['HTTP_HOST']]) && isset($this->environments[$this->aHostsEnv[$_SERVER['HTTP_HOST']]]);
 	}
 
 	private function setIncludePath() {
