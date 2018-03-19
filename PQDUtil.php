@@ -350,6 +350,10 @@ class PQDUtil {
 		));
 	}
 
+	public static function html_entity_decode($data){
+		return self::recursive($data, "html_entity_decode");
+	}
+
 	/**
 	 * @param string $cnpj
 	 * @return boolean

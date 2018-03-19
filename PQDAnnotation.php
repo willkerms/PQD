@@ -185,6 +185,10 @@ class PQDAnnotation{
 				self::$annotation[$this->class]['table'] = $table;
 			}
 
+			preg_match('/\@entity\([^)]*\)/', file_get_contents($this->class), $matches);
+			if(isset($matches[0]))
+				self::$annotation[$this->class]['entity'] = $this->retValues('@entity', $matches[0]);
+
 			return self::$annotation[$this->class]['table'];
 		}
 	}
@@ -266,6 +270,21 @@ class PQDAnnotation{
 			$this->getFields();
 			self::$annotation[$this->class]['allFilters'] = array_merge(self::$annotation[$this->class]['filters'], self::$annotation[$this->class]['viewFilters']);
 			return self::$annotation[$this->class]['allFilters'];
+		}
+	}
+
+	/**
+	 * Retorna todos os campos filtros inclusive os dá classe DTO ou vw
+	 *
+	 * @return array
+	 */
+	public function getClassAnnotation(){
+
+		if(isset(self::$annotation[$this->class]))
+			return self::$annotation[$this->class];
+		else{
+			$this->getFields();
+			return self::$annotation[$this->class];
 		}
 	}
 
