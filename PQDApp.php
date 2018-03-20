@@ -549,7 +549,7 @@ class PQDApp {
 	 * @return PQDApp
 	 */
 	private function iniApp() {
-		define("APP_CWD", getcwd());
+		define("APP_CWD", getcwd() . '/');
 		chdir(APP_PATH);
 		$this->setIncludePath();
 		return $this;
