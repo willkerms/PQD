@@ -127,7 +127,9 @@ class DbfToSQL extends Dbf {
 		$sql .= "$this->deleteField) VALUES ( ";
 
 		foreach ($data as $key => $value){
-			if ($this->header[$key]['type'] == 'character' || $this->header[$key]['type'] == 'date')//Caracter
+			if(empty($value))
+				$sql .= "NULL, ";
+			else if ($this->header[$key]['type'] == 'character' || $this->header[$key]['type'] == 'date')//Caracter
 				$sql .= "'" . str_replace("'", "''", $value) . "', ";
 			else if ($this->header[$key]['type'] == 'number' || $this->header[$key]['type'] == 'boolean')
 				$sql .= $value . ", ";
