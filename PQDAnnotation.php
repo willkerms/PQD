@@ -164,6 +164,7 @@ class PQDAnnotation{
 			return self::$annotation[$this->class]['table'];
 		else{
 			self::$annotation[$this->class]['table'] = array();
+			self::$annotation[$this->class]['entity'] = array();
 			self::$annotation[$this->class]['viewFields'] = array();
 			self::$annotation[$this->class]['viewFilters'] = array();
 
@@ -227,6 +228,20 @@ class PQDAnnotation{
 		else{
 			$this->getFields();
 			return self::$annotation[$this->class]['viewFields'];
+		}
+	}
+
+	/**
+	 * Retorna os valores setados em @entity
+	 *
+	 * @return array
+	 */
+	public function getEntity(){
+		if(isset(self::$annotation[$this->class]['entity']))
+			return self::$annotation[$this->class]['entity'];
+		else{
+			$this->getTable();
+			return self::$annotation[$this->class]['entity'];
 		}
 	}
 
