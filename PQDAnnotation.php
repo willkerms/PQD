@@ -81,8 +81,19 @@ class PQDAnnotation{
 					$col = $this->retValues('@field', $field);
 
 					preg_match('/\@list\(.*$/m', $comment, $list);
-					if(isset($list[0]))
+					if(isset($list[0])){
 						$col['list'] = PQDUtil::json_decode(substr($list[0], strlen('@list')+1, -2));
+
+						if( is_string($col['list']) && substr($col['list'], -5) == '.json'){
+
+							$jsonFile = dirname($this->class) . '/' . $col['list'];
+
+							if (is_file($jsonFile))
+								$col['list'] = PQDUtil::json_decode(file_get_contents($jsonFile));
+							else
+								PQDApp::getApp()->getExceptions()->setException(new \Exception("Arquivo JSON não encontrado!", 13) );
+						}
+					}
 
 					preg_match('/\@help\(.*$/m', $comment, $help);
 					if(isset($help[0]))
