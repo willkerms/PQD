@@ -93,6 +93,9 @@ class PQDAnnotation{
 							else
 								PQDApp::getApp()->getExceptions()->setException(new \Exception("Arquivo JSON não encontrado!", 13) );
 						}
+
+						if (is_null($col['list']))
+							throw new \Exception("Erro no JSON da entidade! Arquivo(" . $this->class . "), coluna: (" . $col['name'] . ").");
 					}
 
 					preg_match('/\@help\(.*$/m', $comment, $help);
