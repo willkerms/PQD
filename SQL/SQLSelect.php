@@ -58,6 +58,10 @@ abstract class SQLSelect extends PQDDb{
 	private $fields = array();
 
 	/**
+	 * @var SQLGroupBy
+	 */
+	private $defaultGroupBy;
+	/**
 	 * @var SQLOrderBy
 	 */
 	private $defaultOrderBy;
@@ -223,6 +227,26 @@ abstract class SQLSelect extends PQDDb{
 			return '*';
 	}
 
+	private function retGroupBy(SQLWhere $oWhere = null, SQLGroupBy $oGroupBy = null){
+
+		$oGroupBy = is_null($oGroupBy) ? $this->getDefaultGroupBy() : $oGroupBy;
+		$oWhere = is_null($oWhere) ? $this->getDefaultWhereOnSelect() : $oWhere;
+
+		$return = "";
+		if (!is_null($oGroupBy)){
+
+			if($this->getDefaultWhereOnSelect() instanceof SQLJoin)
+				$oGroupBy->setAlias($this->getDefaultWhereOnSelect()->getAlias());
+
+			if($oWhere instanceof SQLJoin)
+				$oGroupBy->setAlias($oWhere->getAlias());
+
+			$return = $oGroupBy->getGroupBy();
+		}
+
+		return $return;
+	}
+
 	private function retOrderBy(SQLWhere $oWhere = null, SQLOrderBy $oOrderBy = null){
 
 		$oOrderBy = is_null($oOrderBy) ? $this->getDefaultOrderBy() : $oOrderBy;
@@ -321,7 +345,7 @@ abstract class SQLSelect extends PQDDb{
 	 * @param SQLOrderBy $oOrderBy
 	 * @return array
 	 */
-	public function fetchAll(array $fields = null, $fetchClass = true, SQLOrderBy $oOrderBy = null){
+	public function fetchAll(array $fields = null, $fetchClass = true, SQLOrderBy $oOrderBy = null, SQLGroupBy $oGroupBy = null){
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
 
@@ -331,6 +355,8 @@ abstract class SQLSelect extends PQDDb{
 			$sqlFields = $this->retFieldsSelect();
 
 		$this->sql = "SELECT ". $sqlFields ." FROM " . $table . (!is_null($this->defaultWhereOnSelect) ? " " . $this->getDefaultWhereOnSelect()->getWhere(true) : '');
+
+		$this->sql .= $this->retGroupBy(null, $oGroupBy);
 
 		$this->sql .= $this->retOrderBy(null, $oOrderBy);
 
@@ -409,8 +435,7 @@ abstract class SQLSelect extends PQDDb{
 		$this->sql .= "SELECT " . $rowNumber . $sqlFields . " FROM " . $table . " " . $oWhere->getWhere(true);
 
 		//Group By
-		if (!is_null($oGroupBy))
-			$this->sql .= $oGroupBy->getGroupBy();
+		$this->sql .= $this->retGroupBy($oWhere, $oGroupBy);
 
 		//ORDER BY
 		if(!$isLessSqlSrv11)
@@ -543,6 +568,13 @@ abstract class SQLSelect extends PQDDb{
 	}
 
 	/**
+	 * @param SQLGroupBy $oGroupBy
+	 */
+	public function setDefaultOrderBy(SQLGroupBy $oGroupBy){
+		$this->defaultGroupBy = $oGroupBy;
+	}
+
+	/**
 	 * @param number $indexCon
 	 */
 	public function setIndexCon($indexCon){
@@ -596,6 +628,13 @@ abstract class SQLSelect extends PQDDb{
 	 */
 	public function getDefaultOrderBy(){
 		return $this->defaultOrderBy;
+	}
+
+	/**
+	 * @return SQLGroupBy $defaultGroupBy
+	 */
+	public function getDefaultGroupBy(){
+		return $this->defaultGroupBy;
 	}
 
 	/**
