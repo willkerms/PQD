@@ -570,7 +570,7 @@ abstract class SQLSelect extends PQDDb{
 	/**
 	 * @param SQLGroupBy $oGroupBy
 	 */
-	public function setDefaultOrderBy(SQLGroupBy $oGroupBy){
+	public function setDefaultGroupBy(SQLGroupBy $oGroupBy){
 		$this->defaultGroupBy = $oGroupBy;
 	}
 
