@@ -87,7 +87,7 @@ class PQDDb{
 				if (!isset(self::$dbs[$indexCon]))
 					throw new \Exception("Parâmetros não setados para a conexão!", 12);
 
-				$options = array();
+				$options = self::$dbs[$indexCon]['options'];
 
 				if(self::$dbs[$indexCon]['driver'] != "dblib")
 					$options[PQDPDO::ATTR_TIMEOUT] = 5;
@@ -156,7 +156,7 @@ class PQDDb{
 	 * @param string $port
 	 * @return number $index
 	 */
-	public static function setDbConnection($driver, $host, $dbName, $user, $password, $port = null){
+	public static function setDbConnection($driver, $host, $dbName, $user, $password, $port = null, array $options = array()){
 
 		self::$dbs[] = array(
 			'driver' => $driver,
@@ -164,7 +164,8 @@ class PQDDb{
 			'db' => $dbName,
 			'user' => $user,
 			'pwd' => $password,
-			'port' => $port
+			'port' => $port,
+			'options' => $options
 		);
 
 		return count(self::$dbs) -1;
