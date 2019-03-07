@@ -185,8 +185,8 @@ class PQDApp {
 	 * @param string $port
 	 * @return number $index
 	 */
-	public function setDbConnection($driver, $host, $dbName, $user, $password, $port = null){
-		return PQDDb::setDbConnection($driver, $host, $dbName, $user, $password, $port);
+	public function setDbConnection($driver, $host, $dbName, $user, $password, $port = null, array $options = array()){
+		return PQDDb::setDbConnection($driver, $host, $dbName, $user, $password, $port, $options);
 	}
 
 	/**
