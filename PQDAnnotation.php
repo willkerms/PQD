@@ -80,9 +80,9 @@ class PQDAnnotation{
 
 					$col = $this->retValues('@field', $field);
 
-					preg_match('/\@list\(.*$/m', $comment, $list);
+					preg_match('/\@list\([^\r\n]*/m', $comment, $list);
 					if(isset($list[0])){
-						$col['list'] = PQDUtil::json_decode(substr($list[0], strlen('@list')+1, -2));
+						$col['list'] = PQDUtil::json_decode(substr($list[0], strlen('@list')+1, -1));
 
 						if( is_string($col['list']) && substr($col['list'], -5) == '.json'){
 
