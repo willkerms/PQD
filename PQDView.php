@@ -238,14 +238,14 @@ class PQDView {
 	 * @param string $field
 	 * @return string
 	 */
-	public function e($field, $escape = null){
+	public function e($field, $escape = null, $charset = null){
 
 		$escape = is_null($escape) ? $this->escape : $escape;
 
 		if(is_string($field) && isset($this->fields[$field]['description']))
-			return $escape ? PQDUtil::escapeHtml($this->fields[$field]['description']) : $this->fields[$field]['description'];
+			return $escape ? PQDUtil::escapeHtml($this->fields[$field]['description'], $charset) : $this->fields[$field]['description'];
 		else if(is_array($field) && isset($field['description']))
-			return $escape ? PQDUtil::escapeHtml($field['description']) : $field['description'];
+			return $escape ? PQDUtil::escapeHtml($field['description'], $charset) : $field['description'];
 		else
 			return 'Without Description';
 	}

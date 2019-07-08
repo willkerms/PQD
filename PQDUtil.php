@@ -343,10 +343,13 @@ class PQDUtil {
 		return self::recursive($data, "trim");
 	}
 
-	public static function escapeHtml($data, $charset = 'UTF-8', $flags = null){
+	public static function escapeHtml($data, $charset = null, $flags = null){
+
+		$charset = is_null($charset) ? ( defined('PQD_CHARSET') ? PQD_CHARSET : 'UTF-8' ) : $charset;
+
 		return self::recursive($data, "htmlentities", array(
 			$flags,
-			defined('PQD_CHARSET') ? PQD_CHARSET : $charset
+			$charset
 		));
 	}
 
