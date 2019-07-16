@@ -61,8 +61,8 @@ class PQDExceptions {
 	 * @param boolean $development
 	 * @return string
 	 */
-	public function getJsonExceptions($development = IS_DEVELOPMENT){
-		return PQDUtil::json_encode($this->getArrayExceptions($development));
+	public function getJsonExceptions($development = IS_DEVELOPMENT, $utf8 = true){
+		return PQDUtil::json_encode($this->getArrayExceptions($development), null, $utf8);
 	}
 
 	/**
@@ -70,7 +70,7 @@ class PQDExceptions {
 	 * @param boolean $development
 	 * @return string
 	 */
-	public function getHtmlExceptions($development = IS_DEVELOPMENT){
+	public function getHtmlExceptions($development = IS_DEVELOPMENT, $charset = null){
 
 		$aExceptions = $this->getExceptions();
 		$html = '';
@@ -85,7 +85,7 @@ class PQDExceptions {
 				$pre = '<pre>';
 				$pre .= 'code => '. $e->getCode() . PHP_EOL;
 				$pre .= 'file => ' . $e->getFile() . ":" . $e->getLine() . PHP_EOL;
-				$pre .= 'message => ' . PQDUtil::escapeHtml($e->getMessage()) . PHP_EOL;
+				$pre .= 'message => ' . PQDUtil::escapeHtml($e->getMessage(), $charset) . PHP_EOL;
 				$pre .= 'trace => ' . $e->getTraceAsString();
 				$pre .= '</pre>';
 
@@ -99,7 +99,7 @@ class PQDExceptions {
 			else{
 				$html .= '<tr>';
 				$html .= '<td class="errors-count">' . $key . '</td>';
-				$html .= '<td class="errors-msg">' . PQDUtil::escapeHtml($e->getMessage()) . '</td>';
+				$html .= '<td class="errors-msg">' . PQDUtil::escapeHtml($e->getMessage(), $charset) . '</td>';
 				$html .= '</tr>';
 			}
 		}
