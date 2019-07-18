@@ -353,8 +353,11 @@ class PQDUtil {
 		));
 	}
 
-	public static function html_entity_decode($data){
-		return self::recursive($data, "html_entity_decode");
+	public static function html_entity_decode($data, $quote_style = ENT_COMPAT, $charset = null){
+
+		$charset = is_null($charset) ? ( defined('PQD_CHARSET') ? PQD_CHARSET : 'UTF-8' ) : $charset;
+
+		return self::recursive($data, "html_entity_decode", array( $quote_style, $charset ));
 	}
 
 	/**
