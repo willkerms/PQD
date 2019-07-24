@@ -537,7 +537,7 @@ class PQDUtil {
 		return $hex; // returns the hex value including the number sign (#)
 	}
 
-	public static function contentType($type = 'json', $fileName = null){
+	public static function contentType($type = 'json', $fileName = null, $forceDownload = true){
 
 		if(IS_CLI)
 			return;
@@ -603,7 +603,7 @@ class PQDUtil {
 		header('Content-Type: ' . $contentType, true);
 
 		if (!is_null($fileName))
-			header('Content-Disposition: attachment;filename="' . $fileName . '"');
+			header('Content-Disposition: ' . ($forceDownload ? 'attachment;': 'inline;') . 'filename="' . $fileName . '"');
 
 		if ($type == 'json' && defined("PQD_FIRST_LINE_JSON"))
 			echo PQD_FIRST_LINE_JSON;
@@ -642,6 +642,57 @@ class PQDUtil {
 		}
 
 		return $document;
+	}
+
+	/**
+	 * Retorna um array para o Elemento DOM dado
+	 * @param \DOMNode $root
+	 * @return array
+	 */
+	public static function dom_to_array($root){
+		$result = array();
+
+		if ($root->hasAttributes()){
+			$attrs = $root->attributes;
+
+			foreach ($attrs as $i => $attr)
+				$result[$attr->name] = $attr->value;
+		}
+
+		$children = $root->childNodes;
+
+		if ($children->length == 1){
+			$child = $children->item(0);
+
+			if ($child->nodeType == XML_TEXT_NODE){
+				$result['_value'] = $child->nodeValue;
+
+				if (count($result) == 1)
+					return $result['_value'];
+				else
+					return $result;
+			}
+		}
+
+		$group = array();
+
+		for($i = 0; $i < $children->length; $i++){
+			$child = $children->item($i);
+
+			if (!isset($result[$child->nodeName]))
+				$result[$child->nodeName] = self::dom_to_array($child);
+			else{
+				if (!isset($group[$child->nodeName])){
+					$tmp = $result[$child->nodeName];
+					$result[$child->nodeName] = array($tmp);
+					$group[$child->nodeName] = 1;
+				}
+
+				$result[$child->nodeName][] = self::dom_to_array($child);
+			}
+		}
+
+		return $result;
 	}
 
 	/**
