@@ -696,6 +696,27 @@ class PQDUtil {
 	}
 
 	/**
+	 * Apresenta um choice no cli
+	 *
+	 * @param string $msg
+	 * @param array $choices
+	 * @return string
+	 */
+	public static function choiceCLI($msg = "Escolha um item:", array $choices){
+
+		$resp = null;
+		while (!isset($choices[$resp])){
+			echo $msg . PHP_EOL;
+			foreach ($choices as $k => $v)
+				echo "\t" . $k . '=>' . $v . PHP_EOL;
+
+			$resp = trim(fgets(STDIN));
+		}
+
+		return $resp;
+	}
+
+	/**
 	 * Formata um número
 	 *
 	 * @param number $number
