@@ -380,6 +380,14 @@ class PQDApp {
 		return $this->aAlias;
 	}
 
+	public function getLogController(){
+		return $this->logController;
+	}
+
+	public function getLogAction(){
+		return $this->logAction;
+	}
+
 	private function runClasses($aClasses){
 		foreach ($aClasses as $class){
 			if( class_exists($class) &&  method_exists($class, 'run'))
