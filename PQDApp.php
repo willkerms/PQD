@@ -122,11 +122,6 @@ class PQDApp {
 			define('PQD_ORM_FORMAT_FIELD', true);
 
 		self::$oPQDApp = $this;
-
-		if (!file_exists(APP_PATH . 'logs/')){
-			if(mkdir(APP_PATH . 'logs/', 0777, true) === false)
-				$this->getExceptions()->setException(new \Exception("Erro ao Criar diretório de LOG!", 6));
-		}
 	}
 
 	public static function getApp(){
@@ -701,39 +696,5 @@ class PQDApp {
 
 	public function __destruct() {
 		$this->runClasses($this->aFinalClasses);
-		if (file_exists(APP_PATH . 'logs/')){
-
-			$log = array(
-	 			'environment' => APP_ENVIRONMENT,
-				'date' => time(),
-				'ip' => isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '::1',
-				'http_user' => isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : null,
-				'user_id' => isset($_SESSION['user']['idUsuario']) ? $_SESSION['user']['idUsuario'] : null,
-				'user' => isset($_SESSION['user']['login']) ? $_SESSION['user']['login'] : null,
-				'request_uri' => $_SERVER['REQUEST_URI'],
-				'host' => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST']: null,
-				'controller' => $this->logController,
-				'action' => $this->logAction,
-				'app_url' => APP_URL,
-				'app_url_public' => APP_URL_PUBLIC,
-				'method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : null,
-				'http_response' => http_response_code()
-			);
-
-			$f = fopen(APP_PATH . 'logs/access-log-' . date('y-m-W') . '.log', 'a');
-			if($f === false){
-				throw new \Exception("Erro ao Criar arquivo de LOG!", 7);
-			}
-			else{
-				fwrite($f, Util::json_encode($log) . PHP_EOL);
-				fclose($f);
-
-				if ($this->exceptions->count() > 0) {
-					$f = fopen(APP_PATH . 'logs/error-log-' . date('y-m-W') . '.log', 'a');
-					fwrite($f, '{"date": ' . time() . ', "exceptions": ' . $this->exceptions->getJsonExceptions(true) . '}' . PHP_EOL);
-					fclose($f);
-				}
-			}
-		}
 	}
 }
