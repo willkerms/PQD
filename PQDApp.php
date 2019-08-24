@@ -451,11 +451,20 @@ class PQDApp {
 				$modulo = $pathinfo['dirname'] . '/' . $pathinfo['filename'];
 		}
 
-		if(!is_dir(APP_PATH . 'modulos/' . $modulo) && isset($this->aAlias[$modulo]))
+		/**
+		 * Melhoria para poder fazer o redirecionamento de qualquer url, inclusive o home!
+		 * @since 2019-08-24
+		 */
+		$homeEnv = $this->environments[APP_ENVIRONMENT] . "home";
+		if(isset($this->aAlias[$modulo])){
+			if ($modulo == $homeEnv)
+				$homeEnv = $this->aAlias[$modulo];
+
 			$modulo = $this->aAlias[$modulo];
+		}
 
 		if (is_dir(APP_PATH . 'modulos/' . $modulo)){
-			if (!IS_CLI && !isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $this->environments[APP_ENVIRONMENT] . "home" && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][APP_URL]) && !isset($this->aFreePaths[APP_ENVIRONMENT . '/' . APP_URL]))
+			if (!IS_CLI && !isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $homeEnv && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][APP_URL]) && !isset($this->aFreePaths[APP_ENVIRONMENT . '/' . APP_URL]))
 				$this->httpError(403);
 			else{
 				$ctrl = ucwords(basename(APP_PATH . 'modulos/' . $modulo)) . 'Ctrl';
