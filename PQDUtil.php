@@ -238,11 +238,11 @@ class PQDUtil {
 		}
 	}
 
-	public static function json_encode($value, $options = null, $utf8 = true){
+	public static function json_encode($value, $options = null, $utf8 = false){
 		return json_encode( $utf8 ? self::utf8_encode($value) : $value, $options);
 	}
 
-	public static function json_decode($json, $assoc = false, $depth = 512, $options = 0){
+	public static function json_decode($json, $assoc = true, $depth = 512, $options = 0){
 
 		$return = json_decode( $json, $assoc, $depth, $options);
 

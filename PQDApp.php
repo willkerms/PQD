@@ -393,7 +393,7 @@ class PQDApp {
 			if( class_exists($class) &&  method_exists($class, 'run'))
 				$class::run();
 			else
-				$this->getExceptions()->setException(new \Exception("Classe(" . $class . ") ou metodo(run) não encontrado!"));
+				$this->getExceptions()->setException(new PQDExceptionsDev("Classe(" . $class . ") ou metodo(run) não encontrado!"));
 		}
 	}
 
@@ -477,8 +477,10 @@ class PQDApp {
 				$this->execClass($file, $ctrl);//Executa a classe
 			}
 		}
-		else
+		else{
+			$this->exceptions->setException(new PQDExceptionsDev('(modulos/' . $modulo . ") não encontrado!"));
 			$this->httpError(404);
+		}
 	}
 
 	/**
@@ -501,20 +503,22 @@ class PQDApp {
 				if(count($this->aUrlRequestPublic) > 1 && $this->aUrlRequestPublic[0] == 'login' && !method_exists($obj, $act))
 					$act = 'view';
 
-					if(!method_exists($obj, $act))
+					if(!method_exists($obj, $act)){
+						$this->exceptions->setException(new PQDExceptionsDev("Metodo não existe: $ctrl::$act!"));
 						$this->httpError(500);
+					}
 					else{
 						$this->logAction = $act;
 						$obj->{$act}();
 					}
 			}
 			else {
-				$this->exceptions->setException(new \Exception("Classe (". $ctrl .") não encontrada!"));
+				$this->exceptions->setException(new PQDExceptionsDev("Classe (". $ctrl .") não encontrada!"));
 				$this->httpError(500);
 			}
 		}
 		else{
-			$this->exceptions->setException(new \Exception("Arquivo (". $file .".php) não encontrado!"));
+			$this->exceptions->setException(new PQDExceptionsDev("Arquivo (". $file .".php) não encontrado!"));
 			$this->httpError(500);
 		}
 	}

@@ -99,9 +99,6 @@ class PQDDb{
 				if(self::$dbs[$indexCon]['driver'] == "mssql" && extension_loaded('pdo_sqlsrv')){
 					$options['ReturnDatesAsStrings'] = true;
 					self::$connections[$indexCon] = new PQDPDO('sqlsrv:Server=' . self::$dbs[$indexCon]['host'] . $port . ';Database=' . self::$dbs[$indexCon]['db'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
-
-					if(strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
-						self::$connections[$indexCon]->setAttribute(PQDPDO::SQLSRV_ATTR_ENCODING, PQDPDO::SQLSRV_ENCODING_SYSTEM);
 				}
 				else if(self::$dbs[$indexCon]['driver'] == "sqlite"){
 					self::$connections[$indexCon] = new PQDPDO(self::$dbs[$indexCon]['driver'] . ":" . self::$dbs[$indexCon]['db'], null, null, $options);
