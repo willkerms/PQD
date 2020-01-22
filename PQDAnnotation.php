@@ -73,7 +73,7 @@ class PQDAnnotation{
 			$fields = array();
 			$pk = null;
 			foreach($matches[0] as $key => $comment){
-				preg_match('/\@field\([^)]*\)/', $comment, $field);
+				preg_match('/\@field\(.*\)/', $comment, $field);
 
 				if(isset($field[0])){
 					$field = $field[0];

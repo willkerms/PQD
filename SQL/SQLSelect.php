@@ -448,6 +448,8 @@ abstract class SQLSelect extends PQDDb{
 
 			if($this->getDriverDB($this->getIndexCon()) == "mysql")
 				$this->sql .= " LIMIT " . (($page - 1) * $limit) . "," . $limit . ";";
+			else if($this->getDriverDB($this->getIndexCon()) == "pgsql")
+				$this->sql .= " LIMIT " . $limit . " OFFSET " . (($page - 1) * $limit) . ";";
 			else if(!is_null($limit) && $this->getDriverDB($this->getIndexCon()) == "mssql"){
 				//SQLServer 2012
 				if($this->getDriverDB($this->getIndexCon(), true) != "dblib" && version_compare($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0)
