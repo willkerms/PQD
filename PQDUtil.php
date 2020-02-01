@@ -75,9 +75,9 @@ class PQDUtil {
 
 
 	/**
-	 * Dá Trim nos valores,
+	 * Dï¿½ Trim nos valores,
 	 * Cria a instancia da classe passada e seta os valores de acordo com o namepace informado
-	 * caso os valores sejam vazios não seta no objeto.
+	 * caso os valores sejam vazios nï¿½o seta no objeto.
 	 *
 	 * @author Willker Moraes Silva
 	 * @since 2014-07-17
@@ -108,7 +108,7 @@ class PQDUtil {
 						if(!isset($objRet[$k]))
 							$objRet[$k] = new $class();
 
-						//Não seta string vazia
+						//Nï¿½o seta string vazia
 						if (is_string($v)){
 							$v = trim($v);
 							if($v == "")
@@ -123,7 +123,7 @@ class PQDUtil {
 					if(is_null($objRet))
 						$objRet = new $class();
 
-					//Não seta string vazia
+					//Nï¿½o seta string vazia
 					if (is_string($value)){
 						$value = trim($value);
 
@@ -141,8 +141,8 @@ class PQDUtil {
 	}
 
 	/**
-	 * Quando returnNull = true, caso o número não seja maior que zero retorna NULL
-	 * Quando returnNull = false, formata o número do jeito que foi enviado independentemente do valor
+	 * Quando returnNull = true, caso o nï¿½mero nï¿½o seja maior que zero retorna NULL
+	 * Quando returnNull = false, formata o nï¿½mero do jeito que foi enviado independentemente do valor
 	 *
 	 * @param float $number
 	 * @param number $precision
@@ -158,7 +158,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Formata um número no padrão Brasileiro
+	 * Formata um nï¿½mero no padrï¿½o Brasileiro
 	 *
 	 * @param number $number
 	 * @param number $decimal
@@ -169,7 +169,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Formata um número no padrão do Banco de Dados
+	 * Formata um nï¿½mero no padrï¿½o do Banco de Dados
 	 *
 	 * @param number $number
 	 * @return number
@@ -314,6 +314,10 @@ class PQDUtil {
 	 */
 	public static function escapeJS($data){
 		return self::recursive($data, function($data){
+			
+			//A funÃ§Ã£o ord nÃ£o aceita UTF-8, devendo ser ISO-8859-1
+			$data = mb_detect_encoding($data) == 'UTF-8' ? self::utf8_decode($data) : $data;
+
 			$return = "";
 			for ($i=0, $return = ""; $i<strlen($data); $i++)
 				$return .= '\x' . dechex(ord(substr($data, $i, 1)));
@@ -435,12 +439,12 @@ class PQDUtil {
 
 		//Without Comments /**/ //
 		if($commentsJS){
-			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressï¿½o estï¿½ errada, o certo seria .|\s
 			$aSearch[] = '/(\/\*([^\xff])*?(\*\/))/'; //Comments /* */
 			$aSearch[] = "/\/\/.*$/"; // Comments //
 
 			//Retirando JSON
-			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressï¿½o estï¿½ errada, o certo seria .|\s
 			$matchJSON = '/(\/\*JSON_START\*\/)([^\xff]*)?(\/\*JSON_END\*\/)/i';
 			preg_match_all($matchJSON, $string, $json);
 			foreach ($json[0] as $key => $text)
@@ -453,11 +457,11 @@ class PQDUtil {
 			if($commentsJS)
 				array_pop($aSearch); //remove comments from one line because when we have http:// it removes all code
 
-			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressï¿½o estï¿½ errada, o certo seria .|\s
 			$aSearch[] = '/(\<\!\-\-([^\xff])*?(\-\-\>))/';
 
 			//Retirando TEXTAREAS
-			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressï¿½o estï¿½ errada, o certo seria .|\s
 			$matchTextArea = '/(\<textarea)([^\xff])*?(\<\/textarea\>)/i';
 			preg_match_all($matchTextArea, $string, $textareas);
 
@@ -594,7 +598,7 @@ class PQDUtil {
 				header ('Pragma: public'); // HTTP/1.0
 			break;
 			case 'pdf':
-				// Redirect output to a client’s web browser (PDF)
+				// Redirect output to a clientï¿½s web browser (PDF)
 				$contentType = 'application/pdf';
 				header('Cache-Control: max-age=0');
 			break;
@@ -717,7 +721,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Formata um número
+	 * Formata um nï¿½mero
 	 *
 	 * @param number $number
 	 * @param number $decimals
@@ -733,7 +737,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Separa uma string de acordo com o tamanho e caracter de separação passado
+	 * Separa uma string de acordo com o tamanho e caracter de separaï¿½ï¿½o passado
 	 *
 	 * @param string $str
 	 * @param number $len
