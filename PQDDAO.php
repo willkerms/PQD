@@ -5,7 +5,7 @@ use PQD\SQL\SQLWhere;
 use PQD\SQL\SQLSelect;
 
 /**
- * Classe de abastração do banco de dados
+ * Classe de abastraÃ§Ã£o do banco de dados
  *
  * @author Willker Moraes Silva
  * @since 2015-11-12
@@ -53,7 +53,7 @@ abstract class PQDDAO extends SQLSelect{
 
 
 	/**
-	 * Prepara a inserção de um registro
+	 * Prepara a inserÃ§Ã£o de um registro
 	 *
 	 * @param PQDEntity $oEntity
 	 * @param array $fields
@@ -69,7 +69,7 @@ abstract class PQDDAO extends SQLSelect{
 
 		foreach ($fields as $col => $value){
 
-			//Para não inserir campos que estão nulos
+			//Para nÃ£o inserir campos que estÃ£o nulos
 			if($this->skipNull && !isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 				continue;
 
@@ -83,7 +83,7 @@ abstract class PQDDAO extends SQLSelect{
 		$comma = "";
 		foreach ($fields as $col => $value){
 
-			//Para não inserir campos que estão nulos
+			//Para nÃ£o inserir campos que estÃ£o nulos
 			if($this->skipNull && !isset($this->fieldsDefaultValuesOnInsert[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 				continue;
 
@@ -104,7 +104,7 @@ abstract class PQDDAO extends SQLSelect{
 	}
 
 	/**
-	 * Prepara a atualização de um registro
+	 * Prepara a atualizaÃ§Ã£o de um registro
 	 *
 	 * @param PQDEntity $oEntity
 	 * @param array $fields
@@ -121,7 +121,7 @@ abstract class PQDDAO extends SQLSelect{
 
 		foreach ($fields as $col => $value){
 
-			//Para não atualizar campos que estão nulos
+			//Para nÃ£o atualizar campos que estÃ£o nulos
 			if($this->skipNull && !isset($this->fieldsDefaultValuesOnUpdate[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
 				continue;
 
@@ -151,7 +151,7 @@ abstract class PQDDAO extends SQLSelect{
 	}
 
 	/**
-	 * Prepara a exclusão de um registro
+	 * Prepara a exclusÃ£o de um registro
 	 *
 	 * @param PQDEntity $oEntity
 	 * @return \PDOStatement
@@ -166,7 +166,7 @@ abstract class PQDDAO extends SQLSelect{
 
 	protected function save(PQDEntity &$oEntity){
 
-		//Para forçar operações de insert mesmo quando a chave primária já está setada!
+		//Para forÃ§ar operaÃ§Ãµes de insert mesmo quando a chave primÃ¡ria jÃ¡ estÃ¡ setada!
 		if (is_null($this->getOperation())){
 			if (is_null($oEntity->{$this->getMethodGetPk()}()))
 				$this->setOperation("I");

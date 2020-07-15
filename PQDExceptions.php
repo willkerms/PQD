@@ -28,7 +28,7 @@ class PQDExceptions {
 	 * @param boolean $development
 	 * @return string
 	 */
-	public function getArrayExceptions($development = IS_DEVELOPMENT){
+	public function getArrayExceptions($development = IS_DEVELOPMENT, $isJSON = false){
 
 		$aExceptions = $this->getExceptions();
 		$aExceptionsJSON = array();
@@ -39,13 +39,18 @@ class PQDExceptions {
 				continue;
 
 				if ($development === true) {
-					$aExceptionsJSON[] = array(
+
+					$aException = array(
 						'code' => $e->getCode(),
 						'file' => $e->getFile() . ":" . $e->getLine(),
 						'traceString' => $e->getTraceAsString(),
-						'trace' => $e->getTrace(),
 						'message' => $e->getMessage()
 					);
+
+					if(!$isJSON)
+						$aException['trace'] = $e->getTrace();
+
+					$aExceptionsJSON[] = $aException;
 				}
 				else{
 					$aExceptionsJSON[] = array(
@@ -61,8 +66,8 @@ class PQDExceptions {
 	 * @param boolean $development
 	 * @return string
 	 */
-	public function getJsonExceptions($development = IS_DEVELOPMENT, $utf8 = true){
-		return PQDUtil::json_encode($this->getArrayExceptions($development), null, $utf8);
+	public function getJsonExceptions($development = IS_DEVELOPMENT, $utf8 = false){
+		return PQDUtil::json_encode($this->getArrayExceptions($development, true), null, $utf8);
 	}
 
 	/**

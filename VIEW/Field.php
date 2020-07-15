@@ -141,7 +141,7 @@ class Field extends FieldAttr{
 		$sth->setFetchMode( \PDO::FETCH_CLASS, 'PQD\VIEW\Field', array($this->getParent(), $this));
 		if ($sth->execute()){
 			while (($field = $sth->fetch(\PDO::FETCH_CLASS)) !== false) {
-				//FIXME: não funciona no php 5.5 no Linux, verificar pq, foi adicionado o código abaixo.
+				//FIXME: nÃ£o funciona no php 5.5 no Linux, verificar pq, foi adicionado o cÃ³digo abaixo.
 				//$field->load($connection);
 				$this->childs[] = $field;
 			}

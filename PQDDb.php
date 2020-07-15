@@ -2,7 +2,7 @@
 namespace PQD;
 
 /**
- * Classe gerenciadora de conexıes com o Banco de Dados
+ * Classe gerenciadora de conex√µes com o Banco de Dados
  *
  * @author Willker Moraes Silva
  * @since 2012-03-30
@@ -73,11 +73,11 @@ class PQDDb{
 	public function getConnection($indexCon = 0){
 
 		if (count(self::$dbs) == 0){
-			$this->exceptions->setException(new \Exception("ConfiguraÁıes de conex„o com o Banco de Dados n„o indefinidas!", 2));
+			$this->exceptions->setException(new \Exception("Configura√ß√µes de conex√£o com o Banco de Dados n√£o indefinidas!", 2));
 			return null;
 		}
 
-		//Somente para n„o tentar conectar em bancos que j· n„o conectaram d· primeira tentativa
+		//Somente para n√£o tentar conectar em bancos que j√° n√£o conectaram d√° primeira tentativa
 		if(isset(self::$exceptionsDbs[$indexCon]))
 			return null;
 
@@ -85,7 +85,7 @@ class PQDDb{
 			try {
 
 				if (!isset(self::$dbs[$indexCon]))
-					throw new \Exception("Par‚metros n„o setados para a conex„o!", 12);
+					throw new \Exception("Par√¢metros n√£o setados para a conex√£o!", 12);
 
 				$options = self::$dbs[$indexCon]['options'];
 
@@ -143,7 +143,7 @@ class PQDDb{
 	}
 
 	/**
-	 * Seta uma string de conex„o com o banco, retorna o identificador de conex„o com este banco
+	 * Seta uma string de conex√£o com o banco, retorna o identificador de conex√£o com este banco
 	 *
 	 * @param string $driver
 	 * @param string $host
