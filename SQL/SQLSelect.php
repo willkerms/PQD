@@ -366,7 +366,7 @@ abstract class SQLSelect extends PQDDb{
 	}
 
 	/**
-	 * Retorna o numero de registros d· busca generica
+	 * Retorna o numero de registros d√° busca generica
 	 *
 	 * @param SQLWhere $oWhere
 	 * @return int
@@ -410,16 +410,16 @@ abstract class SQLSelect extends PQDDb{
 		else
 			$sqlFields = $this->retFieldsSelect();
 
-		//Versıes anteriores ao 2012 do SQLServer
+		//Vers√µes anteriores ao 2012 do SQLServer
 		$rowNumber = "";
 		$isLessSqlSrv11 = false;
 		/*
-		 Todos os tratamentos para OrderBy est„o acima
+		 Todos os tratamentos para OrderBy est√£o acima
 		if($this->getDriverDB($this->getIndexCon()) == "mssql" && is_null($this->getDefaultOrderBy()) && is_null($oOrderBy))
 			$oOrderBy = new SQLOrderBy(array($this->getColPK()));
 		*/
 
-		//Limit para Versıes anteriores ao 2012
+		//Limit para Vers√µes anteriores ao 2012
 		if(!is_null($limit) && ($this->getDriverDB($this->getIndexCon()) == "mssql")){
 			if($this->getDriverDB($this->getIndexCon(), true) == "dblib" || version_compare($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0){
 				$isLessSqlSrv11 = true;
@@ -454,7 +454,7 @@ abstract class SQLSelect extends PQDDb{
 				//SQLServer 2012
 				if($this->getDriverDB($this->getIndexCon(), true) != "dblib" && version_compare($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0)
 					$this->sql .= " OFFSET " . (($page - 1) * $limit) . " ROWS FETCH NEXT " . $limit . " ROWS ONLY;";
-				else//Versıes anteriores ao 2012 do SQLServer
+				else//Vers√µes anteriores ao 2012 do SQLServer
 					$this->sql .= ") as vw WHERE RowNum BETWEEN " . ((($page - 1) * $limit) + 1) . " AND " . ((($page - 1) * $limit) + $limit) . ";";
 			}
 		}
@@ -662,10 +662,10 @@ abstract class SQLSelect extends PQDDb{
 	}
 
 	/**
-	 * Quando o indice da conex„o n„o È passado pega a conex„o padr„o do DAO,
-	 * se n„o foi informado a conex„o padr„o no construtor do DAO pega a conex„o padr„o com o indice 0
+	 * Quando o indice da conex√£o n√£o √© passado pega a conex√£o padr√£o do DAO,
+	 * se n√£o foi informado a conex√£o padr√£o no construtor do DAO pega a conex√£o padr√£o com o indice 0
 	 *
-	 * Quando o indice da conex„o È passado pega a conex„o solicitada.
+	 * Quando o indice da conex√£o √© passado pega a conex√£o solicitada.
 	 *
 	 * {@inheritDoc}
 	 * @see \PQD\PQDDb::getConnection()

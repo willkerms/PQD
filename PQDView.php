@@ -89,7 +89,7 @@ class PQDView {
 				if(!is_null($this->tplFooter) && trim($this->tplFooter) != "" && !IS_CLI)
 					require_once $this->tplFooter;
 
-				//FIXME: Verificar espaços em branco
+				//FIXME: Verificar espaÃ§os em branco
 				//echo PQDUtil::withoutSpaces(ob_get_clean(), true, true);
 			}
 			else{

@@ -2,7 +2,7 @@
 namespace PQD\SQL;
 
 /**
- * Classe para gerenciar order by para sql's din‚micos
+ * Classe para gerenciar order by para sql's din√¢micos
  *
  *
  * @author Willker Moraes Silva

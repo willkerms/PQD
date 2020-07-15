@@ -104,7 +104,7 @@ class PQDApp {
 	private function __construct($appPath, $environments = 'admin', $environmentDefault = 'admin', $publicPath = 'public/'){
 
 		if(!is_null(self::$oPQDApp))
-			throw new \Exception("Aplicação já Iniciada!", 10);
+			throw new \Exception("AplicaÃ§Ã£o jÃ¡ Iniciada!", 10);
 
 		$this->getExceptions();
 		$this->getDb();
@@ -129,7 +129,7 @@ class PQDApp {
 	}
 
 	/**
-	 * Passar os caminhos absolutos nas variáveis $appPath, $publicPath
+	 * Passar os caminhos absolutos nas variÃ¡veis $appPath, $publicPath
 	 *
 	 * @param string $appPath
 	 * @param string|array $environments
@@ -185,7 +185,7 @@ class PQDApp {
 	}
 
 	/**
-	 * Seta templates que serão utilizados na view
+	 * Seta templates que serÃ£o utilizados na view
 	 *
 	 * @param string $head
 	 * @param string $footer
@@ -209,7 +209,7 @@ class PQDApp {
 	}
 
 	/**
-	 * Classes que deverão ser inicializadas antes do método view(), essas classes devem conter o metodo estatico run como public
+	 * Classes que deverÃ£o ser inicializadas antes do mÃ©todo view(), essas classes devem conter o metodo estatico run como public
 	 *
 	 * @param array|string $classes
 	 * @return PQDApp
@@ -238,7 +238,7 @@ class PQDApp {
 	}
 
 	/**
-	 * Classes que deverão ser inicializadas após a execução
+	 * Classes que deverÃ£o ser inicializadas apÃ³s a execuÃ§Ã£o
 	 *
 	 * @param array|string $classes
 	 * @return PQDApp
@@ -249,7 +249,7 @@ class PQDApp {
 	}
 
 	/**
-	 * Adiciona uma classe a ser inicializada após a execução
+	 * Adiciona uma classe a ser inicializada apÃ³s a execuÃ§Ã£o
 	 *
 	 * @param string $classes
 	 * @return PQDApp
@@ -260,7 +260,7 @@ class PQDApp {
 	}
 
 	/**
-	 * Ambientes para a tradução de arquivos para diretorio/controllers
+	 * Ambientes para a traduÃ§Ã£o de arquivos para diretorio/controllers
 	 *
 	 * @param array|string $classes
 	 * @return PQDApp
@@ -296,7 +296,7 @@ class PQDApp {
 	}
 
 	/**
-	 * Adiciona um ambiente para a tradução de arquivos para diretorio/controllers
+	 * Adiciona um ambiente para a traduÃ§Ã£o de arquivos para diretorio/controllers
 	 *
 	 * @param string $classes
 	 * @return PQDApp
@@ -307,7 +307,7 @@ class PQDApp {
 	}
 
 	/**
-	 * Ambientes que exigem atutenticação
+	 * Ambientes que exigem atutenticaÃ§Ã£o
 	 *
 	 * @param array|string $environments
 	 * @return PQDApp
@@ -317,7 +317,7 @@ class PQDApp {
 		return $this;
 	}
 	/**
-	 * Adiciona um ambientes que exige atutenticação
+	 * Adiciona um ambientes que exige atutenticaÃ§Ã£o
 	 *
 	 * @param string $environments
 	 * @return PQDApp
@@ -393,12 +393,12 @@ class PQDApp {
 			if( class_exists($class) &&  method_exists($class, 'run'))
 				$class::run();
 			else
-				$this->getExceptions()->setException(new PQDExceptionsDev("Classe(" . $class . ") ou metodo(run) não encontrado!"));
+				$this->getExceptions()->setException(new PQDExceptionsDev("Classe(" . $class . ") ou metodo(run) nÃ£o encontrado!"));
 		}
 	}
 
 	private function isSafePath(){
-		//Quando o ambiente e mapeado por host, e este ambiente esta acessando outro ambiente, a url a ser considerada é a do ambiente acessado.
+		//Quando o ambiente e mapeado por host, e este ambiente esta acessando outro ambiente, a url a ser considerada Ã© a do ambiente acessado.
 		if(!IS_CLI && isset($this->aHostsEnv[$_SERVER['HTTP_HOST']]) && APP_ENVIRONMENT != $this->aHostsEnv[$_SERVER['HTTP_HOST']])
 			$url = APP_ENVIRONMENT . '/' . APP_URL;
 		else
@@ -412,20 +412,20 @@ class PQDApp {
 	}
 
 	/**
-	 * Executa a aplicação!
+	 * Executa a aplicaÃ§Ã£o!
 	 *
 	 */
 	public function exec(){
 
 		$this->setConstants();//Seta as contantes
-		$this->runClasses($this->aIniClasses);//Inicia as classes que devem ser iniciadas antes da aplicação
+		$this->runClasses($this->aIniClasses);//Inicia as classes que devem ser iniciadas antes da aplicaÃ§Ã£o
 
-		if ($this->isSafePath() && !IS_CLI){ //Verifica se é uma url que deve estar autenticado
+		if ($this->isSafePath() && !IS_CLI){ //Verifica se Ã© uma url que deve estar autenticado
 			header('Location: ' . APP_URL_ENVIRONMENT . 'login/' . APP_URL . (($_SERVER['QUERY_STRING'] != '') ? '?' . $_SERVER['QUERY_STRING'] : ''));
 			exit();
 		}
 
-		if (APP_URL == '')//Quando não requisita nenhuma url aponta para o home
+		if (APP_URL == '')//Quando nÃ£o requisita nenhuma url aponta para o home
 			$modulo = "home";
 		else{
 			if( isset($this->secureEnv[APP_ENVIRONMENT]) && $this->aUrlRequestPublic[0] == "login")
@@ -434,7 +434,7 @@ class PQDApp {
 				$modulo = APP_URL;
 		}
 
-		//Mapeando ambientes, somente não mapea para as urls livres
+		//Mapeando ambientes, somente nÃ£o mapea para as urls livres
 		if(!isset($this->aFreePaths[APP_URL]))
 			$modulo = $this->environments[APP_ENVIRONMENT] . $modulo;
 
@@ -478,7 +478,7 @@ class PQDApp {
 			}
 		}
 		else{
-			$this->exceptions->setException(new PQDExceptionsDev('(modulos/' . $modulo . ") não encontrado!"));
+			$this->exceptions->setException(new PQDExceptionsDev('(modulos/' . $modulo . ") nÃ£o encontrado!"));
 			$this->httpError(404);
 		}
 	}
@@ -504,7 +504,7 @@ class PQDApp {
 					$act = 'view';
 
 					if(!method_exists($obj, $act)){
-						$this->exceptions->setException(new PQDExceptionsDev("Metodo não existe: $ctrl::$act!"));
+						$this->exceptions->setException(new PQDExceptionsDev("Metodo nÃ£o existe: $ctrl::$act!"));
 						$this->httpError(500);
 					}
 					else{
@@ -513,12 +513,12 @@ class PQDApp {
 					}
 			}
 			else {
-				$this->exceptions->setException(new PQDExceptionsDev("Classe (". $ctrl .") não encontrada!"));
+				$this->exceptions->setException(new PQDExceptionsDev("Classe (". $ctrl .") nÃ£o encontrada!"));
 				$this->httpError(500);
 			}
 		}
 		else{
-			$this->exceptions->setException(new PQDExceptionsDev("Arquivo (". $file .".php) não encontrado!"));
+			$this->exceptions->setException(new PQDExceptionsDev("Arquivo (". $file .".php) nÃ£o encontrado!"));
 			$this->httpError(500);
 		}
 	}
@@ -560,7 +560,7 @@ class PQDApp {
 	}
 
 	/**
-	 * Seta o diretório para a raiz do projeto e inicializa a função de include das classes
+	 * Seta o diretÃ³rio para a raiz do projeto e inicializa a funÃ§Ã£o de include das classes
 	 *
 	 * @return PQDApp
 	 */
@@ -606,7 +606,7 @@ class PQDApp {
 	}
 
 	/**
-	 * Seta constante IS_MOBILE, que verifica quando o sistema está sendo acessado via dispositivos moveis.
+	 * Seta constante IS_MOBILE, que verifica quando o sistema estÃ¡ sendo acessado via dispositivos moveis.
 	 *
 	 */
 	private function setMobileConstants(){
@@ -628,7 +628,7 @@ class PQDApp {
 
 		$this->setMobileConstants();
 
-		//Verificando se está rodando a partir dá pasta /public
+		//Verificando se estÃ¡ rodando a partir dÃ¡ pasta /public
 		if(strstr($_SERVER['REQUEST_URI'], basename(APP_PATH) . '/public')){
 			$url = preg_split('/' . basename(APP_PATH) . '\/public/', $_SERVER['REQUEST_URI']);
 			define('APP_URL_PUBLIC', $url[0] . basename(APP_PATH) . '/public/');
@@ -640,7 +640,7 @@ class PQDApp {
 		}
 
 		$path = array_values(array_filter(explode("/", $url)));
-		$pathPublic = $path;//Caminho a partir dá pasta /public
+		$pathPublic = $path;//Caminho a partir dÃ¡ pasta /public
 		if (count($path) > 0) {
 
 			if(isset($this->environments[$path[0]]) && !$this->isHostEnv()){
@@ -660,7 +660,7 @@ class PQDApp {
 				define('APP_URL_ENVIRONMENT', APP_URL_PUBLIC . APP_ENVIRONMENT . '/');
 			}
 			else{
-				//Quando o ambiente é mapeando em algum host
+				//Quando o ambiente Ã© mapeando em algum host
 				if($this->isHostEnv())
 					define("APP_ENVIRONMENT", $this->aHostsEnv[$_SERVER['HTTP_HOST']]);
 				else
@@ -670,7 +670,7 @@ class PQDApp {
 			}
 		}
 		else{
-			//Quando o ambiente é mapeando em algum host
+			//Quando o ambiente Ã© mapeando em algum host
 			if($this->isHostEnv())
 				define("APP_ENVIRONMENT", $this->aHostsEnv[$_SERVER['HTTP_HOST']]);
 			else

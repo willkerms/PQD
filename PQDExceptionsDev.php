@@ -3,7 +3,7 @@
 namespace PQD;
 
 /**
- * Alias somente para n„o aparecer algumas Exceptions para os usu·rios
+ * Alias somente para n√£o aparecer algumas Exceptions para os usu√°rios
  * 
  * @author Willker Moraes Silva
  * @since 2015-11-11

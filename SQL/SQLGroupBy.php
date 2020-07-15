@@ -2,7 +2,7 @@
 namespace PQD\SQL;
 
 /**
- * Classe para gerenciar group by para sql's din‚micos
+ * Classe para gerenciar group by para sql's din√¢micos
  *
  * 
  * @author Willker Moraes Silva

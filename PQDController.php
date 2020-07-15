@@ -56,7 +56,7 @@ abstract class PQDController implements IPQDController{
 	 */
 	public function setView ($view, $autoRender = true, $requireHeaderAndFooter = true) {
 
-		//Quando sobre escreve a view não deixa a view antiga ser exibida ao ser limpada pelo garbage collection!
+		//Quando sobre escreve a view nÃ£o deixa a view antiga ser exibida ao ser limpada pelo garbage collection!
 		if (!is_null($this->getView()))
 			$this->getView()->setAutoRender(false);
 

@@ -5,7 +5,7 @@ use PQD\PQDUtil;
 /**
  *
  *
- * 2015-12-10 Alteração dos filtros para contemplar os fields e values para fazer joins
+ * 2015-12-10 AlteraÃ§Ã£o dos filtros para contemplar os fields e values para fazer joins
  *
  * @author Willker Moraes Sivla
  * @since 2012-08-08

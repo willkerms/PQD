@@ -75,9 +75,9 @@ class PQDUtil {
 
 
 	/**
-	 * D� Trim nos valores,
+	 * Dá Trim nos valores,
 	 * Cria a instancia da classe passada e seta os valores de acordo com o namepace informado
-	 * caso os valores sejam vazios n�o seta no objeto.
+	 * caso os valores sejam vazios não seta no objeto.
 	 *
 	 * @author Willker Moraes Silva
 	 * @since 2014-07-17
@@ -108,7 +108,7 @@ class PQDUtil {
 						if(!isset($objRet[$k]))
 							$objRet[$k] = new $class();
 
-						//N�o seta string vazia
+						//Não seta string vazia
 						if (is_string($v)){
 							$v = trim($v);
 							if($v == "")
@@ -123,7 +123,7 @@ class PQDUtil {
 					if(is_null($objRet))
 						$objRet = new $class();
 
-					//N�o seta string vazia
+					//Não seta string vazia
 					if (is_string($value)){
 						$value = trim($value);
 
@@ -141,8 +141,8 @@ class PQDUtil {
 	}
 
 	/**
-	 * Quando returnNull = true, caso o n�mero n�o seja maior que zero retorna NULL
-	 * Quando returnNull = false, formata o n�mero do jeito que foi enviado independentemente do valor
+	 * Quando returnNull = true, caso o número não seja maior que zero retorna NULL
+	 * Quando returnNull = false, formata o número do jeito que foi enviado independentemente do valor
 	 *
 	 * @param float $number
 	 * @param number $precision
@@ -158,7 +158,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Formata um n�mero no padr�o Brasileiro
+	 * Formata um número no padrão Brasileiro
 	 *
 	 * @param number $number
 	 * @param number $decimal
@@ -169,7 +169,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Formata um n�mero no padr�o do Banco de Dados
+	 * Formata um número no padrão do Banco de Dados
 	 *
 	 * @param number $number
 	 * @return number
@@ -439,12 +439,12 @@ class PQDUtil {
 
 		//Without Comments /**/ //
 		if($commentsJS){
-			//FIXME: [^\xff] essa express�o est� errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
 			$aSearch[] = '/(\/\*([^\xff])*?(\*\/))/'; //Comments /* */
 			$aSearch[] = "/\/\/.*$/"; // Comments //
 
 			//Retirando JSON
-			//FIXME: [^\xff] essa express�o est� errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
 			$matchJSON = '/(\/\*JSON_START\*\/)([^\xff]*)?(\/\*JSON_END\*\/)/i';
 			preg_match_all($matchJSON, $string, $json);
 			foreach ($json[0] as $key => $text)
@@ -457,11 +457,11 @@ class PQDUtil {
 			if($commentsJS)
 				array_pop($aSearch); //remove comments from one line because when we have http:// it removes all code
 
-			//FIXME: [^\xff] essa express�o est� errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
 			$aSearch[] = '/(\<\!\-\-([^\xff])*?(\-\-\>))/';
 
 			//Retirando TEXTAREAS
-			//FIXME: [^\xff] essa express�o est� errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
 			$matchTextArea = '/(\<textarea)([^\xff])*?(\<\/textarea\>)/i';
 			preg_match_all($matchTextArea, $string, $textareas);
 
@@ -541,7 +541,7 @@ class PQDUtil {
 		return $hex; // returns the hex value including the number sign (#)
 	}
 
-	public static function contentType($type = 'json', $fileName = null, $forceDownload = true){
+	public static function contentType($type = 'json', $fileName = null, $forceDownload = true, $charset = null){
 
 		if(IS_CLI)
 			return;
@@ -598,13 +598,13 @@ class PQDUtil {
 				header ('Pragma: public'); // HTTP/1.0
 			break;
 			case 'pdf':
-				// Redirect output to a client�s web browser (PDF)
+				// Redirect output to a client web browser (PDF)
 				$contentType = 'application/pdf';
 				header('Cache-Control: max-age=0');
 			break;
 		}
 
-		header('Content-Type: ' . $contentType, true);
+		header('Content-Type: ' . $contentType . (!is_null($charset) ? ';charset=' . $charset: ''), true);
 
 		if (!is_null($fileName))
 			header('Content-Disposition: ' . ($forceDownload ? 'attachment;': 'inline;') . 'filename="' . $fileName . '"');
@@ -620,10 +620,10 @@ class PQDUtil {
 	 * @param \DOMNode $node
 	 * @param \DOMDocument $document
 	 */
-	public static function dom_encode(array $data, \DOMNode &$node = null, \DOMDocument &$document = null){
+	public static function dom_encode(array $data, \DOMNode &$node = null, \DOMDocument &$document = null, $utf8 = false){
 
 		if(is_null($document)){
-			$data = self::utf8_encode($data);
+			$data = $utf8 ? self::utf8_encode($data) : $data;
 			$document =  new \DOMDocument("1.0");
 			$node = $document->createElement("data");
 			$document->appendChild($node);
@@ -721,7 +721,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Formata um n�mero
+	 * Formata um número
 	 *
 	 * @param number $number
 	 * @param number $decimals
@@ -737,7 +737,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Separa uma string de acordo com o tamanho e caracter de separa��o passado
+	 * Separa uma string de acordo com o tamanho e caracter de separação passado
 	 *
 	 * @param string $str
 	 * @param number $len

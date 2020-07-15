@@ -35,8 +35,8 @@ class LDAPCon {
 	/**
 	 * Conecta a um servidor de AD
 	 * Servidor, ex: 10.0.0.1 ou 10.0.0.1:389
-	 * DescriÁ„o da base, Ex: OU=Empresa,DC=dominio,DC=matriz
-	 * Usu·rio e senha.
+	 * Descri√ß√£o da base, Ex: OU=Empresa,DC=dominio,DC=matriz
+	 * Usu√°rio e senha.
 	 * 
 	 * @param string $server
 	 * @param string $base
@@ -73,7 +73,7 @@ class LDAPCon {
 	}
 	
 	/**
-	 * Busca todos os usu·rios de um banco
+	 * Busca todos os usu√°rios de um banco
 	 * Base Ex: "OU=nameOU,DC=domain,DC=matriz";
 	 * 
 	 * @param string $base
