@@ -75,9 +75,9 @@ class PQDUtil {
 
 
 	/**
-	 * D� Trim nos valores,
+	 * Dá Trim nos valores,
 	 * Cria a instancia da classe passada e seta os valores de acordo com o namepace informado
-	 * caso os valores sejam vazios n�o seta no objeto.
+	 * caso os valores sejam vazios não seta no objeto.
 	 *
 	 * @author Willker Moraes Silva
 	 * @since 2014-07-17
@@ -108,7 +108,7 @@ class PQDUtil {
 						if(!isset($objRet[$k]))
 							$objRet[$k] = new $class();
 
-						//N�o seta string vazia
+						//Não seta string vazia
 						if (is_string($v)){
 							$v = trim($v);
 							if($v == "")
@@ -123,7 +123,7 @@ class PQDUtil {
 					if(is_null($objRet))
 						$objRet = new $class();
 
-					//N�o seta string vazia
+					//Não seta string vazia
 					if (is_string($value)){
 						$value = trim($value);
 
@@ -141,8 +141,8 @@ class PQDUtil {
 	}
 
 	/**
-	 * Quando returnNull = true, caso o n�mero n�o seja maior que zero retorna NULL
-	 * Quando returnNull = false, formata o n�mero do jeito que foi enviado independentemente do valor
+	 * Quando returnNull = true, caso o número não seja maior que zero retorna NULL
+	 * Quando returnNull = false, formata o número do jeito que foi enviado independentemente do valor
 	 *
 	 * @param float $number
 	 * @param number $precision
@@ -158,7 +158,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Formata um n�mero no padr�o Brasileiro
+	 * Formata um número no padrão Brasileiro
 	 *
 	 * @param number $number
 	 * @param number $decimal
@@ -169,7 +169,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Formata um n�mero no padr�o do Banco de Dados
+	 * Formata um número no padrão do Banco de Dados
 	 *
 	 * @param number $number
 	 * @return number
@@ -439,12 +439,12 @@ class PQDUtil {
 
 		//Without Comments /**/ //
 		if($commentsJS){
-			//FIXME: [^\xff] essa express�o est� errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
 			$aSearch[] = '/(\/\*([^\xff])*?(\*\/))/'; //Comments /* */
 			$aSearch[] = "/\/\/.*$/"; // Comments //
 
 			//Retirando JSON
-			//FIXME: [^\xff] essa express�o est� errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
 			$matchJSON = '/(\/\*JSON_START\*\/)([^\xff]*)?(\/\*JSON_END\*\/)/i';
 			preg_match_all($matchJSON, $string, $json);
 			foreach ($json[0] as $key => $text)
@@ -457,11 +457,11 @@ class PQDUtil {
 			if($commentsJS)
 				array_pop($aSearch); //remove comments from one line because when we have http:// it removes all code
 
-			//FIXME: [^\xff] essa express�o est� errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
 			$aSearch[] = '/(\<\!\-\-([^\xff])*?(\-\-\>))/';
 
 			//Retirando TEXTAREAS
-			//FIXME: [^\xff] essa express�o est� errada, o certo seria .|\s
+			//FIXME: [^\xff] essa expressão está errada, o certo seria .|\s
 			$matchTextArea = '/(\<textarea)([^\xff])*?(\<\/textarea\>)/i';
 			preg_match_all($matchTextArea, $string, $textareas);
 
@@ -721,7 +721,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Formata um n�mero
+	 * Formata um número
 	 *
 	 * @param number $number
 	 * @param number $decimals
@@ -737,7 +737,7 @@ class PQDUtil {
 	}
 
 	/**
-	 * Separa uma string de acordo com o tamanho e caracter de separa��o passado
+	 * Separa uma string de acordo com o tamanho e caracter de separação passado
 	 *
 	 * @param string $str
 	 * @param number $len
@@ -767,5 +767,71 @@ class PQDUtil {
 	 */
 	public static function toHTML(array $data) {
 		return self::dom_encode($data)->saveHTML();
+	}
+	
+	/**
+	 * Retorna o valor padrão caso não exista a chave no parâmetro
+	 * 
+	 * @return mixed
+	 */
+	public static function retDefault($param, $key, $default = null){
+		return isset($param[$key]) ? $param[$key] : $default;
+	}
+
+	/**
+	 * Seta valores padrões em uma variavel
+	 * 
+	 * @var array $aParams
+	 * @var array $aDefault
+	 * 
+	 * @return array
+	 */
+	public static function setDefault(array $aParams, array $aDefault){
+
+		foreach($aDefault as $key => $value){
+			if(is_array($value))
+				$aParams[$key] = self::setDefault(self::retDefault($aParams, $key, array()), $value);
+			else
+				$aParams[$key] = self::retDefault($aParams, $key, $value);	
+		}
+
+		return $aParams;
+	}
+
+	/**
+	 * Processa um template de texto e substitui as váriaveis 
+	 * 
+	 * As várieaveis são: array({@variavel} => valor)
+	 * E ifs: array('begin' => {@seAlgo}, 'end' => {@fimSeAlgo}, 'bool' => false)
+	 * 
+	 * @param string $tpl
+	 * @param array $aReplace
+	 * @param array $aIfs
+	 * 
+	 * @return string
+	 */
+	public static function procTplText($tpl, array $aReplace, array $aIfs = array()){
+
+		$search = array_keys($aReplace);
+		$replace = array_values($aReplace);
+		unset($aReplace);
+
+		foreach($aIfs as $if){
+			
+			$aMatches = array();
+
+			if(preg_match_all('/(' . $if['begin'] . ')(.|\s)*?(' . $if['end'] . ')/', $tpl, $aMatches) !== false){
+
+				foreach($aMatches[0] as $txt){
+
+					if($if['bool'])
+						$tpl = str_replace($txt, str_replace($search, $replace, str_replace(array($if['begin'], $if['end']), '', $txt)), $tpl);
+					else
+						$tpl = str_replace($txt, '', $tpl);
+				}
+			}
+		}
+
+		return str_replace($search, $replace, $tpl);
 	}
 }
