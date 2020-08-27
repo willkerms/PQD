@@ -2,7 +2,7 @@
 namespace PQD;
 
 /**
- * Classe para pegar as anotaÁıes das entidades
+ * Classe para pegar as anota√ß√µes das entidades
  *
  * @author Willker Moraes Silva
  * @since 2015-11-13
@@ -23,7 +23,7 @@ class PQDAnnotation{
 
 
 		if(!is_file($this->class)){
-			PQDApp::getApp()->getExceptions()->setException(new \Exception("Classe n„o encontrada!", 11) );
+			PQDApp::getApp()->getExceptions()->setException(new \Exception("Classe n√£o encontrada!", 11) );
 			self::$annotation[$this->class] = array();
 		}
 	}
@@ -65,7 +65,7 @@ class PQDAnnotation{
 		$return->filters = array();
 		$return->fields = array();
 
-		//Todos os coment·rios d· classe
+		//Todos os coment√°rios d√° classe
 		preg_match_all('/(\/\*(.|\s)+?(\*\/))/', file_get_contents($file), $matches);
 
 		if(isset($matches[0])){
@@ -91,7 +91,7 @@ class PQDAnnotation{
 							if (is_file($jsonFile))
 								$col['list'] = PQDUtil::json_decode(file_get_contents($jsonFile));
 							else
-								PQDApp::getApp()->getExceptions()->setException(new \Exception("Arquivo JSON n„o encontrado!", 13) );
+								PQDApp::getApp()->getExceptions()->setException(new \Exception("Arquivo JSON n√£o encontrado!", 13) );
 						}
 
 						if (is_null($col['list']))
@@ -126,7 +126,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * retorna nome d· coluna chave primaria
+	 * retorna nome d√° coluna chave primaria
 	 *
 	 * @return string
 	 */
@@ -168,7 +168,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * retorna valores setados na anotaÁ„o @table
+	 * retorna valores setados na anota√ß√£o @table
 	 *
 	 * @return array
 	 */
@@ -209,7 +209,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * retorna os campos anotados na anotaÁ„o @field
+	 * retorna os campos anotados na anota√ß√£o @field
 	 *
 	 * @return array
 	 */
@@ -232,7 +232,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * Retorna os campos d· classe DTO ou Vw
+	 * Retorna os campos d√° classe DTO ou Vw
 	 *
 	 * @return array
 	 */
@@ -260,7 +260,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * Retorna os filtros c· classe DTO ou Vw
+	 * Retorna os filtros c√° classe DTO ou Vw
 	 */
 	public function getViewFilters(){
 		if(isset(self::$annotation[$this->class]['viewFilters']))
@@ -272,7 +272,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * Retorna todos os campos inclusive os que est„o na classe DTO ou vw
+	 * Retorna todos os campos inclusive os que est√£o na classe DTO ou vw
 	 *
 	 * @return array
 	 */
@@ -287,7 +287,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * Retorna todos os campos filtros inclusive os d· classe DTO ou vw
+	 * Retorna todos os campos filtros inclusive os d√° classe DTO ou vw
 	 *
 	 * @return array
 	 */
@@ -303,7 +303,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * Retorna todos os campos filtros inclusive os d· classe DTO ou vw
+	 * Retorna todos os campos filtros inclusive os d√° classe DTO ou vw
 	 *
 	 * @return array
 	 */

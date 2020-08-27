@@ -541,7 +541,7 @@ class PQDUtil {
 		return $hex; // returns the hex value including the number sign (#)
 	}
 
-	public static function contentType($type = 'json', $fileName = null, $forceDownload = true){
+	public static function contentType($type = 'json', $fileName = null, $forceDownload = true, $charset = null){
 
 		if(IS_CLI)
 			return;
@@ -598,13 +598,13 @@ class PQDUtil {
 				header ('Pragma: public'); // HTTP/1.0
 			break;
 			case 'pdf':
-				// Redirect output to a client�s web browser (PDF)
+				// Redirect output to a client web browser (PDF)
 				$contentType = 'application/pdf';
 				header('Cache-Control: max-age=0');
 			break;
 		}
 
-		header('Content-Type: ' . $contentType, true);
+		header('Content-Type: ' . $contentType . (!is_null($charset) ? ';charset=' . $charset: ''), true);
 
 		if (!is_null($fileName))
 			header('Content-Disposition: ' . ($forceDownload ? 'attachment;': 'inline;') . 'filename="' . $fileName . '"');
@@ -620,10 +620,10 @@ class PQDUtil {
 	 * @param \DOMNode $node
 	 * @param \DOMDocument $document
 	 */
-	public static function dom_encode(array $data, \DOMNode &$node = null, \DOMDocument &$document = null){
+	public static function dom_encode(array $data, \DOMNode &$node = null, \DOMDocument &$document = null, $utf8 = false){
 
 		if(is_null($document)){
-			$data = self::utf8_encode($data);
+			$data = $utf8 ? self::utf8_encode($data) : $data;
 			$document =  new \DOMDocument("1.0");
 			$node = $document->createElement("data");
 			$document->appendChild($node);
