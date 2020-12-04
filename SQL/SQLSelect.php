@@ -179,7 +179,7 @@ abstract class SQLSelect extends PQDDb{
 		$alias = $this->getDefaultWhereOnSelect() instanceof SQLJoin ? $this->getDefaultWhereOnSelect()->getAlias() . ".": '';
 		$where = $this->getDefaultWhereOnSelect() instanceof SQLWhere && $this->getDefaultWhereOnSelect()->count() > 0 ? ' AND ' . $this->getDefaultWhereOnSelect()->getWhere(false): '';
 
-		$this->sql = "SELECT " . (is_null($fields) ? $this->retFieldsSelect() : $fields) . " FROM " . $table . $joins . " WHERE (" . $alias . $this->colPK . " = :" . $this->colPK . ')' . $where . ";";
+		$this->sql = "SELECT " . (is_null($fields) ? $this->retFieldsSelect() : join(', ', $fields)) . " FROM " . $table . $joins . " WHERE (" . $alias . $this->colPK . " = :" . $this->colPK . ')' . $where . ";";
 
 		$oEntity = new $clsFetch();
 		$oEntity->{$this->methodSetPk}($id);
