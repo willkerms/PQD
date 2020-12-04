@@ -171,7 +171,7 @@ abstract class SQLSelect extends PQDDb{
 	 * @param string $fetchClass
 	 * @return object
 	 */
-	public function retEntity($id, $fetchClass = true){
+	public function retEntity($id, $fetchClass = true, array $fields = null){
 
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
@@ -179,7 +179,7 @@ abstract class SQLSelect extends PQDDb{
 		$alias = $this->getDefaultWhereOnSelect() instanceof SQLJoin ? $this->getDefaultWhereOnSelect()->getAlias() . ".": '';
 		$where = $this->getDefaultWhereOnSelect() instanceof SQLWhere && $this->getDefaultWhereOnSelect()->count() > 0 ? ' AND ' . $this->getDefaultWhereOnSelect()->getWhere(false): '';
 
-		$this->sql = "SELECT " . $this->retFieldsSelect() . " FROM " . $table . $joins . " WHERE (" . $alias . $this->colPK . " = :" . $this->colPK . ')' . $where . ";";
+		$this->sql = "SELECT " . (is_null($fields) ? $this->retFieldsSelect() : $fields) . " FROM " . $table . $joins . " WHERE (" . $alias . $this->colPK . " = :" . $this->colPK . ')' . $where . ";";
 
 		$oEntity = new $clsFetch();
 		$oEntity->{$this->methodSetPk}($id);
