@@ -3,6 +3,7 @@ namespace PQD;
 
 use PQD\SQL\SQLWhere;
 use PQD\SQL\SQLSelect;
+use PQD\SQL\SQLUtility;
 
 /**
  * Classe de abastração do banco de dados
@@ -11,6 +12,7 @@ use PQD\SQL\SQLSelect;
  * @since 2015-11-12
  */
 abstract class PQDDAO extends SQLSelect{
+	use SQLUtility;
 
 	private $operation = null;
 
@@ -51,7 +53,6 @@ abstract class PQDDAO extends SQLSelect{
 	 */
 	private $skipNull = false;
 
-
 	/**
 	 * Prepara a inserção de um registro
 	 *
@@ -67,6 +68,7 @@ abstract class PQDDAO extends SQLSelect{
 		$fields = is_null($fields) ? $this->getFields() : $fields;
 		$paramValues = array();
 
+		$escapeColumn = $this->retEscapeColumn();
 		foreach ($fields as $col => $value){
 
 			//Para não inserir campos que estão nulos
@@ -74,7 +76,7 @@ abstract class PQDDAO extends SQLSelect{
 				continue;
 
 			if(!isset($this->fieldsIgnoreOnInsert[$col]) && ($col != $this->getColPK() | ( $col == $this->getColPK() && !is_null($oEntity->{$this->getMethodGetPk()}() ) ) ) ){
-				$this->sql .= $comma . "\t" . $col;
+				$this->sql .= $comma . "\t" . $escapeColumn . $col . $escapeColumn;
 				$comma = "," . PHP_EOL;
 			}
 		}
@@ -119,6 +121,7 @@ abstract class PQDDAO extends SQLSelect{
 		$fields = is_null($fields) ? $this->getFields() : $fields;
 		$paramValues = array();
 
+		$escapeColumn = $this->retEscapeColumn();
 		foreach ($fields as $col => $value){
 
 			//Para não atualizar campos que estão nulos
@@ -128,10 +131,10 @@ abstract class PQDDAO extends SQLSelect{
 			if($col != $this->getColPK() && !isset($this->fieldsIgnoreOnUpdate[$col])){
 
 				if(isset($this->fieldsDefaultValuesOnUpdate[$col]) && is_null($oEntity->{'get' . ucwords($col)}()))
-					$this->sql .= $comma . "\t" . $col . " = " . $this->fieldsDefaultValuesOnUpdate[$col];
+					$this->sql .= $comma . "\t" . $escapeColumn . $col . $escapeColumn . " = " . $this->fieldsDefaultValuesOnUpdate[$col];
 				else{
 					$paramValues[$col] = $value;
-					$this->sql .= $comma . "\t" . $col . " = :" . $col;
+					$this->sql .= $comma . "\t" . $escapeColumn . $col . $escapeColumn . " = :" . $col;
 				}
 
 				$comma = "," . PHP_EOL;
@@ -143,7 +146,7 @@ abstract class PQDDAO extends SQLSelect{
 		if(!is_null($oWhere))
 			$this->sql .= PHP_EOL . $oWhere->getWhere(true);
 		else{
-			$this->sql .= PHP_EOL . "WHERE " . $this->getColPK() . " = :" . $this->getColPK() . ($this->getOperation() == "D" ? $strDefaultWhere : null) . ";";
+			$this->sql .= PHP_EOL . "WHERE " . $escapeColumn . $this->getColPK() . $escapeColumn . " = :" . $this->getColPK() . ($this->getOperation() == "D" ? $strDefaultWhere : null) . ";";
 			$paramValues[$this->getColPK()] = $this->getField($this->getColPK());
 		}
 
@@ -160,7 +163,9 @@ abstract class PQDDAO extends SQLSelect{
 
 		$strDefaultWhere = !is_null($this->defaultWhereOnDelete) ? " AND (" . $this->defaultWhereOnDelete->getWhere(false) . ')' : '';
 
-		$this->sql = "DELETE FROM " . $this->getTable() . " WHERE " . $this->getColPK() . " = :" . $this->getColPK() . $strDefaultWhere . ";";
+		$escapeColumn = $this->retEscapeColumn();
+
+		$this->sql = "DELETE FROM " . $this->getTable() . " WHERE " . $escapeColumn . $this->getColPK() . $escapeColumn . " = :" . $this->getColPK() . $strDefaultWhere . ";";
 		return $this->setParams($oEntity, array($this->getColPK() => $this->getField($this->getColPK())));
 	}
 
