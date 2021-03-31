@@ -465,6 +465,84 @@ abstract class SQLSelect extends PQDDb{
 	}
 
 	/**
+	 * Executa uma busca generica em uma tabela
+	 * 
+	 * @param string $table
+	 * @param SQLWhere $oWhere
+	 * @param array $fields
+	 * @param SQLOrderBy $oOrderBy
+	 * @param int $limit
+	 * @param number $page
+	 * @param SQLGroupBy $groupBy
+	 * @return array
+	 */
+	public function genericSearchTable($table, SQLWhere $oWhere = null, array $fields = null, SQLOrderBy $oOrderBy = null, $limit = null, $page = 0, SQLGroupBy $oGroupBy = null){
+
+		$oWhere = is_null($oWhere) ? new SQLWhere() : $oWhere;
+		$sOrderBy = $this->retOrderBy($oWhere, $oOrderBy);
+		if(empty($sOrderBy) && !is_null($limit) && $this->getDriverDB($this->indexCon) == "mssql")
+			$sOrderBy = $this->retOrderBy($oWhere, new SQLOrderBy(array($this->getColPK())));;
+
+		$this->sql = "";
+
+		if(!is_null($fields))
+			$sqlFields = join(', ', $fields);
+		else
+			$sqlFields = '*';
+
+		//Versões anteriores ao 2012 do SQLServer
+		$rowNumber = "";
+		$isLessSqlSrv11 = false;
+		/*
+		 Todos os tratamentos para OrderBy estão acima
+		if($this->getDriverDB($this->getIndexCon()) == "mssql" && is_null($this->getDefaultOrderBy()) && is_null($oOrderBy))
+			$oOrderBy = new SQLOrderBy(array($this->getColPK()));
+		*/
+
+		//Limit para Versões anteriores ao 2012
+		if(!is_null($limit) && ($this->getDriverDB($this->getIndexCon()) == "mssql")){
+			if($this->getDriverDB($this->getIndexCon(), true) == "dblib" || version_compare($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') < 0){
+				$isLessSqlSrv11 = true;
+
+				$rowNumber = "ROW_NUMBER() OVER ( " . $sOrderBy . " ) AS RowNum, ";
+
+				$this->sql .= "SELECT * FROM (";
+			}
+		}
+
+		$this->sql .= "SELECT " . $rowNumber . $sqlFields . " FROM " . $table . " " . $oWhere->getWhere(true);
+
+		//Group By
+		$this->sql .= $this->retGroupBy($oWhere, $oGroupBy);
+
+		//ORDER BY
+		if(!$isLessSqlSrv11)
+			$this->sql .= $sOrderBy;
+
+		//Limit
+		if(!is_null($limit)){
+			$page = !is_null($limit) && $page <= 0 ? 1 : $page;
+			$limit = $limit <= 0 ? 12 : $limit;
+
+			if($this->getDriverDB($this->getIndexCon()) == "mysql")
+				$this->sql .= " LIMIT " . (($page - 1) * $limit) . "," . $limit . ";";
+			else if($this->getDriverDB($this->getIndexCon()) == "pgsql")
+				$this->sql .= " LIMIT " . $limit . " OFFSET " . (($page - 1) * $limit) . ";";
+			else if(!is_null($limit) && $this->getDriverDB($this->getIndexCon()) == "mssql"){
+				//SQLServer 2012
+				if($this->getDriverDB($this->getIndexCon(), true) != "dblib" && version_compare($this->getConnection($this->getIndexCon())->getAttribute(PQDPDO::ATTR_SERVER_VERSION), '11') >= 0)
+					$this->sql .= " OFFSET " . (($page - 1) * $limit) . " ROWS FETCH NEXT " . $limit . " ROWS ONLY;";
+				else//Versões anteriores ao 2012 do SQLServer
+					$this->sql .= ") as vw WHERE RowNum BETWEEN " . ((($page - 1) * $limit) + 1) . " AND " . ((($page - 1) * $limit) + $limit) . ";";
+			}
+		}
+		else
+			$this->sql .= ";";
+
+		return $this->query(false, '');		
+	}
+	
+	/**
 	 * @return string $table
 	 */
 	public function getTable(){
