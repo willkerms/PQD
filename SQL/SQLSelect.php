@@ -479,9 +479,21 @@ abstract class SQLSelect extends PQDDb{
 	public function genericSearchTable($table, SQLWhere $oWhere = null, array $fields = null, SQLOrderBy $oOrderBy = null, $limit = null, $page = 0, SQLGroupBy $oGroupBy = null){
 
 		$oWhere = is_null($oWhere) ? new SQLWhere() : $oWhere;
-		$sOrderBy = $this->retOrderBy($oWhere, $oOrderBy);
-		if(empty($sOrderBy) && !is_null($limit) && $this->getDriverDB($this->indexCon) == "mssql")
-			$sOrderBy = $this->retOrderBy($oWhere, new SQLOrderBy(array($this->getColPK())));;
+
+		if($oWhere instanceof SQLJoin && !is_null($oOrderBy))
+			$oOrderBy->setAlias($oWhere->getAlias());
+			
+		$sOrderBy = is_null($oOrderBy) ? "" : $oOrderBy->getOrderBy();
+
+		if(empty($sOrderBy) && !is_null($limit) && $this->getDriverDB($this->indexCon) == "mssql"){
+			
+			$oOrderBy = new SQLOrderBy(array($this->getColPK()));
+
+			if($oWhere instanceof SQLJoin && !is_null($oOrderBy))
+				$oOrderBy->setAlias($oWhere->getAlias());
+
+			$sOrderBy = $oOrderBy->getOrderBy();
+		}
 
 		$this->sql = "";
 
@@ -513,7 +525,13 @@ abstract class SQLSelect extends PQDDb{
 		$this->sql .= "SELECT " . $rowNumber . $sqlFields . " FROM " . $table . " " . $oWhere->getWhere(true);
 
 		//Group By
-		$this->sql .= $this->retGroupBy($oWhere, $oGroupBy);
+		if(!is_null($oGroupBy)){
+
+			if($oWhere instanceof SQLJoin)
+				$oGroupBy->setAlias($oWhere->getAlias());
+
+			$this->sql .= $oGroupBy->getGroupBy();
+		}
 
 		//ORDER BY
 		if(!$isLessSqlSrv11)
