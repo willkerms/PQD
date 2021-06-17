@@ -162,10 +162,14 @@ class PQDUtil {
 	 *
 	 * @param number $number
 	 * @param number $decimal
+	 * @param bool $returnNull
 	 * @return string
 	 */
-	public static function formatNumberView($number, $decimal = 2){
-		return number_format($number, $decimal, ",", ".");
+	public static function formatNumberView($number, $decimal = 2, $returnNull = false){
+		if($returnNull)
+			return !is_null($number) && $number > 0 ? number_format($number, $decimal, ",", ".") : null;
+		else
+			return number_format($number, $decimal, ",", ".");
 	}
 
 	/**
