@@ -71,7 +71,6 @@ class PQDApp {
 	 */
 	private $exceptions;
 
-
 	/**
 	 * @var array
 	 */
@@ -86,11 +85,19 @@ class PQDApp {
 	 * @var array
 	 */
 	private $aFreePaths = array();
-
+	
 	private $logController;
-
+	
 	private $logAction;
 
+	private $logModulo;
+	
+	/**
+	 * @var array
+	 */
+	private $aCharModifyUrl = array(
+		'-'
+	);
 
 	/**
 	 * Passar os caminhos absolutos das pastas
@@ -180,8 +187,8 @@ class PQDApp {
 	 * @param string $port
 	 * @return number $index
 	 */
-	public function setDbConnection($driver, $host, $dbName, $user, $password, $port = null, array $options = array()){
-		return PQDDb::setDbConnection($driver, $host, $dbName, $user, $password, $port, $options);
+	public function setDbConnection($driver, $host, $dbName, $user, $password, $port = null, array $options = array(), $dsn = null){
+		return PQDDb::setDbConnection($driver, $host, $dbName, $user, $password, $port, $options, $dsn);
 	}
 
 	/**
@@ -373,6 +380,20 @@ class PQDApp {
 		return $this->environments;
 	}
 
+	public function getCharModifyUrl(){
+		return $this->aCharModifyUrl;
+	}
+
+	public function addCharModifyUrl($char){
+		$this->aCharModifyUrl[] = $char;
+		return $this;
+	}
+
+	public function setCharModifyUrl(array $aChars){
+		$this->aCharModifyUrl = $aChars;
+		return $this;
+	}
+
 	/**
 	 * Retor os alias setados
 	 */
@@ -386,6 +407,18 @@ class PQDApp {
 
 	public function getLogAction(){
 		return $this->logAction;
+	}
+
+	public function getLogModulo(){
+		return $this->logModulo;
+	}
+
+	public function getUrlRequest(){
+		return $this->aUrlRequest;
+	}
+
+	public function getUrlRequestPublic(){
+		return $this->aUrlRequestPublic;
 	}
 
 	private function runClasses($aClasses){
@@ -439,9 +472,13 @@ class PQDApp {
 			$modulo = $this->environments[APP_ENVIRONMENT] . $modulo;
 
 		//Para aceitar modulos como "cadastre-se", "quem-somos"
-		if(strstr($modulo, '-')){
-			$modulo  = preg_split("[-]", $modulo);
-			$modulo = $modulo[0] . join('', array_map("ucwords", array_slice($modulo, 1)));
+		if(count($this->aCharModifyUrl) > 0){
+			foreach($this->aCharModifyUrl as $char){
+				if(strstr($modulo, $char)){
+					$modulo  = explode($char, $modulo);
+					$modulo = $modulo[0] . join('', array_map("ucwords", array_slice($modulo, 1)));
+				}
+			}
 		}
 
 		if(isset($_GET['rst']) && !IS_CLI)
@@ -466,6 +503,7 @@ class PQDApp {
 			$modulo = $this->aAlias[$modulo];
 		}
 
+		$this->logModulo = $modulo;
 		if (is_dir(APP_PATH . 'modulos/' . $modulo)){
 			if (!IS_CLI && !isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $homeEnv && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][APP_URL]) && !isset($this->aFreePaths[APP_ENVIRONMENT . '/' . APP_URL]))
 				$this->httpError(403);
@@ -639,7 +677,10 @@ class PQDApp {
 			$url = str_replace('?' . $_SERVER['QUERY_STRING'], '', $_SERVER['REQUEST_URI']);
 		}
 
-		$path = array_values(array_filter(explode("/", $url)));
+		$path = array_values(array_filter(explode("/", $url), function($str){
+			return trim($str) != "";
+		}));
+		
 		$pathPublic = $path;//Caminho a partir dá pasta /public
 		if (count($path) > 0) {
 

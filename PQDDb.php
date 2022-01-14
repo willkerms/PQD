@@ -88,21 +88,24 @@ class PQDDb{
 					throw new \Exception("Parâmetros não setados para a conexão!", 12);
 
 				$options = self::$dbs[$indexCon]['options'];
+				$port = !is_null(self::$dbs[$indexCon]['port']) ? ";port=" . self::$dbs[$indexCon]['port'] : "";
 
-				if(self::$dbs[$indexCon]['driver'] != "dblib")
-					$options[PQDPDO::ATTR_TIMEOUT] = 5;
+				//Caso o cliente queira, setar na váriavel $options
+				//if(self::$dbs[$indexCon]['driver'] != "dblib")
+				//	$options[PQDPDO::ATTR_TIMEOUT] = 5;	
 
-				$port = "";
-				if (!is_null(self::$dbs[$indexCon]['port']))
-					$port = ":" . self::$dbs[$indexCon]['port'];
+				if( !is_null(self::$dbs[$indexCon]['dsn']) )
+					self::$connections[$indexCon] = new PQDPDO(self::$dbs[$indexCon]['dsn'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
+				else if(self::$dbs[$indexCon]['driver'] == "mssql" && extension_loaded('pdo_sqlsrv')){
 
-				if(self::$dbs[$indexCon]['driver'] == "mssql" && extension_loaded('pdo_sqlsrv')){
-					$options['ReturnDatesAsStrings'] = true;
+					$port = !is_null(self::$dbs[$indexCon]['port']) ? ", " . self::$dbs[$indexCon]['port'] : $port;
+	
+					$options['ReturnDatesAsStrings'] = PQDUtil::retDefault($options, 'ReturnDatesAsStrings', true);
+
 					self::$connections[$indexCon] = new PQDPDO('sqlsrv:Server=' . self::$dbs[$indexCon]['host'] . $port . ';Database=' . self::$dbs[$indexCon]['db'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
 				}
-				else if(self::$dbs[$indexCon]['driver'] == "sqlite"){
+				else if(self::$dbs[$indexCon]['driver'] == "sqlite")
 					self::$connections[$indexCon] = new PQDPDO(self::$dbs[$indexCon]['driver'] . ":" . self::$dbs[$indexCon]['db'], null, null, $options);
-				}
 				else if(self::$dbs[$indexCon]['driver'] == "oci"){
 					//echo self::$dbs[$indexCon]['port'];
 					$port = !is_null(self::$dbs[$indexCon]['port']) ? self::$dbs[$indexCon]['port'] : 1521;
@@ -120,11 +123,11 @@ class PQDDb{
 					self::$connections[$indexCon] = new PQDPDO(self::$dbs[$indexCon]['driver'] . ":dbname=" . $tns, self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
 				}
 				else{
+					//Caso o cliente queira, setar na váriavel $options
+					//if(self::$dbs[$indexCon]['driver'] == "mysql")
+					//	$options[\PDO::MYSQL_ATTR_INIT_COMMAND] = 'SET NAMES latin1;';
 
-					if(self::$dbs[$indexCon]['driver'] == "mysql")
-						$options[\PDO::MYSQL_ATTR_INIT_COMMAND] = 'SET NAMES latin1;';
-
-					self::$connections[$indexCon] = new PQDPDO(self::$dbs[$indexCon]['driver'] . ":" . "dbname=" . self::$dbs[$indexCon]['db'] . ";host=" . self::$dbs[$indexCon]['host']. self::$dbs[$indexCon]['port'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
+					self::$connections[$indexCon] = new PQDPDO(self::$dbs[$indexCon]['driver'] . ":" . "dbname=" . self::$dbs[$indexCon]['db'] . ";host=" . self::$dbs[$indexCon]['host'] . $port, self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
 				}
 			}
 			catch (\PDOException $e) {
@@ -153,7 +156,7 @@ class PQDDb{
 	 * @param string $port
 	 * @return number $index
 	 */
-	public static function setDbConnection($driver, $host, $dbName, $user, $password, $port = null, array $options = array()){
+	public static function setDbConnection($driver, $host, $dbName, $user, $password, $port = null, array $options = array(), $dsn = null){
 
 		self::$dbs[] = array(
 			'driver' => $driver,
@@ -162,7 +165,8 @@ class PQDDb{
 			'user' => $user,
 			'pwd' => $password,
 			'port' => $port,
-			'options' => $options
+			'options' => $options,
+			'dsn' => $dsn
 		);
 
 		return count(self::$dbs) -1;
