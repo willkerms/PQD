@@ -167,7 +167,7 @@ class PQDUtil {
 	 */
 	public static function formatNumberView($number, $decimal = 2, $returnNull = false){
 		if($returnNull)
-			return !is_null($number) && $number > 0 ? number_format($number, $decimal, ",", ".") : null;
+			return !is_null($number) && trim($number) != '' ? number_format($number, $decimal, ",", ".") : null;
 		else
 			return number_format($number, $decimal, ",", ".");
 	}
