@@ -175,11 +175,14 @@ class PQDUtil {
 	/**
 	 * Formata um número no padrão do Banco de Dados
 	 *
-	 * @param number $number
+	 * @param string $number
 	 * @return number
 	 */
-	public static function formatNumberDb($number){
-		return (float)str_replace(array('.', ','), array('', '.'), $number);
+	public static function formatNumberDb($number, $returnNull = false){
+		if($returnNull)
+			return !is_null($number) && trim($number) != '' ? (float)str_replace(array('.', ','), array('', '.'), $number) : null;
+		else
+			return (float)str_replace(array('.', ','), array('', '.'), $number);
 	}
 
 	public static function formatDate($date = null, $from = self::FORMAT_VIEW_DATETIME, $to = self::FORMAT_DB_DATETIME){
