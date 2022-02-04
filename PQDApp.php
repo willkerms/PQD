@@ -100,6 +100,48 @@ class PQDApp {
 	);
 
 	/**
+	 * POST que será passado ao controller
+	 * 
+	 * @var array
+	 */
+	private $_POST = null;
+	
+	/**
+	 * GET que será passado ao controller
+	 * 
+	 * @var array
+	 */
+	private $_GET = null;
+	
+	/**
+	 * SESSION que será passado ao controller
+	 * 
+	 * @var array
+	 */
+	private $_SESSION = null;
+	
+	/**
+	 * FILES que será passado ao controller
+	 * 
+	 * @var array
+	 */
+	private $_FILES = null;
+	
+	/**
+	 * Ação que será passada procurado no get para traduzir em um metodo no controller
+	 * 
+	 * @var string
+	 */
+	private $action = 'act';
+
+	/**
+	 * Ação Padrão
+	 * 
+	 * @var string
+	 */
+	private $defaultAction = 'view';
+
+	/**
 	 * Passar os caminhos absolutos das pastas
 	 *
 	 * @param string $appPath
@@ -531,15 +573,18 @@ class PQDApp {
 	private function execClass($file, $ctrl){
 
 		if(file_exists($file)){
+			
 			require_once $file;
+
 			if(class_exists($ctrl)){
 
-				$obj = new $ctrl($_POST, $_GET, $_SESSION, $this->exceptions, $_FILES);
+				$obj = new $ctrl((is_null($this->_POST) ? $_POST : $this->getPost()), (is_null($this->_GET) ? $_GET : $this->getGet()), (is_null($this->_SESSION) ? $_SESSION : $this->getSession()), $this->exceptions, (is_null($this->_FILES) ? $_FILES : $this->getFiles()));
+
 				$this->logController = $ctrl;
-				$act = isset($_GET['act']) ? $_GET['act'] : 'view';
+				$act = isset($_GET[$this->getAction()]) ? $_GET[$this->getAction()] : $this->getDefaultAction();
 
 				if(count($this->aUrlRequestPublic) > 1 && $this->aUrlRequestPublic[0] == 'login' && !method_exists($obj, $act))
-					$act = 'view';
+					$act = $this->getDefaultAction();
 
 					if(!method_exists($obj, $act)){
 						$this->exceptions->setException(new PQDExceptionsDev("Metodo não existe: $ctrl::$act!"));
@@ -745,6 +790,108 @@ class PQDApp {
 			if($found !== false)
 				require_once $found;
 		});
+	}
+
+	/**
+	 * @param array $post
+	 * 
+	 * @return $this
+	 */
+	public function setPost($post){
+		$this->_POST = $post;
+		return $this;
+	}
+	
+	/**
+	 * @param array $get
+	 * 
+	 * @return $this
+	 */
+	public function setGet($get){
+		$this->_GET = $get;
+		return $this;
+	}
+
+	/**
+	 * @param array $session
+	 * 
+	 * @return $this
+	 */
+	public function setSession($session){
+		$this->_SESSION = $session;
+		return $this;
+	}
+
+	/**
+	 * @param array $files
+	 * 
+	 * @return $this
+	 */
+	public function setFiles($files){
+		$this->_FILES = $files;
+		return $this;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getPost(){
+		return $this->_POST;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getGet(){
+		return $this->_GET;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getSession(){
+		return $this->_SESSION;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getFiles(){
+		return $this->_FILES;
+	}
+
+	/**
+	 * @param string $action
+	 * 
+	 * @return $this
+	 */
+	public function setAction($action){
+		$this->action = $action;
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getAction(){
+		return $this->action;
+	}
+
+	/**
+	 * @param string $defaultAction
+	 * 
+	 * @return $this
+	 */
+	public function setDefaultAction($defaultAction){
+		$this->defaultAction = $defaultAction;
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getDefaultAction(){
+		return $this->defaultAction;
 	}
 
 	public function __destruct() {
