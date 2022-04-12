@@ -6,9 +6,6 @@ require_once 'PQDDb.php';
 
 use PQD\PQDUtil as Util;
 
-session_name('APP');
-session_start();
-
 /**
  * @author Willker Moraes Silva
  * @since 2015-09-25
@@ -142,6 +139,27 @@ class PQDApp {
 	private $defaultAction = 'view';
 
 	/**
+	 * Inicia a sessão automaticamente
+	 * 
+	 * @var bool
+	 */
+	private $sessionAutoStart = true;
+
+	/**
+	 * Nome do cookie de sessão
+	 * 
+	 * @var string
+	 */
+	private $sessionName = 'APP';
+
+	/**
+	 * Source Folder
+	 * 
+	 * @var string
+	 */
+	private $sourceFolder = 'modulos/';
+
+	/**
 	 * Passar os caminhos absolutos das pastas
 	 *
 	 * @param string $appPath
@@ -161,7 +179,7 @@ class PQDApp {
 		$this->environments = is_array($environments) ? $environments : array($environments => '');
 		$this->envDefault = $environmentDefault;
 
-		define('APP_PATH', $appPath);
+		define('APP_PATH', substr($appPath, -1) != '/' ? $appPath . '/' : $appPath);
 		define('APP_PATH_PUBLIC', $publicPath == 'public/' ? APP_PATH . $publicPath : $publicPath);
 
 		if(!defined('APP_DEBUG'))
@@ -414,6 +432,11 @@ class PQDApp {
 		return $this;
 	}
 
+	public function addEnvironment($environment, $path){
+		$this->environments[$environment] = $path;
+		return $this;
+	}
+
 	public function getEnvironments(){
 		return array_keys($this->environments);
 	}
@@ -492,6 +515,11 @@ class PQDApp {
 	 */
 	public function exec(){
 
+		if( $this->sessionAutoStart ){
+			session_name($this->getSessionName());
+			session_start();
+		}
+
 		$this->setConstants();//Seta as contantes
 		$this->runClasses($this->aIniClasses);//Inicia as classes que devem ser iniciadas antes da aplicação
 
@@ -526,10 +554,10 @@ class PQDApp {
 		if(isset($_GET['rst']) && !IS_CLI)
 			Util::contentType($_GET['rst']);
 
-		if(isset($this->aEvnTranslateFile[APP_ENVIRONMENT]) && !is_dir(APP_PATH . 'modulos/' . $modulo)){
+		if(isset($this->aEvnTranslateFile[APP_ENVIRONMENT]) && !is_dir(APP_PATH . $this->getSourceFolder() . $modulo)){
 			$pathinfo = pathinfo($modulo);
 
-			if(is_dir(APP_PATH . 'modulos/' . $pathinfo['dirname'] . '/' . $pathinfo['filename']))
+			if(is_dir(APP_PATH . $this->getSourceFolder() . $pathinfo['dirname'] . '/' . $pathinfo['filename']))
 				$modulo = $pathinfo['dirname'] . '/' . $pathinfo['filename'];
 		}
 
@@ -546,19 +574,19 @@ class PQDApp {
 		}
 
 		$this->logModulo = $modulo;
-		if (is_dir(APP_PATH . 'modulos/' . $modulo)){
+		if (is_dir(APP_PATH . $this->getSourceFolder() . $modulo)){
 			if (!IS_CLI && !isset($this->aFreePaths[APP_URL]) && $modulo != $this->environments[APP_ENVIRONMENT] . "login" && $modulo != $homeEnv && isset($this->secureEnv[APP_ENVIRONMENT]) && !isset($_SESSION[APP_ENVIRONMENT]['acessos'][APP_URL]) && !isset($this->aFreePaths[APP_ENVIRONMENT . '/' . APP_URL]))
 				$this->httpError(403);
 			else{
-				$ctrl = ucwords(basename(APP_PATH . 'modulos/' . $modulo)) . 'Ctrl';
-				$file = APP_PATH . 'modulos/' . $modulo . '/' . $ctrl . '.php';
-				$ctrl = str_replace('/', "\\", '/modulos/' . $modulo . '/' . $ctrl);
+				$ctrl = ucwords(basename(APP_PATH . $this->getSourceFolder() . $modulo)) . 'Ctrl';
+				$file = APP_PATH . $this->getSourceFolder() . $modulo . '/' . $ctrl . '.php';
+				$ctrl = str_replace('/', "\\", '/' . $this->getSourceFolder() . $modulo . '/' . $ctrl);
 
 				$this->execClass($file, $ctrl);//Executa a classe
 			}
 		}
 		else{
-			$this->exceptions->setException(new PQDExceptionsDev('(modulos/' . $modulo . ") não encontrado!"));
+			$this->exceptions->setException(new PQDExceptionsDev('(' . $this->getSourceFolder() . $modulo . ") não encontrado!"));
 			$this->httpError(404);
 		}
 	}
@@ -578,7 +606,10 @@ class PQDApp {
 
 			if(class_exists($ctrl)){
 
-				$obj = new $ctrl((is_null($this->_POST) ? $_POST : $this->getPost()), (is_null($this->_GET) ? $_GET : $this->getGet()), (is_null($this->_SESSION) ? $_SESSION : $this->getSession()), $this->exceptions, (is_null($this->_FILES) ? $_FILES : $this->getFiles()));
+				$session = isset($_SESSION) ? $_SESSION : [];
+				$session = is_null($this->_SESSION) ? $session : $this->getSession();
+
+				$obj = new $ctrl((is_null($this->_POST) ? $_POST : $this->getPost()), (is_null($this->_GET) ? $_GET : $this->getGet()), $session, $this->exceptions, (is_null($this->_FILES) ? $_FILES : $this->getFiles()));
 
 				$this->logController = $ctrl;
 				$act = isset($_GET[$this->getAction()]) ? $_GET[$this->getAction()] : $this->getDefaultAction();
@@ -778,7 +809,7 @@ class PQDApp {
 		//Default Includes
 		set_include_path(
 			get_include_path() . PATH_SEPARATOR .
-			APP_PATH . "/libs/" . PATH_SEPARATOR .
+			APP_PATH . "libs/" . PATH_SEPARATOR .
 			APP_PATH
 		);
 
@@ -790,6 +821,21 @@ class PQDApp {
 			if($found !== false)
 				require_once $found;
 		});
+	}
+
+	/**
+	 * Seta o ambiente padrão
+	 * 
+	 * @param string $env
+	 * 
+	 * @return $this
+	 */
+	public function setDefaultEnv($env){
+
+		if( isset( $this->environments[$env] ) )
+			$this->envDefault = $env;
+		
+		return $this;
 	}
 
 	/**
@@ -892,6 +938,57 @@ class PQDApp {
 	 */
 	public function getDefaultAction(){
 		return $this->defaultAction;
+	}
+
+	/**
+	 * @param bool $sessionAutoStart
+	 * 
+	 * @return $this
+	 */
+	public function setSessionAutoStart($sessionAutoStart){
+		$this->sessionAutoStart = $sessionAutoStart;
+		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function getSessionAutoStart(){
+		return $this->sessionAutoStart;
+	}
+
+	/**
+	 * @param string $sessionName
+	 * 
+	 * @return $this
+	 */
+	public function setSessionName($sessionName){
+		$this->sessionName = $sessionName;
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getSessionName(){
+		return $this->sessionName;
+	}
+
+	/**
+	 * @param string $sourceFolder
+	 * 
+	 * @return $this
+	 */
+	public function setSourceFolder($sourceFolder){
+		$this->sourceFolder = $sourceFolder;
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getSourceFolder(){
+		return $this->sourceFolder;
 	}
 
 	public function __destruct() {
