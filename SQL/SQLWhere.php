@@ -40,6 +40,8 @@ class SQLWhere {
 	const STRING = "'#'";
 	const NUMBER = "#";
 
+	private $aGroupFilters = [];
+
 	private $filters = array();
 
 	private $alias = null;
@@ -304,17 +306,19 @@ class SQLWhere {
 	public function getWhere($where = false){
 
 		$sqlWhere = ($where === true && count($this->filters) > 0 ? "WHERE " : "");
-		for ($i = 0, $espace = "", $alias = ""; $i < count($this->filters); $i++) {
-			if (is_array($this->filters[$i])){
+		$espace = ""; $alias = "";
+		
+		foreach ($this->filters as $filter ){
+			if (is_array($filter)){
 				if(!is_null($this->getAlias())){
-					if(preg_match('/^[a-zA-Z0-9]+\.[a-zA-Z_\-0-9]+/', $this->filters[$i]['field']) !== 1)
+					if(preg_match('/^[a-zA-Z0-9]+\.[a-zA-Z_\-0-9]+/', $filter['field']) !== 1)
 						$alias = $this->getAlias() . ".";
 				}
 
-				$sqlWhere .= $espace . $alias . $this->filters[$i]['field'] . $this->filters[$i]['value'];
+				$sqlWhere .= $espace . $alias . $filter['field'] . $filter['value'];
 			}
 			else
-				$sqlWhere .= $espace . $this->filters[$i];
+				$sqlWhere .= $espace . $filter;
 
 			$espace = " ";
 			$alias = "";
@@ -330,5 +334,35 @@ class SQLWhere {
 
 		return $sqlWhere;
 		*/
+	}
+
+	public function removeGroupOfFilters( $groupName ){
+		$aRange = $this->getFilterGroup($groupName);
+
+		$aFilters = $this->getFilters();
+		$i = $aRange[0];
+		while( $i <= $aRange[1] ){
+			unset($aFilters[ $i ]);
+			$i++;
+		}
+
+		return $this->setFilters($aFilters);
+	}
+
+
+	public function addGroupFilters($groupName, $idxBegin, $idxEnd){
+		$this->aGroupFilters[ $groupName ] = [ $idxBegin, $idxEnd ];
+	}
+
+	public function setGroupFilters(array $aGroupFilters){
+		$this->aGroupFilters = $aGroupFilters;
+	}
+
+	public function getGroupFilters(){
+		return $this->aGroupFilters;
+	}
+
+	public function getFilterGroup($groupName){
+		return isset($this->aGroupFilters[ $groupName ]) ? $this->aGroupFilters[ $groupName ] : null;
 	}
 }
