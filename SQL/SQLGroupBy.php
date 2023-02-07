@@ -87,7 +87,7 @@ class SQLGroupBy{
 		if (count($this->aFields) > 0){
 			if(!is_null($this->alias)){
 				foreach ($this->aFields as &$field){
-					if(preg_match('/^[a-zA-Z]+\.[a-zA-Z_\-]+/', $field) !== 1)
+					if(preg_match('/^[a-zA-Z0-9*_]+$/', $field) === 1)
 						$field = $this->alias . '.' . $field;
 				}
 			}

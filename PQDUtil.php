@@ -45,7 +45,8 @@ class PQDUtil {
 	 */
 	public static function escapeSQL($data){
 		return self::recursive($data, function($data){
-			return str_replace("'", "''", stripslashes($data));
+			//return str_replace("'", "''", stripslashes($data));
+			return str_replace("'", "''", $data);
 		});
 	}
 
@@ -104,19 +105,22 @@ class PQDUtil {
 			if (count($obj) > 0 && $obj[0] == $nameSpace) {
 
 				if(is_array($objRet)){
-					foreach ($value as $k => $v){
-						if(!isset($objRet[$k]))
-							$objRet[$k] = new $class();
+					
+					if(is_array($value) || is_object($value)){
+						foreach ($value as $k => $v){
+							if(!isset($objRet[$k]))
+								$objRet[$k] = new $class();
 
-						//Não seta string vazia
-						if (is_string($v)){
-							$v = trim($v);
-							if($v == "")
-								continue;
+							//Não seta string vazia
+							if (is_string($v)){
+								$v = trim($v);
+								if($v == "")
+									continue;
+							}
+
+							if (method_exists($objRet[$k], "set" . ucwords($obj[1])))
+								$objRet[$k]->{"set" . ucwords($obj[1])}($v);
 						}
-
-						if (method_exists($objRet[$k], "set" . ucwords($obj[1])))
-							$objRet[$k]->{"set" . ucwords($obj[1])}($v);
 					}
 				}
 				else{

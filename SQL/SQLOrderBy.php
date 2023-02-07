@@ -119,7 +119,7 @@ class SQLOrderBy{
 					$return .= ' ' . $field['sql'];
 				else{
 					if(!is_null($this->alias)){
-						if(preg_match('/^[a-zA-Z0-9]+\.[a-zA-Z_\-0-9]+/', $field) !== 1)
+						if(preg_match('/^[a-zA-Z0-9*_]+$/', $field) === 1)
 							$field = $this->alias . '.' . $field;
 					}
 

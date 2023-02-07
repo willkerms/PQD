@@ -164,6 +164,19 @@ abstract class SQLSelect extends PQDDb{
 		}
 	}
 
+	private function retAliasFields(array $fields, $alias = null){
+
+		if(empty($alias))
+			return join(', ', $fields);
+
+		foreach ($fields as &$field ){
+			if(preg_match('/^[a-zA-Z0-9*_]+$/', $field) === 1)
+				$field = $alias . "." . $field;
+		}
+
+		return join(', ', $fields);
+	}
+
 	/**
 	 * Retorna uma entidade
 	 *
@@ -176,10 +189,10 @@ abstract class SQLSelect extends PQDDb{
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
 		$joins = $this->getDefaultWhereOnSelect() instanceof SQLJoin ? ' ' . $this->getDefaultWhereOnSelect()->getJoins(true): '';
-		$alias = $this->getDefaultWhereOnSelect() instanceof SQLJoin ? $this->getDefaultWhereOnSelect()->getAlias() . ".": '';
+		$alias = $this->getDefaultWhereOnSelect() instanceof SQLWhere && !is_null($this->getDefaultWhereOnSelect()->getAlias()) ? $this->getDefaultWhereOnSelect()->getAlias() . ".": '';
 		$where = $this->getDefaultWhereOnSelect() instanceof SQLWhere && $this->getDefaultWhereOnSelect()->count() > 0 ? ' AND ' . $this->getDefaultWhereOnSelect()->getWhere(false): '';
 
-		$this->sql = "SELECT " . (is_null($fields) ? $this->retFieldsSelect() : join(', ', $fields)) . " FROM " . $table . $joins . " WHERE (" . $alias . $this->colPK . " = :" . $this->colPK . ')' . $where . ";";
+		$this->sql = "SELECT " . (is_null($fields) ? $this->retFieldsSelect() : $this->retAliasFields($fields, ($this->getDefaultWhereOnSelect() instanceof SQLWhere ? $this->getDefaultWhereOnSelect()->getAlias() : null))) . " FROM " . $table . $joins . " WHERE (" . $alias . $this->colPK . " = :" . $this->colPK . ')' . $where . ";";
 
 		$oEntity = new $clsFetch();
 		$oEntity->{$this->methodSetPk}($id);
@@ -221,7 +234,7 @@ abstract class SQLSelect extends PQDDb{
 
 	private function retFieldsSelect(){
 		if(count($this->fieldsDefaultOnSelect) > 0){
-			return join(", ", $this->fieldsDefaultOnSelect);
+			return $this->retAliasFields($this->fieldsDefaultOnSelect, ($this->getDefaultWhereOnSelect() instanceof SQLWhere ? $this->getDefaultWhereOnSelect()->getAlias() : null) );
 		}
 		else
 			return '*';
@@ -232,17 +245,15 @@ abstract class SQLSelect extends PQDDb{
 		$oGroupBy = is_null($oGroupBy) ? $this->getDefaultGroupBy() : $oGroupBy;
 		$oWhere = is_null($oWhere) ? $this->getDefaultWhereOnSelect() : $oWhere;
 
+		if (is_null($oGroupBy))
+			return "";
+
 		$return = "";
-		if (!is_null($oGroupBy)){
 
-			if($this->getDefaultWhereOnSelect() instanceof SQLJoin)
-				$oGroupBy->setAlias($this->getDefaultWhereOnSelect()->getAlias());
+		if(is_null($oGroupBy->getAlias()))
+			$oGroupBy->setAlias($oWhere->getAlias());
 
-			if($oWhere instanceof SQLJoin)
-				$oGroupBy->setAlias($oWhere->getAlias());
-
-			$return = $oGroupBy->getGroupBy();
-		}
+		$return = $oGroupBy->getGroupBy();
 
 		return $return;
 	}
@@ -252,17 +263,15 @@ abstract class SQLSelect extends PQDDb{
 		$oOrderBy = is_null($oOrderBy) ? $this->getDefaultOrderBy() : $oOrderBy;
 		$oWhere = is_null($oWhere) ? $this->getDefaultWhereOnSelect() : $oWhere;
 
+		if(is_null($oOrderBy))
+			return "";
+
 		$return = "";
-		if (!is_null($oOrderBy)){
 
-			if($this->getDefaultWhereOnSelect() instanceof SQLJoin)
-				$oOrderBy->setAlias($this->getDefaultWhereOnSelect()->getAlias());
+		if(is_null($oOrderBy->getAlias()))
+			$oOrderBy->setAlias($oWhere->getAlias());
 
-			if($oWhere instanceof SQLJoin)
-				$oOrderBy->setAlias($oWhere->getAlias());
-
-			$return = $oOrderBy->getOrderBy();
-		}
+		$return = $oOrderBy->getOrderBy();
 
 		return $return;
 	}
@@ -399,16 +408,13 @@ abstract class SQLSelect extends PQDDb{
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
 
+		$oWhere = $this->retWhere($oWhere);
+
 		$sOrderBy = $this->retOrderBy($oWhere, $oOrderBy);
 		if(empty($sOrderBy) && !is_null($limit) && $this->getDriverDB($this->indexCon) == "mssql")
 			$sOrderBy = $this->retOrderBy($oWhere, new SQLOrderBy(array($this->getColPK())));;
 
 		$this->sql = "";
-
-		if(!is_null($fields))
-			$sqlFields = join(', ', $fields);
-		else
-			$sqlFields = $this->retFieldsSelect();
 
 		//Versões anteriores ao 2012 do SQLServer
 		$rowNumber = "";
@@ -430,7 +436,11 @@ abstract class SQLSelect extends PQDDb{
 			}
 		}
 
-		$oWhere = $this->retWhere($oWhere);
+
+		if(!is_null($fields))
+			$sqlFields = $this->retAliasFields($fields, $oWhere->getAlias());
+		else
+			$sqlFields = $this->retFieldsSelect();
 
 		$this->sql .= "SELECT " . $rowNumber . $sqlFields . " FROM " . $table . " " . $oWhere->getWhere(true);
 
@@ -443,8 +453,8 @@ abstract class SQLSelect extends PQDDb{
 
 		//Limit
 		if(!is_null($limit)){
-			$page = !is_null($limit) && $page <= 0 ? 1 : $page;
-			$limit = $limit <= 0 ? 12 : $limit;
+			$page = !is_null($limit) && $page <= 0 ? 1 : intval($page);
+			$limit = $limit <= 0 ? 12 : intval($limit);
 
 			if($this->getDriverDB($this->getIndexCon()) == "mysql")
 				$this->sql .= " LIMIT " . (($page - 1) * $limit) . "," . $limit . ";";
@@ -539,8 +549,8 @@ abstract class SQLSelect extends PQDDb{
 
 		//Limit
 		if(!is_null($limit)){
-			$page = !is_null($limit) && $page <= 0 ? 1 : $page;
-			$limit = $limit <= 0 ? 12 : $limit;
+			$page = !is_null($limit) && $page <= 0 ? 1 : intval($page);
+			$limit = $limit <= 0 ? 12 : intval($limit);
 
 			if($this->getDriverDB($this->getIndexCon()) == "mysql")
 				$this->sql .= " LIMIT " . (($page - 1) * $limit) . "," . $limit . ";";
