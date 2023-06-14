@@ -3,9 +3,9 @@ namespace PQD;
 
 class PQDStatement extends \PDOStatement{
 	
-	public function execute($input_parameters = null){
+	public function execute(?array $params = null): bool{
 		
-		$return = parent::execute($input_parameters);
+		$return = parent::execute($params);
 		
 		if($return === false)
 			PQDApp::getApp()->getExceptions()->setException(new PQDExceptionsDB($this->errorInfo(), 'Erro ao executar SQL:' . PHP_EOL . $this->queryString));

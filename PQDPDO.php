@@ -7,9 +7,9 @@ class PQDPDO extends \PDO{
 		$this->setAttribute(PQDPDO::ATTR_STATEMENT_CLASS, array('PQD\PQDStatement'));
 	}
 
-	public function query($statement){
+	public function query(string $statement, ?int $fetchMode = null, ...$fetchModeArgs):\PDOStatement|false{
 
-		$result = parent::query($statement);
+		$result = parent::query($statement, $fetchMode, $fetchModeArgs);
 
 		if($result === false)
 			PQDApp::getApp()->getExceptions()->setException( new PQDExceptionsDB($this->errorInfo(), "Erro na busca: " . $statement));
@@ -19,7 +19,7 @@ class PQDPDO extends \PDO{
 		return $result;
 	}
 
-	public function exec($statement){
+	public function exec(string $statement): int|false{
 
 		$result = parent::exec($statement);
 
