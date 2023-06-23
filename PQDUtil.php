@@ -347,11 +347,11 @@ class PQDUtil {
 
 
 	public static function strtoupper($data){
-		return self::recursive($data, "strtoupper");
+		return self::recursive($data, "mb_strtoupper");
 	}
 
 	public static function strtolower($data){
-		return self::recursive($data, "strtolower");
+		return self::recursive($data, "mb_strtolower");
 	}
 
 	public static function trim($data){
@@ -711,13 +711,68 @@ class PQDUtil {
 	}
 
 	/**
+	 * Obtem um confirmação quando executando em CLI
+	 *
+	 * @param string $msg
+	 * @param array $result
+	 * @return boolean
+	 */
+	public static function confirmCLI($msg, array $result = null){
+
+		if(!IS_CLI)
+			return true;
+
+		$msg .= PHP_EOL . "y = yes, n = no";
+		if (!is_null($result))
+			$msg .= ", v=view data" . PHP_EOL . "(" . count($result) . ") registro(s)!";
+		$msg .= PHP_EOL;
+
+		$resp = "";
+		while($resp != "y" && $resp != "n"){
+			echo $msg;
+			$resp = self::strtolower( trim(fgets(STDIN)) );
+			if($resp == "v")
+				print_r($result);
+		}
+
+		return $resp == "y";
+	}
+
+	/**
+	 * Obtem um input no terminal
+	 *
+	 * @param string $msg
+	 * @param string $default
+	 * @return string|NULL
+	 */
+	public static function inputCLI($msg, $default = null){
+
+		$input = "";
+
+		while($input == ""){
+
+			echo $msg;
+			$input = trim(fgets(STDIN));
+
+			if (!is_null($default) && $input == "")
+				return $default;
+		}
+
+		return $input;
+	}
+
+
+	/**
 	 * Apresenta um choice no cli
 	 *
 	 * @param string $msg
 	 * @param array $choices
 	 * @return string
 	 */
-	public static function choiceCLI($msg = "Escolha um item:", array $choices){
+	public static function choiceCLI($msg = "Escolha um item:", array $choices, $default = null, $caseSensitive = false){
+
+		if(!$caseSensitive)
+			$choices = array_change_key_case($choices, CASE_LOWER);
 
 		$resp = null;
 		while (!isset($choices[$resp])){
@@ -726,6 +781,11 @@ class PQDUtil {
 				echo "\t" . $k . '=>' . $v . PHP_EOL;
 
 			$resp = trim(fgets(STDIN));
+
+			if (!is_null($default) && empty($resp))
+				return $default;
+
+			$resp = !$caseSensitive ? self::strtolower($resp) : $resp;
 		}
 
 		return $resp;
