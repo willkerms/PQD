@@ -26,7 +26,7 @@ class PQDExceptions {
 	/**
 	 *
 	 * @param boolean $development
-	 * @return string
+	 * @return array
 	 */
 	public function getArrayExceptions($development = IS_DEVELOPMENT, $isJSON = false){
 
@@ -42,9 +42,9 @@ class PQDExceptions {
 
 					$aException = array(
 						'code' => $e->getCode(),
+						'message' => $e->getMessage(),
 						'file' => $e->getFile() . ":" . $e->getLine(),
-						'traceString' => $e->getTraceAsString(),
-						'message' => $e->getMessage()
+						'traceString' => $e->getTraceAsString()
 					);
 
 					if(!$isJSON)
@@ -89,8 +89,8 @@ class PQDExceptions {
 
 				$pre = '<pre>';
 				$pre .= 'code => '. $e->getCode() . PHP_EOL;
-				$pre .= 'file => ' . $e->getFile() . ":" . $e->getLine() . PHP_EOL;
 				$pre .= 'message => ' . PQDUtil::escapeHtml($e->getMessage(), $charset) . PHP_EOL;
+				$pre .= 'file => ' . $e->getFile() . ":" . $e->getLine() . PHP_EOL;
 				$pre .= 'trace => ' . $e->getTraceAsString();
 				$pre .= '</pre>';
 
@@ -140,8 +140,8 @@ class PQDExceptions {
 			if ($development === true) {
 
 				$txt .= 'code => '. $e->getCode();
-				$txt .= ', file => '. $e->getFile() . ":" . $e->getLine();
 				$txt .= ', message => '. $e->getMessage() . PHP_EOL;
+				$txt .= ', file => '. $e->getFile() . ":" . $e->getLine();
 				$txt .= 'trace String: ' . PHP_EOL . $e->getTraceAsString() . PHP_EOL;
 			}
 			else{
