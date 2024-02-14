@@ -141,8 +141,8 @@ class PQDExceptions {
 
 				$txt .= 'code => '. $e->getCode();
 				$txt .= ', message => '. $e->getMessage() . PHP_EOL;
-				$txt .= ', file => '. $e->getFile() . ":" . $e->getLine();
-				$txt .= 'trace String: ' . PHP_EOL . $e->getTraceAsString() . PHP_EOL;
+				$txt .= 'file => '. $e->getFile() . ":" . $e->getLine() . PHP_EOL;
+				$txt .= "trace String: " . PHP_EOL . "\t" . join("\n\t", explode("\n", $e->getTraceAsString()))  . PHP_EOL;
 			}
 			else{
 				$txt .= $e->getMessage() . PHP_EOL;
