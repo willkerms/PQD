@@ -46,7 +46,7 @@ class PQDPDO extends \PDO{
 			return $result;
 		}
 		catch(\Exception $e){
-			PQDApp::getApp()->getExceptions()->setException( new PQDExceptionsDev($e->getMessage(), $e->getCode(), $e) );
+			PQDApp::getApp()->getExceptions()->setException( new PQDExceptionsDev($e->getMessage(), 0, $e) );
 		}
 
 		return false;
