@@ -733,11 +733,19 @@ class PQDUtil {
 		$msg .= PHP_EOL;
 
 		$resp = "";
+		$count = 0;
 		while($resp != "y" && $resp != "n"){
 			echo $msg;
 			$resp = self::strtolower( trim(fgets(STDIN)) );
 			if($resp == "v")
 				print_r($result);
+
+			$count++;
+
+			if( $count > 3 ){
+				echo "Você não respondeu corretamente!" . PHP_EOL;
+				exit(1);
+			}
 		}
 
 		return $resp == "y";
