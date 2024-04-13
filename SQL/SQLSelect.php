@@ -359,7 +359,7 @@ abstract class SQLSelect extends PQDDb{
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
 
 		if(!is_null($fields))
-			$sqlFields = join(', ', $fields);
+			$sqlFields = $this->retAliasFields($fields, !is_null($this->defaultWhereOnSelect) ? $this->defaultWhereOnSelect->getAlias() : null);
 		else
 			$sqlFields = $this->retFieldsSelect();
 

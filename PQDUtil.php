@@ -382,6 +382,8 @@ class PQDUtil {
 	public static function isCnpj($cnpj){
 		$cnpj = self::onlyNumbers($cnpj);
 
+		if( strlen($cnpj) != 14 )
+			return false;
 		/*
 		if(strlen($cnpj) != 14 || self::isValid($cnpj, "/(^0{14}$)|(^1{14}$)|(^2{14}$)|(^3{14}$)|(^4{14}$)|(^5{14}$)|(^6{14}$)|(^7{14}$)|(^8{14}$)|(^9{14}$)/"))
 			return false;
@@ -403,6 +405,9 @@ class PQDUtil {
 
 	public static function isCpf($cpf){
 		$cpf = self::onlyNumbers($cpf);
+
+		if( strlen($cpf) != 11 )
+			return false;
 		/*
 		if(strlen($cpf) != 11 || self::isValid($cpf, "/(^0{11}$)|(^1{11}$)|(^2{11}$)|(^3{11}$)|(^4{11}$)|(^5{11}$)|(^6{11}$)|(^7{11}$)|(^8{11}$)|(^9{11}$)/"))
 			return false;
@@ -728,11 +733,19 @@ class PQDUtil {
 		$msg .= PHP_EOL;
 
 		$resp = "";
+		$count = 0;
 		while($resp != "y" && $resp != "n"){
 			echo $msg;
 			$resp = self::strtolower( trim(fgets(STDIN)) );
 			if($resp == "v")
 				print_r($result);
+
+			$count++;
+
+			if( $count > 3 ){
+				echo "Você não respondeu corretamente!" . PHP_EOL;
+				exit(1);
+			}
 		}
 
 		return $resp == "y";

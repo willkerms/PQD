@@ -614,6 +614,16 @@ class PQDApp {
 				$this->logController = $ctrl;
 				$act = isset($_GET[$this->getAction()]) ? $_GET[$this->getAction()] : $this->getDefaultAction();
 
+				//Para aceitar acoes do tipo: "?a=cadastre-se", "?a=quem-somos", "?a=quem-somos"
+				if( count($this->aCharModifyUrl) > 0 ){
+					foreach($this->aCharModifyUrl as $char){
+						if(strstr($act, $char)){
+							$act  = explode($char, $act);
+							$act = $act[0] . join('', array_map("ucwords", array_slice($act, 1)));
+						}
+					}
+				}
+
 				if(count($this->aUrlRequestPublic) > 1 && $this->aUrlRequestPublic[0] == 'login' && !method_exists($obj, $act))
 					$act = $this->getDefaultAction();
 
