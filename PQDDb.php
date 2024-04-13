@@ -102,7 +102,7 @@ class PQDDb{
 	
 					$options['ReturnDatesAsStrings'] = PQDUtil::retDefault($options, 'ReturnDatesAsStrings', true);
 
-					self::$connections[$indexCon] = new PQDPDO('sqlsrv:Server=' . self::$dbs[$indexCon]['host'] . $port . ';Database=' . self::$dbs[$indexCon]['db'], self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
+					self::$connections[$indexCon] = new PQDPDO('sqlsrv:Server=' . self::$dbs[$indexCon]['host'] . $port . ';Database=' . self::$dbs[$indexCon]['db'].';TrustServerCertificate=yes;', self::$dbs[$indexCon]['user'], self::$dbs[$indexCon]['pwd'], $options);
 				}
 				else if(self::$dbs[$indexCon]['driver'] == "sqlite")
 					self::$connections[$indexCon] = new PQDPDO(self::$dbs[$indexCon]['driver'] . ":" . self::$dbs[$indexCon]['db'], null, null, $options);
