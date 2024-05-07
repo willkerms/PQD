@@ -149,10 +149,10 @@ class PQDUtil {
 	 * Quando returnNull = false, formata o número do jeito que foi enviado independentemente do valor
 	 *
 	 * @param float $number
-	 * @param number $precision
+	 * @param int $precision
 	 * @param boolean $returnNull
 	 *
-	 * @return NULL|string
+	 * @return null|string
 	 */
 	public static function formatNumberXML($number, $precision = 2, $returnNull = false){
 		if($returnNull)
@@ -164,8 +164,8 @@ class PQDUtil {
 	/**
 	 * Formata um número no padrão Brasileiro
 	 *
-	 * @param number $number
-	 * @param number $decimal
+	 * @param int $number
+	 * @param int $decimal
 	 * @param bool $returnNull
 	 * @return string
 	 */
@@ -180,7 +180,7 @@ class PQDUtil {
 	 * Formata um número no padrão do Banco de Dados
 	 *
 	 * @param string $number
-	 * @return number
+	 * @return float|null
 	 */
 	public static function formatNumberDb($number, $returnNull = false){
 		if($returnNull)
@@ -189,45 +189,143 @@ class PQDUtil {
 			return (float)str_replace(array('.', ','), array('', '.'), $number);
 	}
 
+	/**
+	 * Obtem o timestamp atual
+	 * 
+	 * @return int
+	 */
+	public static function time(){
+		return self::date('U');
+	}
+
+	/**
+	 * Retorna uma data no formato passado, caso o timestamp não seja passada retorna a data atual
+	 * 
+	 * @param string $format
+	 * @param int $timestamp
+	 * 
+	 * @return string
+	 */
+	public static function date($format, int $timestamp = null){
+
+		$timestamp = is_null($timestamp) ? ( new \DateTimeImmutable() )->format('U') : $timestamp;
+
+		return self::formatDate($timestamp, 'U', $format);
+	}
+
+	/**
+	 * Converte uma data em timestamp
+	 * 
+	 * @param string $date
+	 * @param string $format
+	 * 
+	 * @return int
+	 */
+	public static function toTime($date, $format = self::FORMAT_DB_DATE){
+		return self::formatDate($date, $format, 'U');
+	}
+
+	/**
+	 * Formata uma data de acordo com o formato passado
+	 * 
+	 * @param string $date
+	 * @param string $from
+	 * @param string $to
+	 * 
+	 * @return string
+	 */
 	public static function formatDate($date = null, $from = self::FORMAT_VIEW_DATETIME, $to = self::FORMAT_DB_DATETIME){
-		if(!empty($date)){
+		
+		if( !empty($date) || ($date >= 0 && $from == 'U')){
+			
+			$oDateTimeImmutable = self::getDateObj($date, $from);
 
-			$dateTemp = substr($date, 0, strlen(date($from)));
-			$nDate = \DateTime::createFromFormat($from, $dateTemp);
-
-			if($nDate instanceof \DateTime)
-				return $nDate->format($to);
-				else
-					return $date;
+			if($oDateTimeImmutable instanceof \DateTimeImmutable)
+				return $oDateTimeImmutable->format($to);
+			else
+				return $date;
 		}
 
 		return $date;
 	}
 
+	/**
+	 * Formata uma data no padrão de visualização
+	 * 
+	 * @param string $date
+	 * @param string $formatVW
+	 * @param string $formatDB
+	 * 
+	 * @return string
+	 */
 	public static function formatDateView($date = null, $formatVW = self::FORMAT_VIEW_DATE, $formatDB = self::FORMAT_DB_DATE){
 		return self::formatDate($date, $formatDB, $formatVW);
 	}
 
+	/**
+	 * Formata uma data e hora no padrão de visualização
+	 * 
+	 * @param string $date
+	 * @param string $formatVW
+	 * @param string $formatDB
+	 * @return string
+	 */
 	public static function formatDateTimeView($date = null, $formatVW = self::FORMAT_VIEW_DATETIME, $formatDB = self::FORMAT_DB_DATETIME){
 		return self::formatDate($date, $formatDB, $formatVW);
 	}
 
+	/**
+	 * Formata uma data no padrão do Banco de Dados
+	 * 
+	 * @param string $date
+	 * @param string $formatVW
+	 * @param string $formatDB
+	 * @return string
+	 */
 	public static function formatDateDB($date = null, $formatVW = self::FORMAT_VIEW_DATE, $formatDB = self::FORMAT_DB_DATE){
 		return self::formatDate($date, $formatVW, $formatDB);
 	}
 
+	/**
+	 * Formata uma data e hora no padrão do Banco de Dados
+	 * 
+	 * @param string $date
+	 * @param string $formatVW
+	 * @param string $formatDB
+	 * @return string
+	 */
 	public static function formatDateTimeDB($date = null, $formatVW = self::FORMAT_VIEW_DATETIME, $formatDB = self::FORMAT_DB_DATETIME){
 		return self::formatDate($date, $formatVW, $formatDB);
 	}
 
 	/**
-	 *
+	 * Obtem o objeto DateTimeImmutable de uma string de data e um formato
+	 * 
 	 * @param string $date
 	 * @param string $format
-	 * @return \DateTime
+	 * 
+	 * @return \DateTimeImmutable
 	 */
-	public static function getDateObj($date = null, $format){
-		return \DateTime::createFromFormat($format, $date);
+	public static function getDateObj($date, $format){
+
+		$timeZone = new \DateTimeZone( date_default_timezone_get() );
+
+		//Caso a data venha com informaçõe a mais do que o formato passado Ex: "2015-11-11 00:00:00.000000 -03:00" remove as informações a mais, formato: "Y-m-d H:i:s". 
+		$dateTemp = substr($date, 0, strlen(date($format)));
+
+		try{
+			$oDateTimeImmutable = \DateTimeImmutable::createFromFormat('!' . $format, $dateTemp, $timeZone);
+		}
+		catch (\Exception $e){
+			$oDateTimeImmutable = $date;
+			PQDApp::getApp()->getExceptions()->setException( $e );
+		}
+
+		//Caso a data seja um timestamp, seta o timezone
+		if( $format == 'U' && $oDateTimeImmutable instanceof \DateTimeImmutable)
+			$oDateTimeImmutable = $oDateTimeImmutable->setTimezone( $timeZone );
+
+		return $oDateTimeImmutable;
 	}
 
 	public static function onlyNumbers($string){
@@ -807,8 +905,8 @@ class PQDUtil {
 	/**
 	 * Formata um número
 	 *
-	 * @param number $number
-	 * @param number $decimals
+	 * @param int $number
+	 * @param int $decimals
 	 * @param string $dec_point
 	 * @param string $thousands_sep
 	 */
@@ -824,7 +922,7 @@ class PQDUtil {
 	 * Separa uma string de acordo com o tamanho e caracter de separação passado
 	 *
 	 * @param string $str
-	 * @param number $len
+	 * @param int $len
 	 * @param string $separation
 	 *
 	 * @return string
