@@ -984,7 +984,7 @@ class PQDUtil {
 	 * Processa um template de texto e substitui as váriaveis 
 	 * 
 	 * As várieaveis são: array({@variavel} => valor)
-	 * E ifs: array('begin' => {@seAlgo}, 'end' => {@fimSeAlgo}, 'bool' => false)
+	 * E ifs: array('begin' => {@seAlgo}, 'else' => '{@elseAlgo}', 'end' => {@fimSeAlgo}, 'bool' => false)
 	 * 
 	 * @param string $tpl
 	 * @param array $aReplace
@@ -998,18 +998,50 @@ class PQDUtil {
 		$replace = array_values($aReplace);
 		unset($aReplace);
 
+		//Processando ifs
 		foreach($aIfs as $if){
 			
 			$aMatches = array();
 
-			if(preg_match_all('/(' . $if['begin'] . ')(.|\s)*?(' . $if['end'] . ')/', $tpl, $aMatches) !== false){
+			if( preg_match_all('/(' . $if['begin'] . ')(.|\s)*?(' . $if['end'] . ')/', $tpl, $aMatches) !== false ){
 
 				foreach($aMatches[0] as $txt){
 
-					if($if['bool'])
-						$tpl = str_replace($txt, str_replace($search, $replace, str_replace(array($if['begin'], $if['end']), '', $txt)), $tpl);
-					else
-						$tpl = str_replace($txt, '', $tpl);
+					$aClearText = array($if['begin'], $if['end']);
+					if( isset($if['else']) )
+						$aClearText[] = $if['else'];
+					
+					$txtResult = $txt;
+
+					//Limpando if/else
+					if( $if['bool'] ){
+
+						//Limpando else
+						if( isset($if['else']) ){
+
+							$aMatchesElse = array();
+							
+							if( preg_match_all('/(' . $if['else'] . ')(.|\s)*?(' . $if['end'] . ')/', $txt, $aMatchesElse) !== false ){
+								foreach($aMatchesElse[0] as $txtElse)
+									$txtResult = str_replace($txtElse, '', $txtResult);
+							}
+						}						
+					}
+					else{
+
+						//Limpando if
+						$end = isset($if['else']) ? 'else' : 'end';
+
+						$aMatchesIf = array();
+						
+						if( preg_match_all('/(' . $if['begin'] . ')(.|\s)*?(' . $if[ $end ] . ')/', $txt, $aMatchesIf) !== false ){
+							foreach($aMatchesIf[0] as $txtIf)
+								$txtResult = str_replace($txtIf, '', $txtResult);
+						}
+					}
+
+					$txtResult = str_replace($aClearText, '', $txtResult);
+					$tpl = str_replace($txt, str_replace($search, $replace, $txtResult), $tpl);
 				}
 			}
 		}
