@@ -170,10 +170,14 @@ class PQDUtil {
 	 * @return string
 	 */
 	public static function formatNumberView($number, $decimal = 2, $returnNull = false){
-		if($returnNull)
-			return !is_null($number) && trim($number) != '' ? number_format($number, $decimal, ",", ".") : null;
-		else
+
+		if( !is_null($number) && trim($number) != '' )
 			return number_format($number, $decimal, ",", ".");
+
+		if( $returnNull )
+			return null;
+	
+		return $number;
 	}
 
 	/**
