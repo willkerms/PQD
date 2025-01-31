@@ -421,6 +421,19 @@ class PQDUtil {
 	}
 
 	/**
+	 * Escape $data as XML string
+	 * 
+	 * @param string $data
+	 * 
+	 * @return mixed
+	 */
+	public static function escapeXML($data){
+		return self::recursive($data, function($data){
+			return htmlspecialchars($data, ENT_QUOTES | ENT_SUBSTITUTE | ENT_XML1);
+		});
+	}
+
+	/**
 	 * @author Willker Moraes Silva
 	 * @since 2015-11-11
 	 * @param mixed $data
