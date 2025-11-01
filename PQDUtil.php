@@ -906,7 +906,7 @@ class PQDUtil {
 		while (!isset($choices[$resp])){
 			echo $msg . PHP_EOL;
 			foreach ($choices as $k => $v)
-				echo "\t" . $k . '=>' . $v . PHP_EOL;
+				echo "\t" . $k . ' => ' . $v . PHP_EOL;
 
 			$resp = trim(fgets(STDIN));
 
