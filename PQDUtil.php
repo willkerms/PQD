@@ -12,10 +12,12 @@ class PQDUtil {
 	const IS_CPF_WITH_MASK = '/^[0-9]{3,3}\.[0-9]{3,3}\.[0-9]{3,3}-[0-9]{2,2}$/';
 	const IS_CPF_WITHOUT_MASK = '/^[0-9]{11,11}$/';
 
-	const IS_CNPJ_WITH_MASK = '/^[0-9]{2,2}\.[0-9]{3,3}\.[0-9]{3,3}\/[0-9]{4,4}-[0-9]{2,2}$/';
-	const IS_CNPJ_ALPHANUMERIC_WITH_MASK = '/^[A-Z0-9]{2}\.[A-Z0-9]{3}\.[A-Z0-9]{3}\/[A-Z0-9]{4}-[0-9]{2}$/';
-	const IS_CNPJ_WITHOUT_MASK = '/^[0-9]{14,14}$/';
-	const IS_CNPJ_ALPHANUMERIC_WITHOUT_MASK = '/^[A-Z0-9]{12}[0-9]{2}$/';
+	// CNPJ antigo (com máscara)
+	// const IS_CNPJ_WITH_MASK = '/^[0-9]{2,2}\.[0-9]{3,3}\.[0-9]{3,3}\/[0-9]{4,4}-[0-9]{2,2}$/';
+	// CNPJ novo (sem máscara)
+	// const IS_CNPJ_WITHOUT_MASK = '/^[0-9]{14,14}$/';
+	const IS_CNPJ_WITH_MASK = '/^[A-Z0-9]{2}\.[A-Z0-9]{3}\.[A-Z0-9]{3}\/[A-Z0-9]{4}-[0-9]{2}$/';
+	const IS_CNPJ_WITHOUT_MASK = '/^[A-Z0-9]{12}[0-9]{2}$/';
 
 	const IS_FONE_WITH_DDD = '/^\([0-9]{2,2}\) [0-9]{4,4}-[0-9]{4,5}$/';
 	const IS_FONE_WITHOUT_DDD = '/^[0-9]{4,4}-[0-9]{4,5}$/';
@@ -335,17 +337,8 @@ class PQDUtil {
 	}
 
 	public static function onlyNumbers($string){
-		if(!is_null($string) && self::isCnpj($string))
-			return preg_replace("/[^A-Z0-9]/", "", $string);
-		elseif(!is_null($string))
-			return preg_replace("/[^0-9]/", "", $string);
-		else
-			return $string;
-	}
-
-	public static function alphanumeric($string){
 		if(!is_null($string))
-			return preg_replace("/[^A-Z0-9]/", "", $string);
+			return preg_replace("/[^0-9]/", "", $string);
 		else
 			return $string;
 	}
@@ -354,27 +347,6 @@ class PQDUtil {
 		if (strlen($cpf) == 11) {
 			return substr($cpf, 0, 3) . "." . substr($cpf, 3, 3) . "." . substr($cpf, 6, 3) . "-" . substr($cpf, 9);
 		}
-	}
-
-	/**
-	 * Converte um caractere para seu valor numérico segundo a tabela ASCII - 48
-	 * A-Z: 17-42
-	 * 0-9: 0-9
-	 *
-	 * @param string $char
-	 * @return int
-	 */
-	private static function getAsciiValue($char) {
-		$code = ord($char);
-		// 0-9: ord(48-57) - 48 = 0-9
-		if ($code >= 48 && $code <= 57) {
-			return $code - 48;
-		}
-		// A-Z: ord(65-90) - 48 = 17-42
-		if ($code >= 65 && $code <= 90) {
-			return $code - 48;
-		}
-		return 0;
 	}
 
 	/**
@@ -550,6 +522,19 @@ class PQDUtil {
 			return false;
 		}
 
+		$fnCharValue = function($char){
+			$code = ord($char);
+			// 0-9: ord(48-57) - 48 = 0-9
+			if ($code >= 48 && $code <= 57) {
+				return $code - 48;
+			}
+			// A-Z: ord(65-90) - 48 = 17-42
+			if ($code >= 65 && $code <= 90) {
+				return $code - 48;
+			}
+			return 0;
+		};
+
 		// Elimina CNPJs inválidos conhecidos (todos os dígitos iguais)
 		// if (preg_match('/(^0{14}$)|(^1{14}$)|(^2{14}$)|(^3{14}$)|(^4{14}$)|(^5{14}$)|(^6{14}$)|(^7{14}$)|(^8{14}$)|(^9{14}$)/', $cnpj)) {
 		// 	return false;
@@ -564,13 +549,13 @@ class PQDUtil {
 		$pos = $tamanho - 7;
 
 		for ($i = $tamanho; $i >= 1; $i--) {
-			$charValue = self::getAsciiValue(substr($numeros, $tamanho - $i, 1));
+			$charValue = $fnCharValue(substr($numeros, $tamanho - $i, 1));
 			$soma += $charValue * $pos--;
 			$pos = ($pos < 2) ? 9 : $pos;
 		}
 
 		$resultado = ($soma % 11) < 2 ? 0 : 11 - ($soma % 11);
-		if ($resultado != self::getAsciiValue(substr($digitos, 0, 1))) {
+		if ($resultado != $fnCharValue(substr($digitos, 0, 1))) {
 			return false;
 		}
 
@@ -582,13 +567,13 @@ class PQDUtil {
 		$pos = $tamanho - 7;
 
 		for ($i = $tamanho; $i >= 1; $i--) {
-			$charValue = self::getAsciiValue(substr($numeros, $tamanho - $i, 1));
+			$charValue = $fnCharValue(substr($numeros, $tamanho - $i, 1));
 			$soma += $charValue * $pos--;
 			$pos = ($pos < 2) ? 9 : $pos;
 		}
 
 		$resultado = ($soma % 11) < 2 ? 0 : 11 - ($soma % 11);
-		if ($resultado != self::getAsciiValue(substr($digitos, 1, 1))) {
+		if ($resultado != $fnCharValue(substr($digitos, 1, 1))) {
 			return false;
 		}
 
