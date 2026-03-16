@@ -12,8 +12,12 @@ class PQDUtil {
 	const IS_CPF_WITH_MASK = '/^[0-9]{3,3}\.[0-9]{3,3}\.[0-9]{3,3}-[0-9]{2,2}$/';
 	const IS_CPF_WITHOUT_MASK = '/^[0-9]{11,11}$/';
 
-	const IS_CNPJ_WITH_MASK = '/^[0-9]{2,2}\.[0-9]{3,3}\.[0-9]{3,3}\/[0-9]{4,4}-[0-9]{2,2}$/';
-	const IS_CNPJ_WITHOUT_MASK = '/^[0-9]{14,14}$/';
+	// CNPJ antigo (com máscara)
+	// const IS_CNPJ_WITH_MASK = '/^[0-9]{2,2}\.[0-9]{3,3}\.[0-9]{3,3}\/[0-9]{4,4}-[0-9]{2,2}$/';
+	// CNPJ novo (sem máscara)
+	// const IS_CNPJ_WITHOUT_MASK = '/^[0-9]{14,14}$/';
+	const IS_CNPJ_WITH_MASK = '/^[A-Z0-9]{2}\.[A-Z0-9]{3}\.[A-Z0-9]{3}\/[A-Z0-9]{4}-[0-9]{2}$/';
+	const IS_CNPJ_WITHOUT_MASK = '/^[A-Z0-9]{12}[0-9]{2}$/';
 
 	const IS_FONE_WITH_DDD = '/^\([0-9]{2,2}\) [0-9]{4,4}-[0-9]{4,5}$/';
 	const IS_FONE_WITHOUT_DDD = '/^[0-9]{4,4}-[0-9]{4,5}$/';
@@ -345,7 +349,14 @@ class PQDUtil {
 		}
 	}
 
+	/**
+	 * Formata um valor em CNPJ com suporte a caracteres alfanuméricos
+	 *
+	 * @param string $cnpj
+	 * @return string|null
+	 */
 	public static function formatCnpj($cnpj){
+		$cnpj = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $cnpj));
 		if (strlen($cnpj) == 14) {
 			return substr($cnpj, 0, 2) . "." . substr($cnpj, 2, 3) . "." . substr($cnpj, 5, 3) . "/" . substr($cnpj, 8, 4) . "-" . substr($cnpj, 12);
 		}
@@ -491,31 +502,82 @@ class PQDUtil {
 	}
 
 	/**
+	 * Valida CNPJ com suporte a caracteres alfanuméricos
+	 * Usa tabela ASCII - 48 para conversão de letras
+	 *
 	 * @param string $cnpj
 	 * @return boolean
 	 */
 	public static function isCnpj($cnpj){
-		$cnpj = self::onlyNumbers($cnpj);
-
-		if( strlen($cnpj) != 14 )
+		// Validação básica
+		if (is_null($cnpj) || trim($cnpj) === '') {
 			return false;
-		/*
-		if(strlen($cnpj) != 14 || self::isValid($cnpj, "/(^0{14}$)|(^1{14}$)|(^2{14}$)|(^3{14}$)|(^4{14}$)|(^5{14}$)|(^6{14}$)|(^7{14}$)|(^8{14}$)|(^9{14}$)/"))
+		}
+
+		// Converte para maiúsculas e remove caracteres inválidos
+		$cnpj = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $cnpj));
+
+		// Valida o comprimento
+		if (strlen($cnpj) != 14) {
 			return false;
-		*/
+		}
 
+		$fnCharValue = function($char){
+			$code = ord($char);
+			// 0-9: ord(48-57) - 48 = 0-9
+			if ($code >= 48 && $code <= 57) {
+				return $code - 48;
+			}
+			// A-Z: ord(65-90) - 48 = 17-42
+			if ($code >= 65 && $code <= 90) {
+				return $code - 48;
+			}
+			return 0;
+		};
 
-		for ($i = 0, $sum = 0; $i < 12; $i++)
-			$sum += (int)substr($cnpj, $i, 1) * ($i < 4 ? 5-$i:13-$i);
+		// Elimina CNPJs inválidos conhecidos (todos os dígitos iguais)
+		// if (preg_match('/(^0{14}$)|(^1{14}$)|(^2{14}$)|(^3{14}$)|(^4{14}$)|(^5{14}$)|(^6{14}$)|(^7{14}$)|(^8{14}$)|(^9{14}$)/', $cnpj)) {
+		// 	return false;
+		// }
 
-		$firstDig = $sum % 11 < 2 ? 0 : 11-($sum%11);
+		// Valida primeiro dígito verificador
+		$tamanho = 12;
+		$numeros = substr($cnpj, 0, $tamanho);
+		$digitos = substr($cnpj, $tamanho);
 
-		for ($i = 0, $sum = 0; $i < 13; $i++)
-			$sum += (int)substr($cnpj, $i, 1) * ($i < 5 ? 6-$i:14-$i);
+		$soma = 0;
+		$pos = $tamanho - 7;
 
-			$secondDig = $sum % 11 < 2 ? 0 : 11-($sum%11);
+		for ($i = $tamanho; $i >= 1; $i--) {
+			$charValue = $fnCharValue(substr($numeros, $tamanho - $i, 1));
+			$soma += $charValue * $pos--;
+			$pos = ($pos < 2) ? 9 : $pos;
+		}
 
-		return substr($cnpj, 12, 1) == $firstDig && substr($cnpj, 13, 1) == $secondDig;
+		$resultado = ($soma % 11) < 2 ? 0 : 11 - ($soma % 11);
+		if ($resultado != $fnCharValue(substr($digitos, 0, 1))) {
+			return false;
+		}
+
+		// Valida segundo dígito verificador
+		$tamanho = 13;
+		$numeros = substr($cnpj, 0, $tamanho);
+
+		$soma = 0;
+		$pos = $tamanho - 7;
+
+		for ($i = $tamanho; $i >= 1; $i--) {
+			$charValue = $fnCharValue(substr($numeros, $tamanho - $i, 1));
+			$soma += $charValue * $pos--;
+			$pos = ($pos < 2) ? 9 : $pos;
+		}
+
+		$resultado = ($soma % 11) < 2 ? 0 : 11 - ($soma % 11);
+		if ($resultado != $fnCharValue(substr($digitos, 1, 1))) {
+			return false;
+		}
+
+		return true;
 	}
 
 	public static function isCpf($cpf){
