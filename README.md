@@ -256,6 +256,30 @@ Helpers úteis:
 
 ---
 
+## Convenções de nomenclatura de variáveis
+
+PQD adota um esquema enxuto de prefixos por tipo nas variáveis locais, inspirado em uma versão leve de Hungarian notation. O objetivo é deixar o tipo da variável visível no nome, sem depender da declaração ou do retorno de uma função para inferi-lo.
+
+| Tipo | Prefixo | Exemplos |
+|------|---------|----------|
+| Objeto / instância | `$o<Nome>` | `$oCliente`, `$oWhere`, `$oOrderBy` |
+| Array | `$a<Nome>` | `$aFields`, `$aDados`, `$aClientes` |
+| Boolean | `$is<X>` ou `$has<X>` (inglês preferido) | `$isCodigo`, `$hasNome`, `$isAtivo` |
+| Data (`date`) | `$dta<Nome>` | `$dtaInicio`, `$dtaFim`, `$dtaCadastro` |
+| Timestamp / `datetime` | `$time<Nome>` | `$timeInicio`, `$timeUltimaAlt` |
+| String SQL | `$sql` (com sufixo opcional) | `$sql`, `$sqlInsert`, `$sqlContagem` |
+| Primitivos (int, string, float) | camelCase plain | `$idCliente`, `$titulo`, `$status`, `$valor` |
+
+**Boolean é predicado.** Sempre começa com `is` ou `has` em inglês — o padrão recomendado é o inglês porque a expressão lê naturalmente como pergunta (`if ($isCodigo)` → "se é código"). Versões em português (`$ehCodigo`, `$temNome`) são aceitas, mas não recomendadas.
+
+**SQL pode ter sufixo** quando há mais de uma query no mesmo escopo (`$sqlInsert`, `$sqlUpdate`, `$sqlContagem`), mas o nome **sempre começa com `$sql`** — esse é o sinal de que a variável carrega SQL cru.
+
+**Primitivos não levam prefixo de tipo.** O nome do campo já carrega a semântica (`$idCliente` é claramente um ID inteiro; `$titulo` é claramente uma string). Prefixar `$i` ou `$s` polui o nome sem ganho.
+
+**Atributos de classe seguem a mesma regra.** Ex.: `$this->oWhere`, `$this->aFields`, `$this->isCodigo`.
+
+---
+
 ## ORM — Builders de SQL
 
 ### `SQLWhere`
