@@ -331,6 +331,20 @@ class PQDAnnotation{
 	}
 
 	/**
+	 * Retorna um campo pelo nome, ou null caso não exista
+	 *
+	 * A busca é feita no conjunto completo, ou seja, nos campos da entidade e nos da
+	 * classe DTO ou vw, pela chave, que é a propriedade "name" do campo.
+	 *
+	 * @param string $field Nome da coluna, ex.: "idProduct"
+	 * @return array|null
+	 */
+	public function getField($field){
+		$aFields = $this->getAllFields();
+		return isset($aFields[$field]) ? $aFields[$field] : null;
+	}
+
+	/**
 	 * Retorna todos os campos filtros inclusive os da classe DTO ou vw
 	 *
 	 * @return array
