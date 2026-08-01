@@ -345,6 +345,19 @@ class PQDAnnotation{
 	}
 
 	/**
+	 * Retorna a lista de valores de um campo, ou array vazio caso não exista
+	 * 
+	 * @param string $field Nome da coluna, ex.: "idProduct"
+	 * @return array
+	 */
+	public function getFieldList($field){
+		
+		$aField = $this->getField($field);
+
+		return !is_null($aField) && isset($aField['list']) ? $aField['list'] : [];
+	}
+
+	/**
 	 * Retorna todos os campos filtros inclusive os da classe DTO ou vw
 	 *
 	 * @return array

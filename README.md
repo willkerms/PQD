@@ -315,6 +315,7 @@ Duas propriedades de `@field` existem exclusivamente para o parser:
 | `getEntity()` | Valores de `@entity` |
 | `getFields()` | `@field` da própria classe, indexados pelo nome da coluna |
 | `getField($field)` | Um campo pelo nome, considerando entidade + DTO/View, ou `null` |
+| `getFieldList($field)` | A lista declarada em `@list` para o campo; array vazio se o campo não existir ou não tiver `@list` |
 | `getPk()` | Nome da coluna com `isPk=true`, ou `null` |
 | `getFks()` | Lista de `array(coluna => fk)` |
 | `getFilters()` | Campos com `isFilter=true` |
