@@ -2,7 +2,12 @@
 namespace PQD;
 
 /**
- * Classe para pegar as anotações das entidades
+ * Parser das anotações de phpDOC das entidades
+ *
+ * Recebe o caminho do arquivo da classe, a partir da raiz da aplicação, e extrai
+ * por expressão regular as anotações @entity, @table, @field, @list e @help.
+ * O resultado fica em um cache estático indexado pelo caminho do arquivo, de modo
+ * que a mesma entidade é lida do disco apenas uma vez por request.
  *
  * @author Willker Moraes Silva
  * @since 2015-11-13
@@ -10,12 +15,30 @@ namespace PQD;
  */
 class PQDAnnotation{
 
+	/**
+	 * Cache das anotações já lidas, indexado pelo caminho do arquivo da classe
+	 *
+	 * Chaves de cada entrada: table, entity, fields, pk, fks, filters,
+	 * viewFields, viewFilters, allFields, allFilters.
+	 * Protegido e estático de propósito: subclasses podem completar ou alterar
+	 * os metadados já resolvidos.
+	 *
+	 * @var array
+	 */
 	protected static $annotation = array();
 
+	/**
+	 * Caminho do arquivo da classe anotada, com separador normalizado em "/"
+	 *
+	 * @var string
+	 */
 	protected $class;
 
 	/**
-	 * @param string $classFile
+	 * Se o arquivo não existir, registra a exceção de código 11 e a instância
+	 * passa a responder com metadados vazios.
+	 *
+	 * @param string $classFile Caminho do arquivo da classe a partir da raiz da aplicação, ex.: "modulos/cad/pessoas/Pessoa.php". Barras invertidas são normalizadas, o que permite informar o nome da classe com namespace + ".php".
 	 */
 	function __construct($classFile) {
 
@@ -28,10 +51,14 @@ class PQDAnnotation{
 		}
 	}
 	/**
-	 * Retorna valores dentro dos parenteses
+	 * Retorna valores dentro dos parênteses
 	 *
-	 * @param string $nameAttr
-	 * @param string $str
+	 * O conteúdo é quebrado por ", " (vírgula + espaço) e cada parte por "=".
+	 * Partes no formato "chave=valor" viram índices associativos; partes sem "="
+	 * viram índices numéricos, ex.: "@table(products)" retorna array(0 => 'products').
+	 *
+	 * @param string $nameAttr Nome da anotação, com "@", ex.: "@field"
+	 * @param string $str Anotação completa, ex.: "@field(name=price, type=money)"
 	 * @return array
 	 */
 	private function retValues($nameAttr, $str){
@@ -51,11 +78,20 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * Retorna um objeto com todos os campos setados neste campo
+	 * Retorna um objeto com todos os campos anotados no arquivo informado
+	 *
+	 * Percorre todos os blocos de comentário do arquivo; em cada bloco que contenha um
+	 * campo anotado, agrega a ele as anotações de lista e de ajuda do mesmo bloco. Os
+	 * campos são indexados pela propriedade "name", ou por índice numérico quando
+	 * "name" não é informado.
+	 *
+	 * A anotação @help é lida até o fim da linha, contando com a quebra de linha no
+	 * formato CRLF.
 	 *
 	 * @author Willker Moraes Silva
 	 * @since 2015-12-01
-	 * @param \stdClass $file
+	 * @param string $file Caminho do arquivo da entidade, do DTO ou da View
+	 * @return \stdClass pk (string|null), fks (array), filters (array) e fields (array)
 	 */
 	private function getAllFieldsFile($file){
 
@@ -126,9 +162,9 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * retorna nome dá coluna chave primaria
+	 * retorna nome da coluna chave primaria, a que está marcada com isPk=true
 	 *
-	 * @return string
+	 * @return string|null
 	 */
 	public function getPk(){
 		if(isset(self::$annotation[$this->class]['pk']))
@@ -140,7 +176,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * retorna os filtros
+	 * retorna os filtros, ou seja, os campos marcados com isFilter=true
 	 *
 	 * @return array
 	 */
@@ -154,9 +190,9 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * retorna FK's
+	 * retorna FK's, um array(coluna => fk) para cada campo que declara a propriedade fk
 	 *
-	 * @return string
+	 * @return array
 	 */
 	public function getFks(){
 		if(isset(self::$annotation[$this->class]['fks']))
@@ -170,7 +206,10 @@ class PQDAnnotation{
 	/**
 	 * retorna valores setados na anotação @table
 	 *
-	 * @return array
+	 * No mesmo passo resolve a anotação @entity e, quando @table declara clsDTO ou
+	 * clsView, os campos e filtros dessa classe (viewFields e viewFilters).
+	 *
+	 * @return array Normalmente array('name' => '<tabela>')
 	 */
 	public function getTable(){
 
@@ -209,7 +248,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * retorna os campos anotados na anotação @field
+	 * retorna os campos anotados na anotação @field, indexados pelo nome da coluna
 	 *
 	 * @return array
 	 */
@@ -232,7 +271,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * Retorna os campos dá classe DTO ou Vw
+	 * Retorna os campos da classe DTO ou Vw declarada em @table
 	 *
 	 * @return array
 	 */
@@ -260,7 +299,9 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * Retorna os filtros cá classe DTO ou Vw
+	 * Retorna os filtros da classe DTO ou Vw, os campos marcados com isFilter=true
+	 *
+	 * @return array
 	 */
 	public function getViewFilters(){
 		if(isset(self::$annotation[$this->class]['viewFilters']))
@@ -273,6 +314,9 @@ class PQDAnnotation{
 
 	/**
 	 * Retorna todos os campos inclusive os que estão na classe DTO ou vw
+	 *
+	 * Em caso de mesmo nome de coluna nas duas classes, o campo do DTO ou da View
+	 * prevalece sobre o da entidade.
 	 *
 	 * @return array
 	 */
@@ -287,7 +331,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * Retorna todos os campos filtros inclusive os dá classe DTO ou vw
+	 * Retorna todos os campos filtros inclusive os da classe DTO ou vw
 	 *
 	 * @return array
 	 */
@@ -303,7 +347,7 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * Retorna todos os campos filtros inclusive os dá classe DTO ou vw
+	 * Retorna a entrada completa do cache de anotações da classe
 	 *
 	 * @return array
 	 */
@@ -318,7 +362,9 @@ class PQDAnnotation{
 	}
 
 	/**
-	 * @return the $class
+	 * Retorna o caminho do arquivo lido, com separador normalizado em "/"
+	 *
+	 * @return string
 	 */
 	public function getClass() {
 		return $this->class;

@@ -256,6 +256,96 @@ Helpers úteis:
 
 ---
 
+## Anotações (`PQDAnnotation`)
+
+`PQDAnnotation` é o parser que transforma o phpDOC das entidades nos metadados que a aplicação injeta no DAO (colunas, PK, tipos) e nas views (labels, filtros, listas, tooltips). É instanciado com o **caminho do arquivo** da classe, a partir da raiz da aplicação:
+
+```php
+$oAnnotation = new PQDAnnotation('modulos/catalog/products/Product.php');
+
+$oAnnotation->getTable();      // array('name' => 'products')
+$oAnnotation->getPk();         // 'idProduct'
+$oAnnotation->getAllFields();  // campos da Entity + campos do DTO
+```
+
+As barras invertidas são normalizadas para `/`, então passar o nome da classe com namespace + `.php` também funciona. Se o arquivo não existir, a exceção de código `11` é registrada em `PQDApp::getApp()->getExceptions()` e a instância passa a responder com metadados vazios.
+
+### Anotações reconhecidas
+
+| Anotação | Onde | Função |
+|----------|------|--------|
+| `@table(...)` | phpDOC da classe | Nome da tabela e classe complementar (`clsDTO` / `clsView`) |
+| `@entity(...)` | phpDOC da classe | Flags da entidade, ex.: `isEscaped=true` |
+| `@field(...)` | phpDOC do atributo | Metadados da coluna — ver [Entity](#entity-pqdentity) |
+| `@list(...)` | phpDOC do atributo | Lista de valores de campos enum/select |
+| `@help(...)` | phpDOC do atributo | Tooltip do campo |
+
+`@table` aceita a forma posicional (`@table(products)` ⇒ `array('name' => 'products')`) ou nomeada:
+
+| Propriedade | Função |
+|-------------|--------|
+| `name` | Nome da tabela |
+| `clsDTO` | Classe DTO cujos `@field` são carregados como `viewFields` / `viewFilters` |
+| `clsView` | Alternativa a `clsDTO`, para entidades mapeadas sobre uma view do banco |
+
+`clsDTO` / `clsView` recebem o nome da classe com namespace: PQD troca `\` por `/`, acrescenta `.php` e lê o arquivo — ou seja, o namespace precisa espelhar a estrutura de pastas a partir da raiz da aplicação.
+
+Duas propriedades de `@field` existem exclusivamente para o parser:
+
+| Propriedade | Função |
+|-------------|--------|
+| `isPk` | `isPk=true` marca a coluna devolvida por `getPk()` |
+| `fk` | Tabela/classe referenciada; alimenta `getFks()` |
+
+### Regras de sintaxe do parser
+
+- Uma anotação **por linha** do phpDOC.
+- `@field` é lido até o **último `)` da linha** — não escreva nada depois do fecha-parênteses.
+- Os pares dentro dos parênteses são separados por **vírgula + espaço** (`, `). `name=x,description=y`, sem o espaço, não é quebrado corretamente.
+- `@list` e `@help` são anotações independentes: pertencem ao campo cujo bloco de comentário as contém, não a `@field`.
+- `@help` é lido até o fim da linha e conta com quebra de linha **CRLF** — o padrão dos arquivos de entidade.
+- Cada campo é indexado pela propriedade `name`; campos sem `name` recebem índice numérico.
+- `@list` apontando para um `.json` inexistente registra a exceção de código `13`; JSON malformado lança exceção com o arquivo e a coluna na mensagem.
+
+### API pública
+
+| Método | Retorno |
+|--------|---------|
+| `getTable()` | Valores de `@table` |
+| `getEntity()` | Valores de `@entity` |
+| `getFields()` | `@field` da própria classe, indexados pelo nome da coluna |
+| `getPk()` | Nome da coluna com `isPk=true`, ou `null` |
+| `getFks()` | Lista de `array(coluna => fk)` |
+| `getFilters()` | Campos com `isFilter=true` |
+| `getViewFields()` / `getViewFilters()` | Idem, mas da classe `clsDTO` / `clsView` |
+| `getAllFields()` / `getAllFilters()` | União da entidade com o DTO/View |
+| `getClassAnnotation()` | Mapa completo de metadados da classe |
+| `getClass()` | Caminho normalizado do arquivo lido |
+
+Qualquer um pode ser o primeiro a ser chamado: o parser resolve as dependências sozinho (`getPk()` dispara `getFields()`, que dispara `getTable()`). Em `getAllFields()`, campo de mesmo nome declarado no DTO/View prevalece sobre o da entidade.
+
+O resultado fica em um cache **estático** indexado pelo caminho do arquivo — a mesma entidade é lida do disco uma única vez por request, mesmo com várias instâncias de `PQDAnnotation`.
+
+### Estendendo o parser
+
+O cache é `protected static`, o que permite a uma subclasse enriquecer metadados já resolvidos:
+
+```php
+class AppAnnotation extends PQDAnnotation {
+
+    public function getFields(){
+        $aFields = parent::getFields();
+        // ex.: resolver @list que ficou como string, traduzir descriptions,
+        // ajustar required conforme configuração da instalação...
+        return $aFields;
+    }
+}
+```
+
+Esse é o gancho usado para resolver `@list` a partir de banco de dados, API ou cache — ver [`@list`](#anotações-complementares-help-e-list).
+
+---
+
 ## Convenções de nomenclatura de variáveis
 
 PQD adota um esquema enxuto de prefixos por tipo nas variáveis locais, inspirado em uma versão leve de Hungarian notation. O objetivo é deixar o tipo da variável visível no nome, sem depender da declaração ou do retorno de uma função para inferi-lo.
@@ -383,7 +473,7 @@ O método `PQDApp::setHostsEnv([$host => $envFolder, ...])` permite que a mesma 
 
 | Classe | Função |
 |--------|--------|
-| `PQDAnnotation` | Parser de phpDOC usado pelos `@field`, `@table`, `@list` |
+| `PQDAnnotation` | Parser de phpDOC das entidades (`@table`, `@entity`, `@field`, `@list`, `@help`) — ver [Anotações](#anotações-pqdannotation) |
 | `PQDCrypt` | Encriptação simétrica para tokens e cookies |
 | `PQDLogs` | Logger de acessos e SQL com rotação por arquivo |
 | `PQDDynamicView` / `PQDDynamicReport` | Views/relatórios renderizados a partir de definição declarativa |
