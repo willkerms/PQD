@@ -56,9 +56,14 @@ class PQDView {
 	private $escape = true;
 
 	/**
+	 * @var array $messages
+	*/
+	private $messages = array();
+
+	/**
 	 * @param string $view
 	 */
-	function __construct ($view, PQDExceptions $exceptions = null, $autoRender = true, $requireHeaderAndFooter = true) {
+	function __construct ($view, ?PQDExceptions $exceptions = null, $autoRender = true, $requireHeaderAndFooter = true) {
 
 		$this->setViewFile($view);
 
@@ -135,15 +140,15 @@ class PQDView {
 	}
 
 	/**
-	 * @return the $view
+	 * @return self $view
 	 */
 	public function getView() {
 		return $this->view;
 	}
 
 	/**
-	 * @return string $file
-	 */
+	 * @param string $file
+	*/
 	public function setViewFile($file) {
 		$file = str_replace("\\", "/", $file);
 		if(is_file($file))
@@ -168,7 +173,7 @@ class PQDView {
 
 	/**
 	 *
-	 * @param booelan $requireHeaderAndFooter
+	 * @param boolean $requireHeaderAndFooter
 	 * @return self
 	 */
 	public function setRequireHeaderAndFooter($requireHeaderAndFooter){
@@ -235,6 +240,21 @@ class PQDView {
 
 	/**
 	 *
+	 * @param string $msg
+	 * @param string $type
+	 * @param string $style
+	 * @param string $class
+	 * @param bool $autoDismiss
+	 * 
+	 * @return self
+	*/
+	public function setMessage($msg, $type = 'info', $autoDismiss = true, $class = null, $style = null){
+		$this->messages[] = array('msg' => $msg, 'type' => $type, 'style' => $style, 'class' => $class, 'autoDismiss' => $autoDismiss);
+		return $this;
+	}
+
+	/**
+	 *
 	 * @param string $field
 	 * @return string
 	 */
@@ -295,7 +315,7 @@ class PQDView {
 			$this->render();
 	}
 	/**
-	 * @return the $escape
+	 * @return bool $escape
 	 */
 	public function getEscape() {
 		return $this->escape;

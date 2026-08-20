@@ -718,7 +718,7 @@ abstract class SQLSelect extends PQDDb{
 	}
 
 	/**
-	 * @return SQLWhere $defaultWhereOnSelect
+	 * @return SQLJoin $defaultWhereOnSelect
 	 */
 	public function getDefaultWhereOnSelect(){
 		return $this->defaultWhereOnSelect;
