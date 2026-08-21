@@ -210,11 +210,11 @@ class PQDUtil {
 	 * Retorna uma data no formato passado, caso o timestamp não seja passada retorna a data atual
 	 * 
 	 * @param string $format
-	 * @param int $timestamp
+	 * @param int|null $timestamp
 	 * 
 	 * @return string
 	 */
-	public static function date($format, int $timestamp = null){
+	public static function date($format, int|null $timestamp){
 
 		$timestamp = is_null($timestamp) ? ( new \DateTimeImmutable() )->format('U') : $timestamp;
 
@@ -400,7 +400,7 @@ class PQDUtil {
 		return $return;
 	}
 
-	public static function recursive($data, $function, array $args = null){
+	public static function recursive($data, $function, array|null $args){
 
 		if ( is_array($data)){
 			foreach ($data as $key => $value)
@@ -810,10 +810,11 @@ class PQDUtil {
 	 * Retorna um DOMDocument para o array dado
 	 *
 	 * @param array $data
-	 * @param \DOMNode $node
-	 * @param \DOMDocument $document
+	 * @param \DOMNode|null $node
+	 * @param \DOMDocument|null $document
+	 * @param bool $utf8
 	 */
-	public static function dom_encode(array $data, \DOMNode &$node = null, \DOMDocument &$document = null, $utf8 = false){
+	public static function dom_encode(array $data, \DOMNode|null &$node, \DOMDocument|null &$document = null, bool $utf8 = false){
 
 		if(is_null($document)){
 			$data = $utf8 ? self::utf8_encode($data) : $data;
@@ -896,10 +897,10 @@ class PQDUtil {
 	 * Obtem um confirmação quando executando em CLI
 	 *
 	 * @param string $msg
-	 * @param array $result
+	 * @param array|null $result
 	 * @return boolean
 	 */
-	public static function confirmCLI($msg, array $result = null){
+	public static function confirmCLI($msg, array|null $result){
 
 		if(!IS_CLI)
 			return true;
@@ -1042,12 +1043,12 @@ class PQDUtil {
 	/**
 	 * Seta valores padrões em uma variavel
 	 * 
-	 * @var array $aParams
+	 * @var array|null $aParams
 	 * @var array $aDefault
 	 * 
-	 * @return array
+	 * @return array|null
 	 */
-	public static function setDefault(array $aParams, array $aDefault){
+	public static function setDefault(array|null $aParams, array $aDefault){
 
 		foreach($aDefault as $key => $value){
 			if(is_array($value))
