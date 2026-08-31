@@ -85,8 +85,10 @@ class PQDAnnotation{
 	 * campos são indexados pela propriedade "name", ou por índice numérico quando
 	 * "name" não é informado.
 	 *
-	 * A anotação @help é lida até o fim da linha, contando com a quebra de linha no
-	 * formato CRLF.
+	 * A anotação @help pode ocupar várias linhas e conter ")" no meio do texto: é
+	 * encerrada no ")" que fecha a linha e é seguido de outra anotação ou do fim do
+	 * bloco de comentário, em quebras de linha LF ou CRLF. O prefixo " * " das linhas
+	 * de continuação é removido do texto retornado.
 	 *
 	 * @author Willker Moraes Silva
 	 * @since 2015-12-01
@@ -134,9 +136,10 @@ class PQDAnnotation{
 							throw new \Exception("Erro no JSON da entidade! Arquivo(" . $this->class . "), coluna: (" . $col['name'] . ").");
 					}
 
-					preg_match('/\@help\(.*$/m', $comment, $help);
-					if(isset($help[0]))
-						$col['help'] = substr($help[0], strlen('@help')+1, -2);
+					//Fecha no ')' que termina a linha e é seguido de outra anotação ou do fim do comentário
+					preg_match('/\@help\((.*?)\)[ \t]*\r?\n(?=\s*\*\s*(?:@|\/))/s', $comment, $help);
+					if(isset($help[1]))
+						$col['help'] = preg_replace('/[\r\n]+[ \t]*\*[ \t]?/', "\n", $help[1]);
 
 					if(isset($col['name']))
 						$fields[$col['name']] = $col;
