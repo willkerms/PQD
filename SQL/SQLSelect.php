@@ -67,7 +67,7 @@ abstract class SQLSelect extends PQDDb{
 	private $defaultOrderBy;
 
 	/**
-	 * @var SQLWhere
+	 * @var SQLWhere|SQLJoin
 	 */
 	private $defaultWhereOnSelect;
 
@@ -181,10 +181,11 @@ abstract class SQLSelect extends PQDDb{
 	 * Retorna uma entidade
 	 *
 	 * @param int $id
-	 * @param string $fetchClass
+	 * @param bool $fetchClass
+	 * @param array|null $fields
 	 * @return object
 	 */
-	public function retEntity($id, $fetchClass = true, array $fields = null){
+	public function retEntity(int $id, bool $fetchClass = true, array|null $fields){
 
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
@@ -220,10 +221,11 @@ abstract class SQLSelect extends PQDDb{
 	/**
 	 * Retorna uma consulta vazia
 	 *
-	 * @param string $fetchClass
-	 * @return mixed PQDEntity|array
+	 * @param bool $fetchClass
+	 * 
+	 * @return mixed|PQDEntity|array
 	 */
-	protected function retEmpty($fetchClass = true){
+	protected function retEmpty(bool $fetchClass = true){
 		$clsFetch = !is_null($this->getClsView()) ? $this->getClsView(): $this->getClsEntity();
 
 		if ($fetchClass)
@@ -240,7 +242,7 @@ abstract class SQLSelect extends PQDDb{
 			return '*';
 	}
 
-	private function retGroupBy(SQLWhere $oWhere = null, SQLGroupBy $oGroupBy = null){
+	private function retGroupBy(SQLWhere|null $oWhere, SQLGroupBy|null $oGroupBy){
 
 		$oGroupBy = is_null($oGroupBy) ? $this->getDefaultGroupBy() : $oGroupBy;
 		$oWhere = is_null($oWhere) ? $this->getDefaultWhereOnSelect() : $oWhere;
@@ -258,7 +260,7 @@ abstract class SQLSelect extends PQDDb{
 		return $return;
 	}
 
-	private function retOrderBy(SQLWhere $oWhere = null, SQLOrderBy $oOrderBy = null){
+	private function retOrderBy(SQLWhere|SQLJoin|null $oWhere = null, SQLOrderBy|null $oOrderBy){
 
 		$oOrderBy = is_null($oOrderBy) ? $this->getDefaultOrderBy() : $oOrderBy;
 		$oWhere = is_null($oWhere) ? $this->getDefaultWhereOnSelect() : $oWhere;
@@ -276,7 +278,7 @@ abstract class SQLSelect extends PQDDb{
 		return $return;
 	}
 
-	private function retWhere(SQLWhere $oWhere){
+	private function retWhere(SQLWhere|SQLJoin|null $oWhere){
 
 		$oWhere2 = clone $oWhere;
 
@@ -322,12 +324,12 @@ abstract class SQLSelect extends PQDDb{
 	/**
 	 * Executa uma query
 	 *
-	 * @param string $fetchClass
+	 * @param bool $fetchClass
 	 * @param string $clsFetch
-	 * @param boolean $setException
+	 * @param bool $setException
 	 * @return array
 	 */
-	private function query($fetchClass = true, $clsFetch, $setException = true){
+	private function query(bool $fetchClass = true, $clsFetch, bool $setException = true){
 
 		$data = array();
 
@@ -349,12 +351,14 @@ abstract class SQLSelect extends PQDDb{
 	/**
 	 * Busca todos os registros da tabela
 	 *
-	 * @param array $fields
-	 * @param string $fetchClass
-	 * @param SQLOrderBy $oOrderBy
+	 * @param array|null $fields
+	 * @param bool $fetchClass
+	 * @param SQLOrderBy|null $oOrderBy
+	 * @param SQLGroupBy|null $oGroupBy
+	 * 
 	 * @return array
 	 */
-	public function fetchAll(array $fields = null, $fetchClass = true, SQLOrderBy $oOrderBy = null, SQLGroupBy $oGroupBy = null){
+	public function fetchAll(array|null $fields, bool $fetchClass = true, SQLOrderBy|null $oOrderBy, SQLGroupBy|null $oGroupBy){
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
 
@@ -377,10 +381,10 @@ abstract class SQLSelect extends PQDDb{
 	/**
 	 * Retorna o numero de registros dá busca generica
 	 *
-	 * @param SQLWhere $oWhere
+	 * @param SQLWhere|SQLJoin $oWhere
 	 * @return int
 	 */
-	public function retNumReg(SQLWhere $oWhere){
+	public function retNumReg(SQLWhere|SQLJoin $oWhere){
 
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$oWhere = $this->retWhere($oWhere);
@@ -394,16 +398,16 @@ abstract class SQLSelect extends PQDDb{
 	/**
 	 * Executa uma busca generica na tabela
 	 *
-	 * @param SQLWhere $oWhere
-	 * @param array $fields
-	 * @param string $fetchClass
-	 * @param SQLOrderBy $oOrderBy
-	 * @param int $limit
-	 * @param number $page
-	 * @param SQLGroupBy $groupBy
+	 * @param SQLWhere|SQLJoin|null $oWhere
+	 * @param array|null $fields
+	 * @param bool $fetchClass
+	 * @param SQLOrderBy|null $oOrderBy
+	 * @param int|null $limit
+	 * @param int $page
+	 * @param SQLGroupBy|null $oGroupBy
 	 * @return array
-	 */
-	public function genericSearch(SQLWhere $oWhere, array $fields = null, $fetchClass = true, SQLOrderBy $oOrderBy = null, $limit = null, $page = 0, SQLGroupBy $oGroupBy = null){
+	*/
+	public function genericSearch(SQLWhere|SQLJoin|null $oWhere, array|null $fields, bool $fetchClass = true, SQLOrderBy|null $oOrderBy, int|null $limit, int $page = 0, SQLGroupBy|null $oGroupBy){
 
 		$table = !is_null($this->view) ? $this->view: $this->table;
 		$clsFetch = !is_null($this->clsView) ? $this->clsView: $this->clsEntity;
@@ -478,15 +482,15 @@ abstract class SQLSelect extends PQDDb{
 	 * Executa uma busca generica em uma tabela
 	 * 
 	 * @param string $table
-	 * @param SQLWhere $oWhere
-	 * @param array $fields
-	 * @param SQLOrderBy $oOrderBy
-	 * @param int $limit
-	 * @param number $page
-	 * @param SQLGroupBy $groupBy
+	 * @param SQLWhere|SQLJoin|null $oWhere
+	 * @param array|null $fields
+	 * @param SQLOrderBy|null $oOrderBy
+	 * @param int|null $limit
+	 * @param int $page
+	 * @param SQLGroupBy|null $oGroupBy
 	 * @return array
 	 */
-	public function genericSearchTable($table, SQLWhere $oWhere = null, array $fields = null, SQLOrderBy $oOrderBy = null, $limit = null, $page = 0, SQLGroupBy $oGroupBy = null){
+	public function genericSearchTable(array $table, SQLWhere|SQLJoin|null $oWhere, array|null $fields, SQLOrderBy|null $oOrderBy, int|null $limit, int $page = 0, SQLGroupBy|null $oGroupBy){
 
 		$oWhere = is_null($oWhere) ? new SQLWhere() : $oWhere;
 
@@ -718,16 +722,16 @@ abstract class SQLSelect extends PQDDb{
 	}
 
 	/**
-	 * @return SQLWhere $defaultWhereOnSelect
+	 * @return SQLWhere|SQLJoin $defaultWhereOnSelect
 	 */
 	public function getDefaultWhereOnSelect(){
 		return $this->defaultWhereOnSelect;
 	}
 
 	/**
-	 * @param SQLWhere $defaultWhereOnSelect
+	 * @param SQLWhere|SQLJoin $defaultWhereOnSelect
 	 */
-	public function setDefaultWhereOnSelect(SQLWhere $defaultWhereOnSelect){
+	public function setDefaultWhereOnSelect(SQLWhere|SQLJoin $defaultWhereOnSelect){
 		$this->defaultWhereOnSelect = $defaultWhereOnSelect;
 	}
 
