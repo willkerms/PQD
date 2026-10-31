@@ -89,11 +89,11 @@ class PQDUtil {
 	 * @param string $class
 	 * @param \stdClass|array $oData
 	 * @param string $nameSpace
+	 * @param mixed $objRet
 	 * @return mixed
 	 */
-	public static function setObjs($class, $oData, $nameSpace = null){
+	public static function setObjs($class, $oData, $nameSpace = null, $objRet = null){
 
-		$objRet = null;
 		if(substr($nameSpace, -2) == "[]"){
 			$objRet = array();
 			$nameSpace = substr($nameSpace, 0, -2);
