@@ -90,9 +90,10 @@ class PQDUtil {
 	 * @param \stdClass|array $oData
 	 * @param string $nameSpace
 	 * @param mixed $objRet
+	 * @param bool $ignoreEmpty
 	 * @return mixed
 	 */
-	public static function setObjs($class, $oData, $nameSpace = null, $objRet = null){
+	public static function setObjs($class, $oData, $nameSpace = null, $objRet = null, $ignoreEmpty = true){
 
 		if(substr($nameSpace, -2) == "[]"){
 			$objRet = array();
@@ -116,7 +117,7 @@ class PQDUtil {
 								$objRet[$k] = new $class();
 
 							//Não seta string vazia
-							if (is_string($v)){
+							if ( is_string($v) && $ignoreEmpty){
 								$v = trim($v);
 								if($v == "")
 									continue;
@@ -132,7 +133,7 @@ class PQDUtil {
 						$objRet = new $class();
 
 					//Não seta string vazia
-					if (is_string($value)){
+					if ( is_string($value) && $ignoreEmpty){
 						$value = trim($value);
 
 						if($value == "")
