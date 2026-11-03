@@ -370,6 +370,25 @@ PQD adota um esquema enxuto de prefixos por tipo nas variáveis locais, inspirad
 
 **Atributos de classe seguem a mesma regra.** Ex.: `$this->oWhere`, `$this->aFields`, `$this->isCodigo`.
 
+## Layout do código
+
+Indentação com tabs; chave na mesma linha em classe, método e blocos de controle; espaço dentro dos parênteses de `if`/`for`/`foreach`/`while`; `else` / `else if` na linha abaixo do `}`.
+
+```php
+class MyClass{
+
+	public function whoIm(){
+
+		if( $isX ){
+			...
+		}
+		else{
+			...
+		}
+	}
+}
+```
+
 ---
 
 ## ORM — Builders de SQL
